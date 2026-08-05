@@ -93,6 +93,66 @@ compute grows, not because memory improves.
 
 ---
 
+## 4. KV compaction (H2O-style eviction)
+
+```bash
+cd analysis/compact_breakdown
+python run_compact_breakdown.py && python plot_compact_breakdown.py
+```
+
+![Compaction breakdown](analysis/compact_breakdown/compact_breakdown.png)
+
+A compacted KV cache of budget `k` is, to the datapath, just a length-`k` cache
+— H2O keeps it physically dense by refilling evicted slots with new KV. So
+eviction is modelled by clamping decode `kv_len`. Three results:
+
+**(a) Where it is worth deploying.** Ceiling speedup at 20% budget, decode
+roofline time per token:
+
+| batch \ context | 2K | 8K | 32K |
+|---|---:|---:|---:|
+| 1 | 1.08x | 1.30x | 1.98x |
+| 8 | 1.34x | 2.13x | 3.44x |
+| 32 | 1.99x | 3.40x | **4.43x** |
+
+At batch 1 / 2K, KV is only 2.9% of decode DRAM traffic — decode reads 2.6 GB of
+*weights* per token and 80 MB of KV — so perfect eviction buys 1.08x. Weight
+traffic amortizes over the batch while KV traffic scales with it, so KV is 93.8%
+of traffic at batch 32 / 32K. **Batch 1 is the worst possible case for this
+technique**, and it is what the rest of this study simulates.
+
+**(b) The fixed-overhead knee.** `attn_v` costs
+`per_round = 3 (LGU) + ceil(kv_len/4) + 5 (fill/drain) + 2 (accum)`. The
+constant 10 does not shrink with the budget:
+
+| Retained entries (32K ctx) | Fixed share of attention cycles |
+|---:|---:|
+| 32768 (full) | 1.2% |
+| 6554 (20%) | 1.7% |
+| 656 (2%) | 9.3% |
+| 328 (1%) | 14.9% |
+| 132 (0.4%) | **23.5%** |
+
+The LGU measured at 0.33% of decode cycles on a full cache reaches ~24% of
+attention cycles at the 128–330 entry budgets KV-compression papers headline
+(PyramidKV claims 0.7% cache; SnapKV runs 128 entries). The curves for 2K, 8K
+and 32K collapse onto one line against *absolute* retained entries — the knee
+depends on how many entries survive, not on the original context. This is an
+architecture-specific effect invisible on a GPU, and it means the cost side of
+the accuracy/budget tradeoff curve is not the one those papers drew.
+
+**(c) Compaction is not a cost to justify.** One-time cost is to stream the
+cache once and write back the survivors; the benefit repeats every token,
+because decode re-reads the whole cache each step. Payback is
+`(1+b)/(1-b)` decode steps — 3.0 at 50% budget, 1.5 at 20%, 1.2 at 10%. And if
+eviction is decided during prefill, the survivors are the only KV ever written
+to DRAM: there is no gather at all, and the prefill writeback shrinks too
+(-859 MB at 32K/20%). The architectural question is not *"can I afford to
+compact?"* but **"evict before writeback, or write everything and compact
+later?"** — and the former strictly dominates.
+
+---
+
 ## TODO
 
 - **Measure the BQU.** BQU cycles are *not measured yet* — the original
@@ -109,5 +169,3 @@ compute grows, not because memory improves.
   latency per Sec. IV-A ("on-the-fly"), but not verified against the RTL
   schedule. At ~0.05% of cycles the choice barely matters today; it would matter
   if the measured BQU turns out much slower.
-- **Add BQU energy.** Not modeled — no characterization data in the energy
-  models.
