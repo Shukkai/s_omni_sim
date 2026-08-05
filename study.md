@@ -1,9 +1,5 @@
 # Omni-LUT Cycle Breakdown Study
 
-Where do Omni-LUT's cycles actually go? Two views of the same budget: by
-**pipeline stage** (q_proj, fc1, softmax, ...) and by **hardware unit**
-(LGU, PE array, VPU, BQU).
-
 **Setup.** LLaMA-3-8B (32 layers, GQA 32/8, d_model 4096, d_ffn 14336),
 Omni-LUT-KV4 (32x4 LUT array, W4A16KV4, `AW=AA=OMNI`), 500 MHz, 51.2 GB/s,
 batch 1, 256 output tokens, standard attention.
@@ -72,9 +68,10 @@ from 2K to 32K, almost entirely softmax. At 32K, softmax alone (85.9 s) is the
 single largest prefill stage — larger than any LUT GEMM. Scaling the LUT array
 would not help; the bottleneck has moved off it.
 
-**BQU is negligible and overlapped.** Online KV quantization costs 4.7 M cycles
-at 2K prefill and 75.5 M at 32K — ~0.05% of the phase — and runs concurrently
-with the PE array, so it is excluded from the serial totals above.
+**BQU is not measured yet** (see TODO). The placeholder estimate puts online KV
+quantization at 4.7 M cycles at 2K prefill and 75.5 M at 32K — ~0.05% of the
+phase — and treats it as concurrent with the PE array, so it is excluded from
+the serial totals above.
 
 ---
 
@@ -96,19 +93,34 @@ compute grows, not because memory improves.
 
 ---
 
-## Caveats
+## TODO
 
-- The **BQU cycle model is an addition**, not from the paper or the original
-  simulator (which does not model the BQU at all). It assumes `bqu_width`
-  elements/cycle with the bit-plane loop serialized; tune with `--bqu-width`,
-  disable with `--no-bqu`. BQU **energy** is not modeled — no characterization
-  data exists in the energy models.
-- Treating BQU as fully overlapped follows Sec. IV-A ("on-the-fly"). At ~0.05%
-  of cycles the choice barely matters.
-- A per-unit **energy** breakdown is not possible without new synthesis data:
-  the energy models are lumped per-tile numbers with no LGU/PE split.
-- `simulator/` is unmodified. All logic lives in
-  `analysis/cycle_breakdown/cycle_units.py` as a pure function plus a
-  `UnitAwareSimulator` subclass; the runner asserts its totals match the stock
-  `Simulator`, that stage cycles reconcile with phase totals, and that roofline
-  times match `compute_roofline_latency_breakdown`.
+- **Measure the BQU.** BQU cycles are *not measured yet* — the original
+  simulator does not model the BQU at all, so there was nothing to read.
+  What the current code does instead: `bqu_metrics()` in `cycle_units.py` is a
+  placeholder that charges the BEA one pass per bit-plane
+  (`ceil(tokens x d_kv / bqu_width) x q`, from the greedy residual loop of
+  Eq. 8-9) and the TSE one min/max reduction pass, Value path only. Throughput
+  is *assumed* to be `bqu_width` elements/cycle (default 128) with the bit-plane
+  loop serialized. Replace with real numbers from the BQU RTL; until then treat
+  the BQU rows as an order-of-magnitude estimate. (`--bqu-width` to tune,
+  `--no-bqu` to drop.)
+- **Confirm the BQU really is overlapped.** Currently excluded from serial
+  latency per Sec. IV-A ("on-the-fly"), but not verified against the RTL
+  schedule. At ~0.05% of cycles the choice barely matters today; it would matter
+  if the measured BQU turns out much slower.
+- **Add BQU energy.** Not modeled — no characterization data in the energy
+  models.
+- **Per-unit energy breakdown.** Not possible without new synthesis data: the
+  energy models are lumped per-tile numbers with no LGU/PE split. Cycles split
+  cleanly per unit; energy does not.
+- **Cut the VPU softmax cost**, which reaches 28.75% of prefill at 32K. Either
+  widen the VPU or check whether FlashAttention (`--flash-block 256`) is the
+  intended long-context path — it fuses qk/attn_v but costs +6.7% total cycles
+  from tiling.
+
+Note: `simulator/` is unmodified. All logic lives in
+`analysis/cycle_breakdown/cycle_units.py` as a pure function plus a
+`UnitAwareSimulator` subclass; the runner asserts its totals match the stock
+`Simulator`, that stage cycles reconcile with phase totals, and that roofline
+times match `compute_roofline_latency_breakdown`.
