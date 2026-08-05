@@ -4,13 +4,6 @@
 Omni-LUT-KV4 (32x4 LUT array, W4A16KV4, `AW=AA=OMNI`), 500 MHz, 51.2 GB/s,
 batch 1, 256 output tokens, standard attention.
 
-```bash
-cd analysis/cycle_breakdown
-python run_cycle_breakdown.py
-python plot_cycle_breakdown.py --normalize
-python plot_cycle_breakdown.py --view unit --normalize
-```
-
 ---
 
 ## 1. By pipeline stage
@@ -93,21 +86,24 @@ compute grows, not because memory improves.
 
 ---
 
-## 4. KV compaction (H2O-style eviction)
-
-```bash
-cd analysis/compact_breakdown
-python run_compact_breakdown.py && python plot_compact_breakdown.py
-```
+## 4. KV compaction
 
 ![Compaction breakdown](analysis/compact_breakdown/compact_breakdown.png)
 
-A compacted KV cache of budget `k` is, to the datapath, just a length-`k` cache
-— H2O keeps it physically dense by refilling evicted slots with new KV. So
-eviction is modelled by clamping decode `kv_len`. Three results:
+**Model.** Decode attends to a dense cache of `k` entries — `kv_len -> min(kv_len, k)`.
 
-**(a) Where it is worth deploying.** Ceiling speedup at 20% budget, decode
-roofline time per token:
+- Covers any uniform-budget, compacted eviction: H2O, SnapKV, StreamingLLM, TOVA.
+- H2O keeps the cache dense by refilling evicted slots with new KV, so budget-`k`
+  is simply a length-`k` cache.
+- Not covered: per-layer / per-head budgets (PyramidKV, Ada-KV), channel pruning
+  (ThinK), and select-without-evict (Quest, TidalDecode, NSA) — those keep the
+  cache resident, so DRAM and capacity do not shrink with the compute budget.
+- Selection/bookkeeping cost is excluded for every method. That is where the
+  methods differ from each other; here they all cost the same, which is not true.
+
+### (a) Regime map — where eviction is worth deploying
+
+Ceiling speedup at 20% budget, decode roofline time per token:
 
 | batch \ context | 2K | 8K | 32K |
 |---|---:|---:|---:|
@@ -115,15 +111,17 @@ roofline time per token:
 | 8 | 1.34x | 2.13x | 3.44x |
 | 32 | 1.99x | 3.40x | **4.43x** |
 
-At batch 1 / 2K, KV is only 2.9% of decode DRAM traffic — decode reads 2.6 GB of
-*weights* per token and 80 MB of KV — so perfect eviction buys 1.08x. Weight
-traffic amortizes over the batch while KV traffic scales with it, so KV is 93.8%
-of traffic at batch 32 / 32K. **Batch 1 is the worst possible case for this
-technique**, and it is what the rest of this study simulates.
+- Driver is KV's share of decode DRAM: **2.9% -> 93.8%** across that grid.
+- At batch 1 / 2K, decode reads **2.6 GB of weights** per token vs **80 MB of KV**.
+  Perfect eviction buys 1.08x. The technique is dead here.
+- Weight traffic amortizes over batch; KV traffic scales with it.
+- **Batch 1 is the worst possible case** — and it is what §1–3 simulate.
+- Method-independent: this bounds every KV-reduction technique, not just eviction.
 
-**(b) The fixed-overhead knee.** `attn_v` costs
-`per_round = 3 (LGU) + ceil(kv_len/4) + 5 (fill/drain) + 2 (accum)`. The
-constant 10 does not shrink with the budget:
+### (b) Fixed-overhead knee — the one novel result
+
+`attn_v` costs `per_round = 3 (LGU) + ceil(kv_len/4) + 5 (fill/drain) + 2 (accum)`.
+The constant 10 does not shrink with the budget:
 
 | Retained entries (32K ctx) | Fixed share of attention cycles |
 |---:|---:|
@@ -133,23 +131,30 @@ constant 10 does not shrink with the budget:
 | 328 (1%) | 14.9% |
 | 132 (0.4%) | **23.5%** |
 
-The LGU measured at 0.33% of decode cycles on a full cache reaches ~24% of
-attention cycles at the 128–330 entry budgets KV-compression papers headline
-(PyramidKV claims 0.7% cache; SnapKV runs 128 entries). The curves for 2K, 8K
-and 32K collapse onto one line against *absolute* retained entries — the knee
-depends on how many entries survive, not on the original context. This is an
-architecture-specific effect invisible on a GPU, and it means the cost side of
-the accuracy/budget tradeoff curve is not the one those papers drew.
+- The LGU measures 0.33% of decode cycles on a full cache; it reaches ~24% of
+  attention cycles at the budgets KV-compression papers headline (PyramidKV
+  claims 0.7% cache; SnapKV runs 128 entries).
+- 2K / 8K / 32K curves **collapse onto one line** against *absolute* retained
+  entries — the knee depends on how many entries survive, not on the original
+  context. It is an architectural constant, not a workload artifact.
+- Invisible on a GPU, where kernels hide the grouping. Applies to *any* method
+  that reduces attention to `k` operands, including select-without-evict.
+- Implication: the cost axis of the published accuracy-vs-budget curves does not
+  transfer to LUT-based hardware.
 
-**(c) Compaction is not a cost to justify.** One-time cost is to stream the
-cache once and write back the survivors; the benefit repeats every token,
-because decode re-reads the whole cache each step. Payback is
-`(1+b)/(1-b)` decode steps — 3.0 at 50% budget, 1.5 at 20%, 1.2 at 10%. And if
-eviction is decided during prefill, the survivors are the only KV ever written
-to DRAM: there is no gather at all, and the prefill writeback shrinks too
-(-859 MB at 32K/20%). The architectural question is not *"can I afford to
-compact?"* but **"evict before writeback, or write everything and compact
-later?"** — and the former strictly dominates.
+### (c) Compaction cost — settled, not a tradeoff
+
+- One-time cost: stream the cache once, write back the survivors.
+  Per-token benefit: decode re-reads the whole cache every step.
+- Payback = `(1+b)/(1-b)` decode steps — **3.0** at 50% budget, **1.5** at 20%,
+  **1.2** at 10%.
+- If eviction is decided during prefill, the survivors are the only KV ever
+  written to DRAM: no gather at all, and prefill writeback shrinks too
+  (**-859 MB** at 32K / 20%).
+- So the question is not *"can I afford to compact?"* but **"evict before
+  writeback, or write everything and compact later?"** — the former strictly
+  dominates.
+- Eviction-specific: select-without-evict methods have nothing to compact.
 
 ---
 
