@@ -111,16 +111,3 @@ compute grows, not because memory improves.
   if the measured BQU turns out much slower.
 - **Add BQU energy.** Not modeled — no characterization data in the energy
   models.
-- **Per-unit energy breakdown.** Not possible without new synthesis data: the
-  energy models are lumped per-tile numbers with no LGU/PE split. Cycles split
-  cleanly per unit; energy does not.
-- **Cut the VPU softmax cost**, which reaches 28.75% of prefill at 32K. Either
-  widen the VPU or check whether FlashAttention (`--flash-block 256`) is the
-  intended long-context path — it fuses qk/attn_v but costs +6.7% total cycles
-  from tiling.
-
-Note: `simulator/` is unmodified. All logic lives in
-`analysis/cycle_breakdown/cycle_units.py` as a pure function plus a
-`UnitAwareSimulator` subclass; the runner asserts its totals match the stock
-`Simulator`, that stage cycles reconcile with phase totals, and that roofline
-times match `compute_roofline_latency_breakdown`.
