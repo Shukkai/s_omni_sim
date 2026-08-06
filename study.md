@@ -163,12 +163,8 @@ The constant 10 does not shrink with the budget:
 - **Confirm the BQU is really overlapped.** Excluded from serial latency per
   Sec. IV-A ("on-the-fly"), unverified against the RTL schedule. Only matters if
   the measured BQU is much slower.
-- **Build DRAM and SRAM latency models.** DRAM is one flat
-  `dram_bandwidth_gbps` — no latency, banks, row conflicts, queuing or refresh;
-  row activations count for energy but never cost a cycle. SRAM has no capacity,
-  port or banking limits; `_calculate_peak_sram` reports a footprint that nothing
-  enforces. Two consequences: scattered vs contiguous KV reads look identical, so
-  masked eviction cannot be told apart from compaction on the memory axis; and
-  the §4(a) batch-32 row assumes SRAM that may not exist. **Capacity enforcement
-  is the higher-value half** — it is what converts "2x faster per token" into
-  "4x the batch fits", which is the claim this study currently cannot make.
+- **Build DRAM and SRAM latency models.** DRAM is one flat bandwidth number, so
+  scattered and contiguous KV reads look identical. SRAM capacity is reported but
+  never enforced, so §4(a)'s batch-32 row assumes memory that may not exist.
+  **Capacity enforcement is the higher-value half** — it turns "2x faster per
+  token" into "4x the batch fits", the claim this study cannot currently make.
