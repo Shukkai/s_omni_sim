@@ -1,8 +1,12 @@
 # Omni-LUT Cycle Breakdown Study
 
-**Setup.** LLaMA-3-8B (32 layers, GQA 32/8, d_model 4096, d_ffn 14336),
-Omni-LUT-KV4 (32x4 LUT array, W4A16KV4, `AW=AA=OMNI`), 500 MHz, 51.2 GB/s,
-batch 1, 256 output tokens, standard attention.
+**Setup.**
+
+- Model: LLaMA-3-8B — 32 layers, GQA 32/8, d_model 4096, d_ffn 14336.
+- Hardware: Omni-LUT-KV4 — 32x4 LUT array, W4A16KV4, `AW=AA=OMNI`,
+  500 MHz, 51.2 GB/s.
+- Workload: batch 1, 256 output tokens, standard attention (no FlashAttention,
+  so `qk_matmul` and `attn_v_matmul` stay separate stages).
 
 ---
 
@@ -22,13 +26,15 @@ Share of phase cycles, top stages only:
 | softmax (VPU) | 5.4% | **27.9%** | 2.1% | 3.4% |
 | **Total cycles** | 3.12 G | 153.9 G | 4.09 M | 38.2 M |
 
-**Prefill flips from FFN-bound to attention-bound.** At 2K, fc1+fc2 are 61% of
-cycles. At 32K they fall to 20% while attention (qk + attn_v + softmax) takes
-73% — attention grows quadratically, the FFN linearly.
-
-**Decode is attention-dominated everywhere**, rising from 60% to 93% as context
-grows. `attn_v_matmul` costs far more than `qk_matmul` because in `LUT_OS_V` its
-N dimension is `head_dim`=128 while qk's is `kv_len`.
+- **Prefill flips from FFN-bound to attention-bound.** fc1+fc2 are 61% of cycles
+  at 2K, falling to 20% at 32K while attention (qk + attn_v + softmax) rises to
+  73% — attention grows quadratically, the FFN linearly.
+- **Decode is attention-dominated everywhere**, rising 60% -> 93% with context.
+- **`attn_v_matmul` costs far more than `qk_matmul`** — in `LUT_OS_V` its N
+  dimension is `head_dim`=128 while qk's is `kv_len`, so attn_v serializes over
+  the cache in `k_eff` while qk parallelizes across tiles.
+- Consequence: any KV-reduction technique is aiming at 62% of decode cycles at
+  2K and 96% at 32K.
 
 ---
 
@@ -47,24 +53,23 @@ Share of serial cycles:
 | Operand issue | 0.04% | 0.01% | 0.00% | — | — |
 | VPU | 7.96% | 17.11% | 28.75% | 3.12% | 3.56% |
 
-**The array is efficient; the overheads are not the problem.** Systolic
-fill/drain stays under 1.6% and the accumulator under 0.5%.
-
-**The LGU is nearly free.** It costs *zero* in prefill: `LUT_WS` has no
-table-generation term because generation is pipelined into the M-long activation
-stream and fully amortized. It only appears in decode's `LUT_OS_V` (3 cycles per
-round) and even there stays below 0.7%. The scale-aware LGU buys AA-GEMM support
-at essentially no cycle cost.
-
-**The VPU is the real long-context threat.** It grows 7.96% -> 28.75% of prefill
-from 2K to 32K, almost entirely softmax. At 32K, softmax alone (85.9 s) is the
-single largest prefill stage — larger than any LUT GEMM. Scaling the LUT array
-would not help; the bottleneck has moved off it.
-
-**BQU is not measured yet** (see TODO). The placeholder estimate puts online KV
-quantization at 4.7 M cycles at 2K prefill and 75.5 M at 32K — ~0.05% of the
-phase — and treats it as concurrent with the PE array, so it is excluded from
-the serial totals above.
+- **The array is efficient; the overheads are not the problem.** Systolic
+  fill/drain stays under 1.6%, the accumulator under 0.5%.
+- **The LGU is nearly free at full cache.** Zero in prefill — `LUT_WS` has no
+  table-generation term, since generation is pipelined into the M-long
+  activation stream and fully amortized. It appears only in decode's `LUT_OS_V`
+  (3 cycles/round) and stays below 0.7%.
+  - So the scale-aware LGU buys AA-GEMM support at essentially no cycle cost.
+  - But see §4(b): this reverses at small KV budgets, where the same fixed
+    3 cycles reach ~24% of attention cycles.
+- **The VPU is the real long-context threat.** 7.96% -> 28.75% of prefill from
+  2K to 32K, almost entirely softmax. At 32K, softmax alone (85.9 s) is the
+  single largest prefill stage — larger than any LUT GEMM.
+  - Scaling the LUT array would not help; the bottleneck has moved off it.
+- **BQU is not measured yet** (see TODO). The placeholder estimate puts online KV
+  quantization at 4.7 M cycles at 2K prefill and 75.5 M at 32K (~0.05% of the
+  phase) and treats it as concurrent with the PE array, so it is excluded from
+  the serial totals above.
 
 ---
 
