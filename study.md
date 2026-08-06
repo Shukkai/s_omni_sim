@@ -101,15 +101,9 @@ Decode is DRAM-bound, so raw cycles are not latency:
 ![Compaction breakdown](analysis/compact_breakdown/compact_breakdown.png)
 
 **Model.** Decode attends to a dense cache of `k` entries — `kv_len -> min(kv_len, k)`.
-
-- Covers any uniform-budget, compacted eviction: H2O, SnapKV, StreamingLLM, TOVA.
-- H2O keeps the cache dense by refilling evicted slots with new KV, so budget-`k`
-  is simply a length-`k` cache.
-- Not covered: per-layer / per-head budgets (PyramidKV, Ada-KV), channel pruning
-  (ThinK), and select-without-evict (Quest, TidalDecode, NSA) — those keep the
-  cache resident, so DRAM and capacity do not shrink with the compute budget.
-- Selection/bookkeeping cost is excluded for every method. That is where the
-  methods differ from each other; here they all cost the same, which is not true.
+Covers uniform-budget compacted eviction (H2O, SnapKV, StreamingLLM, TOVA).
+Not per-layer/per-head budgets (PyramidKV, Ada-KV), channel pruning (ThinK), or
+select-without-evict (Quest, TidalDecode, NSA). Selection cost excluded for all.
 
 ### (a) Regime map — where eviction is worth deploying
 
@@ -122,11 +116,10 @@ Ceiling speedup at 20% budget, decode roofline time per token:
 | 32 | 1.99x | 3.40x | **4.43x** |
 
 - Driver is KV's share of decode DRAM: **2.9% -> 93.8%** across that grid.
-- At batch 1 / 2K, decode reads **2.6 GB of weights** per token vs **80 MB of KV**.
-  Perfect eviction buys 1.08x. The technique is dead here.
-- Weight traffic amortizes over batch; KV traffic scales with it.
-- **Batch 1 is the worst possible case** — and it is what §1–3 simulate.
-- Method-independent: this bounds every KV-reduction technique, not just eviction.
+  Weight traffic amortizes over batch; KV traffic scales with it.
+- **Batch 1 / 2K is the worst case and the technique is dead there** (1.08x) —
+  decode reads 2.6 GB of weights per token vs 80 MB of KV. §1–3 all sit here.
+- Bounds every KV-reduction technique, not just eviction.
 
 ### (b) Fixed-overhead knee — the one novel result
 
@@ -141,30 +134,22 @@ The constant 10 does not shrink with the budget:
 | 328 (1%) | 14.9% |
 | 132 (0.4%) | **23.5%** |
 
-- The LGU measures 0.33% of decode cycles on a full cache; it reaches ~24% of
-  attention cycles at the budgets KV-compression papers headline (PyramidKV
-  claims 0.7% cache; SnapKV runs 128 entries).
-- 2K / 8K / 32K curves **collapse onto one line** against *absolute* retained
-  entries — the knee depends on how many entries survive, not on the original
-  context. It is an architectural constant, not a workload artifact.
-- Invisible on a GPU, where kernels hide the grouping. Applies to *any* method
-  that reduces attention to `k` operands, including select-without-evict.
-- Implication: the cost axis of the published accuracy-vs-budget curves does not
-  transfer to LUT-based hardware.
+- Fixed overhead goes **1.2% -> 23.5%** exactly across the budgets these papers
+  headline (PyramidKV 0.7% cache, SnapKV 128 entries).
+- 2K/8K/32K curves **collapse onto one line** against *absolute* retained
+  entries — an architectural constant, not a workload artifact.
+- Invisible on a GPU; applies to any method reducing attention to `k` operands.
+- **So the published accuracy-vs-budget curves have a cost axis that does not
+  transfer to LUT-based hardware.**
 
 ### (c) Compaction cost — settled, not a tradeoff
 
-- One-time cost: stream the cache once, write back the survivors.
-  Per-token benefit: decode re-reads the whole cache every step.
-- Payback = `(1+b)/(1-b)` decode steps — **3.0** at 50% budget, **1.5** at 20%,
-  **1.2** at 10%.
-- If eviction is decided during prefill, the survivors are the only KV ever
-  written to DRAM: no gather at all, and prefill writeback shrinks too
-  (**-859 MB** at 32K / 20%).
-- So the question is not *"can I afford to compact?"* but **"evict before
-  writeback, or write everything and compact later?"** — the former strictly
-  dominates.
-- Eviction-specific: select-without-evict methods have nothing to compact.
+- Cost is one-time, benefit repeats every token: payback = `(1+b)/(1-b)` decode
+  steps — **1.5** at 20% budget.
+- Zero if eviction is decided during prefill: survivors are then the only KV ever
+  written, so prefill writeback shrinks too (**-859 MB** at 32K/20%).
+- **So the question is "evict before writeback or compact later?"** — the former
+  strictly dominates. Not "can I afford to compact?"
 
 ---
 
