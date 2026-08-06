@@ -324,8 +324,10 @@ def parse_args():
                    help="which cache to prune: K, V or KV")
     p.add_argument('--headline-channels', type=int, default=77,
                    help="retained channels for the headline table (ThinK lambda=0.4)")
-    p.add_argument('--output-tokens', type=int, default=32,
-                   help="decode steps to simulate (TPOT is averaged)")
+    p.add_argument('--output-tokens', type=int, default=256,
+                   help="decode steps to simulate (TPOT is averaged); 256 "
+                        "matches study.md, so the dense baseline reproduces "
+                        "its Sec. 3 roofline column exactly")
     p.add_argument('--no-prune-prefill', dest='prune_prefill',
                    action='store_false',
                    help="strict ThinK: leave prefill dense (selection is only "
