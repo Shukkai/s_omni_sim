@@ -155,17 +155,20 @@ The constant 10 does not shrink with the budget:
 
 ## TODO
 
-- **Measure the BQU.** BQU cycles are *not measured yet* — the original
-  simulator does not model the BQU at all, so there was nothing to read.
-  What the current code does instead: `bqu_metrics()` in `cycle_units.py` is a
-  placeholder that charges the BEA one pass per bit-plane
-  (`ceil(tokens x d_kv / bqu_width) x q`, from the greedy residual loop of
-  Eq. 8-9) and the TSE one min/max reduction pass, Value path only. Throughput
-  is *assumed* to be `bqu_width` elements/cycle (default 128) with the bit-plane
-  loop serialized. Replace with real numbers from the BQU RTL; until then treat
-  the BQU rows as an order-of-magnitude estimate. (`--bqu-width` to tune,
-  `--no-bqu` to drop.)
-- **Confirm the BQU really is overlapped.** Currently excluded from serial
-  latency per Sec. IV-A ("on-the-fly"), but not verified against the RTL
-  schedule. At ~0.05% of cycles the choice barely matters today; it would matter
-  if the measured BQU turns out much slower.
+- **Measure the BQU.** Not measured yet — the original simulator does not model
+  it at all. `bqu_metrics()` in `cycle_units.py` is a placeholder: BEA one pass
+  per bit-plane, TSE one min/max pass (Value path only), assumed `bqu_width`
+  elements/cycle. Replace with RTL numbers; treat current rows as
+  order-of-magnitude. (`--bqu-width` to tune, `--no-bqu` to drop.)
+- **Confirm the BQU is really overlapped.** Excluded from serial latency per
+  Sec. IV-A ("on-the-fly"), unverified against the RTL schedule. Only matters if
+  the measured BQU is much slower.
+- **Build DRAM and SRAM latency models.** DRAM is one flat
+  `dram_bandwidth_gbps` — no latency, banks, row conflicts, queuing or refresh;
+  row activations count for energy but never cost a cycle. SRAM has no capacity,
+  port or banking limits; `_calculate_peak_sram` reports a footprint that nothing
+  enforces. Two consequences: scattered vs contiguous KV reads look identical, so
+  masked eviction cannot be told apart from compaction on the memory axis; and
+  the §4(a) batch-32 row assumes SRAM that may not exist. **Capacity enforcement
+  is the higher-value half** — it is what converts "2x faster per token" into
+  "4x the batch fits", which is the claim this study currently cannot make.
