@@ -78,11 +78,16 @@ Decode is DRAM-bound, so raw cycles are not latency:
 | 8K | 10.97 M | 21.94 ms | 70.67 ms | 3.2x |
 | 32K | 38.15 M | 76.30 ms | 131.82 ms | 1.7x |
 
-Every AW stage flags `bound="memory"` in decode (fc1: 1.06 ms compute vs 18.4 ms
-DRAM). At short context the accelerator idles ~85% of decode waiting on weights;
-KV4 quantization is what keeps attention's own DRAM traffic small enough that
-attention stays compute-bound. The gap narrows at 32K only because attention
-compute grows, not because memory improves.
+- **Every AW stage flags `bound="memory"`** in decode — fc1 is 1.06 ms compute
+  against 18.4 ms of DRAM.
+- At 2K the accelerator **idles ~85% of decode** waiting on weights, not on KV.
+- **KV4 quantization is what keeps attention compute-bound** — it shrinks
+  attention's own DRAM traffic enough that the array, not memory, is the limit
+  there.
+- The gap narrows at 32K only because **attention compute grows**, not because
+  memory improves.
+- Consequence: any cycle-only speedup claim on decode is inflated by up to 6.8x.
+  Report cycles and roofline time together, or not at all.
 
 ---
 
