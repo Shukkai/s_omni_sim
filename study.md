@@ -102,7 +102,7 @@ Decode is DRAM-bound, so raw cycles are not latency:
 
 **Model.** Decode attends to a dense cache of `k` entries — `kv_len -> min(kv_len, k)`.
 Covers uniform-budget compacted eviction (H2O, SnapKV, StreamingLLM, TOVA).
-Not per-layer/per-head budgets (PyramidKV, Ada-KV), channel pruning (ThinK), or
+Not per-layer/per-head budgets (PyramidKV, Ada-KV), channel pruning (ThinK, §5), or
 select-without-evict (Quest, TidalDecode, NSA). Selection cost excluded for all.
 
 ### (a) Regime map — where eviction is worth deploying
@@ -157,57 +157,32 @@ The constant 10 does not shrink with the budget:
 
 ![Channel-pruning breakdown](analysis/channel_prune_breakdown/channel_prune_breakdown.png)
 
-**Model.** Decode reads a cache narrowed along `head_dim` — `head_dim -> d_ret`.
-Covers ThinK on the Key path, the Value path, or both. Assumes *materialized*
-pruning: survivors are stored packed, so the datapath sees a dense narrower
-tensor, never a sparse one. Selection is static after prefill and its cost is
-excluded. Prefill is dense under `--no-prune-prefill`; the default also reports
-the hypothetical pruned-prefill case.
+**Model.** Decode reads a cache narrowed along `head_dim` — `head_dim -> d_ret`,
+Key path, Value path or both. Assumes *materialized* pruning: survivors stored
+packed, so the datapath sees a dense narrower tensor, never a sparse one.
+Selection is static after prefill; its cost is excluded.
 
-### (a) Cycles — a null everywhere except decode `qk`
+At 32K, batch 1, λ=0.4 (77 of 128 channels retained):
 
-Stage cycles at 32K, batch 1, normalized to dense:
+| | Prefill (LUT_WS) | Decode (LUT_OS_V) |
+|---|---:|---:|
+| `qk` cycles | 1.00x | **1.40x** |
+| `attn_v` cycles | 1.00x | 1.00x |
+| `attn_v` occupancy | 99.9% -> 60.1% | 3.12% -> 1.88% |
 
-| Retained of 128 | Prefill qk | Prefill attn_v | Decode qk | Decode attn_v |
-|---:|---:|---:|---:|---:|
-| 128 | 1.00x | 1.00x | 1.00x | 1.00x |
-| 77 (λ=0.4) | 1.00x | 1.00x | **1.40x** | 1.00x |
-| 38 (λ=0.7) | 1.00x | 1.00x | **2.10x** | 1.00x |
+- **`attn_v` is exactly flat.** `head_dim` is its *output* dim N and
+  `n_tiles = ceil(N/128) = 1` for all N ≤ 128, so pruning never crosses a tile
+  boundary. Prefill is a null on both axes: `LUT_WS` tiles the reduction into
+  `array_m x MU` = 128 elements, and `head_dim` is exactly one.
+- **Only decode `qk` shrinks**, where `head_dim` is the reduction dim and enters
+  `per_round` as `k_eff = ceil(K/4)`. It is 4.1% of decode, so 1.40x on it is 1.2%
+  of the phase — the axis that saves cycles is the stage that costs nothing.
+- **The cost is occupancy**, against a different denominator per phase: a 128-wide
+  `LUT_WS` tile, versus OS-V's 4096 lanes of which `head_dim` was the most ever
+  live. Head packing cannot fill the rest — §IV-D broadcasts one LGU's LUT to all
+  rows, and two heads need two different LUTs.
 
-- **`attn_v` is exactly flat** — 33,728,006 cycles at every `d_ret`. `head_dim` is
-  its *output* dim N, and `n_tiles = ceil(N/128) = 1` for all N ≤ 128, so pruning
-  never crosses a tile boundary. Same result in both phases.
-- **Only decode `qk` shrinks**, because there `head_dim` is the *reduction* dim and
-  enters `per_round` as `k_eff = ceil(K/4)`. But `qk` is 4.1% of decode at 32K, so
-  1.40x on it is 1.2% of the phase.
-- **Prefill is a null on both axes.** `LUT_WS` tiles the reduction into
-  `array_m x MU` = 128-element tiles, and `head_dim` is exactly one — pruning
-  cannot cross a boundary it is already sitting on.
-- So the axis that saves cycles is the stage that costs nothing, and the stage
-  that costs 88.4% of decode saves none.
-
-### (b) The cost is occupancy, and the denominator differs by phase
-
-`attn_v` array utilization, 32K, batch 1:
-
-| Retained | Prefill (LUT_WS) | Decode (LUT_OS_V) |
-|---:|---:|---:|
-| 128 | 99.9% | 3.12% |
-| 90 | 70.2% | 2.19% |
-| 77 | **60.1%** | **1.88%** |
-| 38 | 29.7% | 0.93% |
-
-- **Prefill idles columns in proportion**: a `LUT_WS` round is one 128-wide output
-  tile that `head_dim` fills exactly, so λ=0.4 wastes 40% of it.
-- **Decode was already nearly empty**: an OS-V round spans
-  `array_m x array_n x NUM_RAC` = 4096 lanes, of which `head_dim` = 128 was the
-  most ever live. Head packing cannot fill the rest — §IV-D broadcasts one LGU's
-  LUT to all rows, and two heads need two different LUTs.
-- So pruning Value channels buys nothing and costs occupancy on both sides.
-
-### (c) The only saving is DRAM — and it is not verified
-
-ThinK-K decode roofline speedup at 77 retained channels:
+**The only saving is DRAM.** ThinK-K decode roofline speedup at 77 channels:
 
 | batch \ context | 2K | 8K | 32K |
 |---|---:|---:|---:|
@@ -215,28 +190,21 @@ ThinK-K decode roofline speedup at 77 retained channels:
 | 8 | 1.018x | 1.035x | 1.048x |
 | 32 | 1.035x | 1.047x | **1.052x** |
 
-- **How it is computed.** Decode roofline time is `sum over stages of
-  max(cycles/freq, dram_bytes/BW)`. Pruning changes only `qk`'s memory term —
-  `kv_len x d_ret x kv_bits` — and `qk` stays memory-bound across the whole sweep.
-  So the saving is exactly `delta K bytes / 51.2 GB/s`: 133.75 ms measured against
-  133.69 ms predicted at batch 32 / 32K, 0.05% apart. It is a bytes effect, not a
-  compute effect, and nothing about it is LUT-specific.
-- **Do not quote it from the KV-DRAM share.** K is 41.5% of decode DRAM at batch
-  32 / 32K, which predicts 1.199x; the truth is 1.052x, because `attn_v` compute is
-  79.8% of the phase and ThinK cannot touch it. §3's warning, running the other way.
-- **ThinK-V is inert on every axis modelled here** — no cycles, no occupancy gain,
-  and no time, since `attn_v` is compute-bound under KV4 and its Value bytes were
-  already hidden under compute. Its byte saving is real but is a *capacity* result,
-  which this simulator cannot convert into a claim (see TODO).
-- **Compaction is not a tradeoff**: read the cache once, write the survivors back,
-  payback in 4 decode tokens of 256 — or zero if fused into the prefill writeback.
-- **Unverified against a real memory system.** DRAM is one flat bandwidth number,
-  so the model cannot tell a packed 77-channel cache from a strided read of 77 of
-  128 channels; it silently assumes the former. The entire result rests on that,
-  and it stays an upper bound until the DRAM model in the TODO exists.
-- **Also assumes per-KV-head selection.** Under GQA 32/8 four query heads share one
-  cache; if a deployable criterion needs their union, `d_ret` rises and the saving
-  shrinks proportionally.
+- **How.** Roofline time is `sum of max(cycles/freq, dram_bytes/BW)`; pruning moves
+  only `qk`'s memory term, and `qk` stays memory-bound throughout. So the saving is
+  exactly `delta K bytes / 51.2 GB/s` — 133.75 ms measured against 133.69 ms
+  predicted at batch 32 / 32K. A bytes effect, nothing LUT-specific.
+- **Not derivable from the KV-DRAM share.** K is 41.5% of decode DRAM there, which
+  predicts 1.199x; `attn_v` compute is 79.8% of the phase and untouchable. §3's
+  warning running the other way.
+- **ThinK-V is inert on every axis modelled** — `attn_v` is compute-bound under KV4,
+  so its Value bytes were already hidden under compute. The byte saving is a
+  *capacity* result this simulator cannot cash (see TODO).
+- **Unverified.** DRAM is one flat bandwidth number, so a packed 77-channel cache
+  and a strided read of 77 of 128 look identical; the model assumes the former, and
+  assumes per-KV-head selection under GQA. Upper bound until the DRAM model in the
+  TODO exists. Compaction itself pays back in 4 decode tokens of 256, or 0 if fused
+  into the prefill writeback.
 
 ---
 
