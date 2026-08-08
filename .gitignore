@@ -4,3 +4,7 @@ __pycache__/
 *.json
 *.csv
 *.DS_Store
+
+# Analysis outputs are regenerable and stay ignored, but the regression archive
+# is the reference a model change is diffed against -- it has to be tracked.
+!analysis/regression/baseline.json
