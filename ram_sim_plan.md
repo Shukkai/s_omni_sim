@@ -67,7 +67,10 @@ adds a feature whose *disabled* default must reproduce today's numbers exactly.
 archive captured **before** the `float()` coercion, which is what proves that
 coercion changed no number.
 
-**Checkpoint.** `b0086fe` — revert point for everything that follows.
+**Checkpoint.** `2342e90` — revert point for everything that follows.
+
+> A checkpoint line cannot name its own commit, so each stage's SHA is recorded by
+> the *next* commit. `git log --oneline` is the tiebreaker if they ever disagree.
 
 ---
 
