@@ -106,10 +106,11 @@ both surfaced only once capacity was enforced, and both recorded in
    2K context, 2.1 GB at 32K. It overflows at every plausible capacity, so its
    spill charge (a constant ~770 GB) prices a wrong assumption and is not usable.
    A real accelerator tiles prefill over the sequence; the model does not.
-2. **Batch is a loop in one half of the model and a dimension in the other.**
+2. **Batch was a loop in one half of the model and a dimension in the other.**
    `_calculate_peak_sram` has no batch term ("peak is per element"), yet
-   projections are issued as one GEMM with `proj_m = batch × seq_len`, so the
-   footprint scales with batch anyway. Peak went 239 MB → 1.91 GB from batch 1 → 8.
+   projections are issued as one GEMM with `proj_m = batch × seq_len`, so their
+   footprint scaled with batch anyway while attention's did not.
+   **Resolved in Stage 1b below.**
 
 Because of (1), the well-posed capacity question is **decode**, and there the
 result is the one the study wanted:
@@ -143,6 +144,54 @@ a first-order cost.
 
 **Checkpoint.** `9eaa1db` — recorded by the following commit, per the note
 under Stage 0.
+
+---
+
+## Stage 1b — batch as a real capacity axis ✅
+
+**Goal.** Close gap (2) above, so "how much batch fits" becomes answerable.
+
+**Files.** `simulator/simulator.py`, `analysis/capacity/capacity_run.py`,
+`analysis/regression/baseline.json` (re-captured).
+
+- `HardwareConfig.sram_batch_model: str = "sequential"` — `"sequential"` is the
+  original per-instance behaviour and stays the default; `"concurrent"` makes
+  batch elements co-resident during attention, heads still sequential.
+- `_calculate_peak_sram` takes `sram_batch` (the workload batch, heads excluded)
+  and multiplies the per-instance working set by it — **for AA ops only**. AW
+  already carries batch in `M`, so scaling it there too would count batch twice.
+- `sram_batch` threaded through `_simulate_matmul` and `_simulate_flash_attention`
+  to the QK / Attn·V / flash call sites.
+
+**Result — the claim the study could not previously make.** Largest batch whose
+decode working set fits, at 32K context (sweep ceiling 32, so "32" means "≥32"):
+
+| SRAM | dense | budget 4096 | budget 1024 |
+|------|-------|-------------|-------------|
+| 4 MB | 1 | 8 | 32 |
+| 8 MB | 2 | 16 | 32 |
+| 16 MB | 4 | 32 | 32 |
+
+Capacity and batch trade one-for-one, and at fixed capacity a KV budget buys
+batch directly — 8× at 4 MB for a 4096-entry budget.
+
+**Caveat, stated in the report too.** `"concurrent"` is a *scheduling
+assumption*, not a measurement. It is the assumption the projection side of the
+model already made, which is why adopting it makes the model self-consistent —
+but a design that serialises batch would show none of this.
+
+**Verification.**
+- Gate at the `"sequential"` default: zero pre-existing values changed, zero keys
+  missing; the sole added key is the new config field. Re-captured (19,896
+  values) and re-checked clean.
+- Hand-checks: an AA op's peak is exactly linear in batch under `"concurrent"`
+  (1×…32×) and exactly flat under `"sequential"`; an AW op is byte-identical
+  under both, proving batch is not double-counted; end-to-end decode peak grows
+  2.06 → 16.50 MB from batch 1 → 8 at 32K.
+- Standing checks 2 and 3 still pass, and Stage 1's overflow hand-check still
+  passes unchanged.
+
+**Checkpoint.** `<stage-1b-sha>` — recorded by the following commit.
 
 ---
 

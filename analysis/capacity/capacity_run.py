@@ -20,19 +20,20 @@ Two structural facts shape what this script can sweep.  Both are properties of
    the model does not.  That is a peak-SRAM modelling gap, not a hardware
    finding, and it is why the tables below lead with decode.
 
-2. **Batch enters through M, not through a batch term.**  `_calculate_peak_sram`
-   has no batch factor -- its docstring says batch elements are sequential --
-   but projections are issued as one GEMM with `proj_m = batch * seq_len`, so
-   batch scales the working set anyway, through the activation operand.  The two
-   halves of the model disagree about whether batch is a loop or a dimension.
-   Section E shows the consequence; resolving it is a modelling decision, not a
-   sweep, so this script reports it rather than papering over it.
+2. **Batch used to be a loop in one half of the model and a dimension in the
+   other.**  Projections are issued as one GEMM with `proj_m = batch * seq_len`,
+   so batch scaled their footprint; attention is issued once per (batch, head)
+   with batch folded into `batch_size`, which `_calculate_peak_sram` ignored, so
+   attention's footprint did not move with batch at all.  `sram_batch_model`
+   settles it: `"sequential"` is the old behaviour and stays the default, and
+   `"concurrent"` makes batch elements co-resident in attention too (heads still
+   run back-to-back), which is what the projection side already assumed.  Under
+   `"concurrent"` batch is a real capacity axis and section F answers "how much
+   batch fits".
 
-Consequently the only place the capacity question is both real and well-posed
-is decode, where the working set is small enough to fit a plausible buffer and a
-KV budget shrinks it directly.  Section D therefore reports the decode charge;
-the prefill charge is printed but is not a usable number, because policy v1
-prices a residency assumption (fact 1) that is itself wrong.
+Prefill remains unusable for capacity claims because of fact 1, so the sweep is
+decode-centric: section D reports the decode spill charge, and the prefill charge
+is omitted because policy v1 prices a residency assumption that is itself wrong.
 
 Usage:
     python capacity_run.py
@@ -59,13 +60,15 @@ MODEL = 'LLaMA-3-8B'
 OUTPUT_TOKENS = 32
 
 
-def omni4(sram_capacity_kb: int) -> HardwareConfig:
+def omni4(sram_capacity_kb: int,
+          batch_model: str = "sequential") -> HardwareConfig:
     """The study's main configuration: Omni-LUT with a 4-bit KV cache."""
     return HardwareConfig(
         array_m=32, array_n=4, FPE_array_size=64,
         act_bits=16, accumulate_bits=32, weight_bits=4, kv_cache_bits=4,
         AW_mode="OMNI", AA_mode="OMNI",
         sram_capacity_kb=sram_capacity_kb,
+        sram_batch_model=batch_model,
     )
 
 
@@ -75,12 +78,21 @@ CAPACITIES_KB = [256, 512, 768, 1024, 1536, 2048, 2176, 4096]
 CONTEXTS = [2048, 8192, 32768]
 KV_BUDGETS = [0, 4096, 1024, 256]     # 0 = dense
 
+# Batch sweep: capacities span the range where batch actually binds, and the
+# decode length is cut to keep the O(batch x capacity x budget) sweep tractable
+# -- peak SRAM is a per-step property, so fewer steps changes nothing about it.
+BATCHES = [1, 2, 4, 8, 16, 32]
+BATCH_CAPACITIES_KB = [1024, 2048, 4096, 8192, 16384, 32768]
+SHORT_DECODE = 2
 
-def run(capacity_kb: int, context: int, kv_budget: int, batch: int = 1):
+
+def run(capacity_kb: int, context: int, kv_budget: int, batch: int = 1,
+        batch_model: str = "sequential", output_tokens: int = OUTPUT_TOKENS):
     model = get_model_config(MODEL)
     workload = WorkloadConfig(batch_size=batch, input_tokens=context,
-                              output_tokens=OUTPUT_TOKENS, flash_block_size=0)
-    sim = KVBudgetSimulator(omni4(capacity_kb), kv_budget=kv_budget)
+                              output_tokens=output_tokens, flash_block_size=0)
+    sim = KVBudgetSimulator(omni4(capacity_kb, batch_model),
+                            kv_budget=kv_budget)
     results = sim.simulate(model, workload)
     pre = results.prefill.get_total_metrics()
     dec = results.decode.get_total_metrics()
@@ -90,6 +102,7 @@ def run(capacity_kb: int, context: int, kv_budget: int, batch: int = 1):
         'context': context,
         'kv_budget': kv_budget,
         'batch': batch,
+        'batch_model': batch_model,
         'prefill_peak': results.prefill.peak_sram_bytes,
         'decode_peak': results.decode.peak_sram_bytes,
         'prefill_overflow': pre.sram_overflow,
@@ -176,18 +189,47 @@ def main():
           "  at every capacity here, so v1 prices the residency assumption of fact 1\n"
           "  and returns a constant ~770 GB regardless of capacity.  Not usable.\n")
 
-    # ---- E. How batch actually enters the footprint -------------------------
-    print("E. Batch enters through proj_m = batch x seq_len, despite\n"
-          "   _calculate_peak_sram having no batch term\n"
-          "   (context 8192, dense, capacity 1024 KB)\n")
-    print(f"  {'batch':>6} {'prefill peak':>16} {'decode peak':>14} "
-          f"{'prefill refetch':>18}")
-    for b in (1, 2, 4, 8):
-        r = run(1024, 8192, 0, batch=b)
-        rows.append(r)
-        print(f"  {b:>6} {r['prefill_peak']:>16,} {r['decode_peak']:>14,} "
-              f"{r['prefill_refetch']:>18,}")
-    print()
+    # ---- E. The two batch-residency models side by side ---------------------
+    print("E. Decode peak vs batch under each residency model\n"
+          "   (context 32768, dense)\n")
+    print(f"  {'batch':>6} {'sequential':>16} {'concurrent':>16} {'concurrent':>12}")
+    print(f"  {'':>6} {'(bytes)':>16} {'(bytes)':>16} {'(MB)':>12}")
+    for b in BATCHES:
+        rs = run(0, 32768, 0, batch=b, batch_model="sequential",
+                 output_tokens=SHORT_DECODE)
+        rc = run(0, 32768, 0, batch=b, batch_model="concurrent",
+                 output_tokens=SHORT_DECODE)
+        rows.extend([rs, rc])
+        print(f"  {b:>6} {rs['decode_peak']:>16,} {rc['decode_peak']:>16,} "
+              f"{rc['decode_peak'] / 1024 / 1024:>12.2f}")
+    print("\n  'sequential' is flat by construction -- attention runs one\n"
+          "  (batch, head) instance at a time.  'concurrent' is linear, which is\n"
+          "  what the projection side of the model already assumed.\n")
+
+    # ---- F. How much batch fits --------------------------------------------
+    print("F. Largest batch whose decode working set fits  (batch_model=concurrent)\n")
+    header = ''.join(f"{c:>8}" for c in BATCH_CAPACITIES_KB)
+    print(f"  {'context':>8} {'kv_budget':>10}{header}   (KB capacity)")
+    for ctx in CONTEXTS:
+        for kvb in KV_BUDGETS:
+            cells = ''
+            for cap in BATCH_CAPACITIES_KB:
+                fits = 0
+                for b in BATCHES:
+                    r = run(cap, ctx, kvb, batch=b, batch_model="concurrent",
+                            output_tokens=SHORT_DECODE)
+                    if r['decode_overflow']:
+                        break
+                    fits = b
+                cells += f"{fits if fits else '-':>8}"
+            print(f"  {ctx:>8} {_label(kvb):>10}{cells}")
+    print(f"\n  '-' = even batch 1 overflows; {BATCHES[-1]} is the sweep ceiling, not a\n"
+          "  hardware limit, so those cells mean 'at least that'.  Doubling capacity\n"
+          "  doubles the batch, and at fixed capacity a KV budget buys batch: at 32K\n"
+          "  context in 4 MB, dense fits batch 1, a 4096-entry budget fits 8, and a\n"
+          "  1024-entry budget fits 32.  That is the claim the study wanted and could\n"
+          "  not previously make -- but note it rests on 'concurrent', which is a\n"
+          "  scheduling assumption, not a measurement.\n")
 
     with open(args.csv, 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

@@ -137,6 +137,21 @@ class HardwareConfig:
     # to make an operation whose working set does not fit pay for the spill.
     sram_capacity_kb: int = 0
 
+    # How many batch elements are resident at once during *attention*.
+    #
+    #   "sequential"  one (batch, head) instance at a time -- the original
+    #                 model, and the default, so existing results stand.
+    #   "concurrent"  all batch elements co-resident, heads still sequential.
+    #
+    # Projections and FFN are unaffected by this switch: they are already
+    # issued as a single GEMM with M = batch x seq_len, so batch is a
+    # dimension there and their footprint already scales with it.  Attention
+    # is issued once per (batch, head) with batch folded into `batch_size`,
+    # which the footprint ignored -- so batch was a dimension in one half of
+    # the model and a loop in the other.  "concurrent" makes the two agree,
+    # which is what makes "how much batch fits" a well-posed question.
+    sram_batch_model: str = "sequential"
+
     # --- Bit widths ---
     act_bits: int = 16
     accumulate_bits: int = 32
@@ -662,7 +677,7 @@ class Simulator:
                 attn_q_len=attn_q_len, kv_len=kv_len,
                 batch_size=batch * num_heads,
                 kv_batch_size=batch * num_kv_heads,
-                is_decode=is_decode,
+                is_decode=is_decode, sram_batch=batch,
             )
             layer_ops.append((OperationType.FLASH_ATTN, ComputeMode.AA, flash_m))
         else:
@@ -672,7 +687,7 @@ class Simulator:
                 shape=(attn_q_len, head_dim, kv_len),
                 batch_size=batch * num_heads, is_decode=is_decode,
                 seq_len=seq_len, kv_len=kv_len,
-                kv_batch_size=batch * num_kv_heads,
+                kv_batch_size=batch * num_kv_heads, sram_batch=batch,
             )
             layer_ops.append((OperationType.QK_MATMUL, ComputeMode.AA, qk_m))
 
@@ -681,7 +696,7 @@ class Simulator:
                 shape=(attn_q_len, kv_len, head_dim),
                 batch_size=batch * num_heads, is_decode=is_decode,
                 seq_len=seq_len, kv_len=kv_len,
-                kv_batch_size=batch * num_kv_heads,
+                kv_batch_size=batch * num_kv_heads, sram_batch=batch,
             )
             layer_ops.append((OperationType.ATTN_V_MATMUL, ComputeMode.AA, av_m))
 
@@ -807,7 +822,7 @@ class Simulator:
         shape: Tuple[int, int, int],
         batch_size: int = 1, is_decode: bool = False,
         seq_len: int = 0, kv_len: int = 0,
-        kv_batch_size: int = 0,
+        kv_batch_size: int = 0, sram_batch: int = 1,
     ) -> OperationMetrics:
         """Simulate a single matrix multiplication A(M×K) @ B(K×N) = C(M×N).
 
@@ -815,6 +830,10 @@ class Simulator:
             kv_batch_size: Effective batch size for the B operand (K/V) DRAM
                 access.  For GQA, this is batch × num_kv_heads while batch_size
                 is batch × num_heads.  0 means same as batch_size (MHA).
+            sram_batch: The workload batch alone, heads excluded -- how many
+                attention instances must be co-resident under
+                `hw.sram_batch_model == "concurrent"`.  Only meaningful for
+                AA ops; AW ops already carry batch in M.
 
         Returns fully-populated OperationMetrics.
         """
@@ -846,6 +865,7 @@ class Simulator:
         # 3. Peak SRAM footprint, and the spill it forces if capacity is finite
         metrics.peak_sram_bytes = self._calculate_peak_sram(
             M, K, N, compute_mode, resolved_mode, batch_size,
+            sram_batch=sram_batch,
         )
         metrics.sram_overflow, metrics.sram_refetch_bytes = (
             self._apply_sram_capacity(
@@ -882,7 +902,7 @@ class Simulator:
         self, model: ModelConfig, workload: WorkloadConfig,
         attn_q_len: int, kv_len: int,
         batch_size: int, kv_batch_size: int,
-        is_decode: bool,
+        is_decode: bool, sram_batch: int = 1,
     ) -> OperationMetrics:
         """Simulate FlashAttention-style fused tiled attention.
 
@@ -963,6 +983,11 @@ class Simulator:
             + Br * head_dim * accum_bits      # O block (output accumulator)
             + Br * 2 * 32                     # Online softmax running max + sum
         )
+        # Same batch-residency rule as _calculate_peak_sram: one (batch, head)
+        # instance by default, all batch elements co-resident under
+        # "concurrent".  Flash is an AA path, so the switch applies here too.
+        if hw.sram_batch_model == "concurrent":
+            peak_sram_bits *= max(1, sram_batch)
 
         # --- Build metrics ---
         metrics = OperationMetrics(
@@ -1222,7 +1247,7 @@ class Simulator:
     def _calculate_peak_sram(
         self, M: int, K: int, N: int,
         compute_mode: ComputeMode, mode: str,
-        batch_size: int,
+        batch_size: int, sram_batch: int = 1,
     ) -> int:
         """Estimate peak SRAM footprint (bytes) for one operation.
 
@@ -1232,9 +1257,31 @@ class Simulator:
           - Input B tile
           - Output C accumulator tile
 
-        Operations across batches are sequential, so peak is per-element.
+        Batch residency differs by operand, and the difference is the point:
+
+          - **Projections and FFN** (`ComputeMode.AW`) are issued as a single
+            GEMM with `M = batch x seq_len`, so batch is already a dimension
+            here: A and C scale with it, while the weight tile does not.  That
+            is the correct picture -- weights are shared across the batch, and
+            sharing them is the whole reason to batch.
+          - **Attention** (`ComputeMode.AA`) is issued once per (batch, head)
+            with batch folded into `batch_size`, which this function
+            historically ignored -- so one instance was resident regardless of
+            batch.  `sram_batch` (the true batch, heads excluded) restores it
+            under `hw.sram_batch_model == "concurrent"`: batch elements are
+            co-resident, heads still run back-to-back.
+
+        `sram_batch` defaults to 1, and "sequential" ignores it, so the
+        original per-instance behaviour is what you get unless asked otherwise.
         """
         hw = self.hw
+        # Attention instances that must be resident together.  Only AA is
+        # affected: AW already carries batch in M (see above), so scaling it
+        # here as well would count the same batch twice.
+        if compute_mode == ComputeMode.AA and hw.sram_batch_model == "concurrent":
+            batch_resident = max(1, sram_batch)
+        else:
+            batch_resident = 1
         act_bits = hw.act_bits
         accum_bits = hw.accumulate_bits
         qbit = hw.weight_bits if compute_mode == ComputeMode.AW else hw.kv_cache_bits
@@ -1246,7 +1293,7 @@ class Simulator:
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = K * col_tile * qbit // 8
             C_tile = M * col_tile * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "LUT_WS":
             k_eff = math.ceil(K / self.MU)
@@ -1254,24 +1301,27 @@ class Simulator:
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = row_tile * col_tile * qbit // 8
             C_tile = M * col_tile * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "FPE_OS":
             B_tile = K * min(N, hw.FPE_array_size) * 16 // 8   # FP16
             C_tile = min(M, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "TENDER":
             B_tile = K * min(N, hw.FPE_array_size) * qbit // 8
             C_tile = min(M, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "VPU":
             B_bytes = K * N * qbit // 8
             C_bytes = M * N * accum_bits // 8
-            return A_bytes + B_bytes + C_bytes
+            per_instance = A_bytes + B_bytes + C_bytes
 
-        return A_bytes  # Fallback: at least A
+        else:
+            per_instance = A_bytes  # Fallback: at least A
+
+        return per_instance * batch_resident
 
     def _column_tiles(self, N: int, mode: str) -> int:
         """Number of column tiles the operation loops over.
