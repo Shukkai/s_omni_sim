@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "201e96acab69d7fbd574cebe67dd4d9be5cc338b5a28ced80c8154399aa3db01",
+  "full_sha256": "4c888b825d1f39ebf2b494ec3f2729cfe58e010ed1110ce731f92871f766376e",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -15,6 +15,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -49,6 +50,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01084518368037921
       }
@@ -79,6 +82,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01084518368037921
     },
@@ -110,6 +115,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -141,6 +148,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -172,6 +181,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -203,6 +214,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -234,6 +247,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -265,6 +280,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -295,6 +312,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.025
     },
@@ -324,6 +343,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01797787016040984
     }
@@ -374,6 +395,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5657458563535912
       }
@@ -404,6 +427,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5657458563535912
     },
@@ -435,6 +460,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -466,6 +493,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -497,6 +526,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -528,6 +559,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -559,6 +592,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -590,6 +625,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -620,6 +657,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9952618150892966
     },
@@ -649,6 +688,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8111003668969219
     }
@@ -678,6 +719,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7505631203324822
    }
@@ -698,7 +741,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "fa034a4fbc776583a4c501423a4a70b72d7ee72f789486f04ce63126c72b5f8c",
+  "full_sha256": "3f75494b2e5490cda495753ef2dd97c384f92f04136ee4d8f5e9eeb1ceaa7ab4",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -713,6 +756,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -747,6 +791,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015126641651031895
       }
@@ -778,6 +824,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.009972170686456401
       }
@@ -808,6 +856,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012020126723816624
     },
@@ -839,6 +889,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -870,6 +922,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -901,6 +955,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -932,6 +988,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -963,6 +1021,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -994,6 +1054,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -1024,6 +1086,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.025
     },
@@ -1053,6 +1117,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.022653776190797007
     }
@@ -1103,6 +1169,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9398806792106471
       }
@@ -1134,6 +1202,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -1164,6 +1234,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6477937687806421
     },
@@ -1195,6 +1267,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -1226,6 +1300,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -1257,6 +1333,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -1288,6 +1366,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -1319,6 +1399,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -1350,6 +1432,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -1380,6 +1464,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.981312889314806
     },
@@ -1409,6 +1495,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9354445797807551
     }
@@ -1438,6 +1526,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.584195972566149
    }
@@ -1458,7 +1548,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "cd1da95edf789cf0bbf635ad306eee6f648b465b4fa22054ac060673900d1fde",
+  "full_sha256": "9903b3857f05cc4eee61698ac4be52a36dc40e9294bbf0362657ed5ee48a3342",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1473,6 +1563,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -1507,6 +1598,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01559265798124924
       }
@@ -1538,6 +1631,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.010189163384652106
       }
@@ -1568,6 +1663,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012324663763443447
     },
@@ -1599,6 +1696,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -1630,6 +1729,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -1661,6 +1762,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -1692,6 +1795,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -1723,6 +1828,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -1754,6 +1861,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -1784,6 +1893,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.025
     },
@@ -1813,6 +1924,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.015193678685106937
     }
@@ -1863,6 +1976,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9960181160521596
       }
@@ -1894,6 +2009,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -1924,6 +2041,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6606251827061682
     },
@@ -1955,6 +2074,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -1986,6 +2107,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -2017,6 +2140,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -2048,6 +2173,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -2079,6 +2206,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -2110,6 +2239,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -2140,6 +2271,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9988112293108178
     },
@@ -2169,6 +2302,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7559858697781262
     }
@@ -2198,6 +2333,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7226732023194782
    }
@@ -2218,7 +2355,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "9e332c20dd094654faf284c74a635b4bba486f854163813bd8ba374f784da4fd",
+  "full_sha256": "d9508a7a9f98509937abe1ab3135d5aee5521e14884bdfd7a8991d8f0ff28e8e",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2233,6 +2370,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -2267,6 +2405,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01559264616321559
       }
@@ -2298,6 +2438,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.010185433822651867
       }
@@ -2328,6 +2470,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012321931323242776
     },
@@ -2359,6 +2503,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4507042253521127
       }
@@ -2390,6 +2536,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4507042253521127
       }
@@ -2421,6 +2569,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4507042253521127
       }
@@ -2452,6 +2602,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4507042253521127
       }
@@ -2483,6 +2635,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4507042253521127
       }
@@ -2514,6 +2668,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4507042253521127
       }
@@ -2544,6 +2700,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.4507042253521127
     },
@@ -2573,6 +2731,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.019323549956785813
     }
@@ -2623,6 +2783,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9960181160521596
       }
@@ -2654,6 +2816,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -2684,6 +2848,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6606251827061682
     },
@@ -2715,6 +2881,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -2746,6 +2914,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -2777,6 +2947,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -2808,6 +2980,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -2839,6 +3013,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -2870,6 +3046,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -2900,6 +3078,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9999628080849502
     },
@@ -2929,6 +3109,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7562314414236707
     }
@@ -2958,6 +3140,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7501213680529091
    }
@@ -2978,7 +3162,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "ed66f96bbcd052d63b20b3e1e134479ad9d3a86b5e520278946dcec78a4f8124",
+  "full_sha256": "4451be3fc9b12e40cee135f90954a2d4d656b23a3141b55f27adca3a810a242e",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2993,6 +3177,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -3027,6 +3212,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015496492501209483
       }
@@ -3058,6 +3245,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01013486790064863
       }
@@ -3088,6 +3277,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012254901960784314
     },
@@ -3119,6 +3310,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.1702127659574468
       }
@@ -3150,6 +3343,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.1702127659574468
       }
@@ -3181,6 +3376,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.1702127659574468
       }
@@ -3212,6 +3409,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.1702127659574468
       }
@@ -3243,6 +3442,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.1702127659574468
       }
@@ -3274,6 +3475,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.1702127659574468
       }
@@ -3304,6 +3507,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.1702127659574468
     },
@@ -3333,6 +3538,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.03530144596029736
     }
@@ -3383,6 +3590,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9842604829989187
       }
@@ -3414,6 +3623,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -3444,6 +3655,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6580183943130247
     },
@@ -3475,6 +3688,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -3506,6 +3721,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -3537,6 +3754,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -3568,6 +3787,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -3599,6 +3820,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -3630,6 +3853,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -3660,6 +3885,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9994052611513534
     },
@@ -3689,6 +3916,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.866244707354458
     }
@@ -3718,6 +3947,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.8305048124842322
    }
@@ -3738,7 +3969,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "8ec30717ed56061e0f552ab3049fea8fd8d1c44db82a74ae372e67c351b538c0",
+  "full_sha256": "39d120fcfb7e756ddb2539f223f675fca31bdd44f9c8e9aecb738fda643711f6",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3753,6 +3984,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -3787,6 +4019,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01084518368037921
       }
@@ -3817,6 +4051,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01084518368037921
     },
@@ -3848,6 +4084,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -3879,6 +4117,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -3910,6 +4150,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -3941,6 +4183,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -3972,6 +4216,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -4003,6 +4249,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.025
       }
@@ -4033,6 +4281,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.025
     },
@@ -4062,6 +4312,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.018846139692352985
     }
@@ -4112,6 +4364,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5657458563535912
       }
@@ -4142,6 +4396,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5657458563535912
     },
@@ -4173,6 +4429,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -4204,6 +4462,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -4235,6 +4495,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -4266,6 +4528,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -4297,6 +4561,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -4328,6 +4594,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -4358,6 +4626,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9952618150892966
     },
@@ -4387,6 +4657,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8364945242896893
     }
@@ -4416,6 +4688,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7750233365438565
    }
@@ -4436,7 +4710,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "46816a68850ef9ad093cd596237343fefba498bd7121b8b28faca9dab12e8ccf",
+  "full_sha256": "e587a6c3e09b4ad1ff0c8b4a5ca795258fa94c27f9e0b2ca19210ece330b6927",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -4451,6 +4725,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -4485,6 +4760,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01084518368037921
       }
@@ -4515,6 +4792,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01084518368037921
     },
@@ -4546,6 +4825,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -4577,6 +4858,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015529071867100036
       }
@@ -4608,6 +4891,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -4639,6 +4924,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -4670,6 +4957,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -4701,6 +4990,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -4731,6 +5022,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01541514923791356
     },
@@ -4760,6 +5053,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.013688884625683944
     }
@@ -4810,6 +5105,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5657458563535912
       }
@@ -4840,6 +5137,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5657458563535912
     },
@@ -4871,6 +5170,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -4902,6 +5203,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9882395188077925
       }
@@ -4933,6 +5236,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -4964,6 +5269,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -4995,6 +5302,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -5026,6 +5335,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -5056,6 +5367,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9744446189055579
     },
@@ -5085,6 +5398,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8013215428116427
     }
@@ -5114,6 +5429,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7250508753506885
    }
@@ -5134,7 +5451,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "582560de1d30d86c5e71fc4c1ad3ee2e7fc4d0f51132de4c1b070075ddfc879d",
+  "full_sha256": "052331106bad460381e347bf3cf4d703483658add082ff70575c71e7ae6b8597",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5149,6 +5466,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -5183,6 +5501,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015126641651031895
       }
@@ -5214,6 +5534,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.009972170686456401
       }
@@ -5244,6 +5566,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012020126723816624
     },
@@ -5275,6 +5599,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -5306,6 +5632,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015551235767842266
       }
@@ -5337,6 +5665,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -5368,6 +5698,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -5399,6 +5731,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -5430,6 +5764,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -5460,6 +5796,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01543617345384381
     },
@@ -5489,6 +5827,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.015026589802028869
     }
@@ -5539,6 +5879,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9398806792106471
       }
@@ -5570,6 +5912,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -5600,6 +5944,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6477937687806421
     },
@@ -5631,6 +5977,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -5662,6 +6010,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9909449091034769
       }
@@ -5693,6 +6043,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -5724,6 +6076,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -5755,6 +6109,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -5786,6 +6142,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -5816,6 +6174,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9769765748575159
     },
@@ -5845,6 +6205,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9318772750910036
     }
@@ -5874,6 +6236,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.4877749335076205
    }
@@ -5894,7 +6258,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "04f4052acd18b61545eb8c878861e1fcbe1a4a330153a7ad3da27e42d9387dda",
+  "full_sha256": "583d649d0d54c2be02980f72e1d09554666d78c85e22960ef4493692190e0677",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5909,6 +6273,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -5943,6 +6308,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01559265798124924
       }
@@ -5974,6 +6341,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.010189163384652106
       }
@@ -6004,6 +6373,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012324663763443447
     },
@@ -6035,6 +6406,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -6066,6 +6439,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015551235767842266
       }
@@ -6097,6 +6472,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -6128,6 +6505,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -6159,6 +6538,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -6190,6 +6571,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -6220,6 +6603,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01543617345384381
     },
@@ -6249,6 +6634,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.013325007754215844
     }
@@ -6299,6 +6686,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9960181160521596
       }
@@ -6330,6 +6719,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -6360,6 +6751,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6606251827061682
     },
@@ -6391,6 +6784,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -6422,6 +6817,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9909449091034769
       }
@@ -6453,6 +6850,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -6484,6 +6883,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -6515,6 +6916,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -6546,6 +6949,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -6576,6 +6981,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9769765748575159
     },
@@ -6605,6 +7012,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7512515104436389
     }
@@ -6634,6 +7043,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7138747497776743
    }
@@ -6654,7 +7065,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "7d5a39b8bc05a16e77c21ccaf1e8041f957fafad96e7219bb64ee70cc6ee7e79",
+  "full_sha256": "86415659b6c78f04ad7481014d0a172538ae253e4770d7f4b01b91267710e72d",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6669,6 +7080,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -6703,6 +7115,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01559264616321559
       }
@@ -6734,6 +7148,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.010185433822651867
       }
@@ -6764,6 +7180,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012321931323242776
     },
@@ -6795,6 +7213,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.484504376626449
       }
@@ -6826,6 +7246,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.49547245455173844
       }
@@ -6857,6 +7279,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.484504376626449
       }
@@ -6888,6 +7312,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.484504376626449
       }
@@ -6919,6 +7345,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.484504376626449
       }
@@ -6950,6 +7378,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.484504376626449
       }
@@ -6980,6 +7410,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.48848828742875794
     },
@@ -7009,6 +7441,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.019347451376692595
     }
@@ -7059,6 +7493,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9960181160521596
       }
@@ -7090,6 +7526,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -7120,6 +7558,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6606251827061682
     },
@@ -7151,6 +7591,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -7182,6 +7624,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9909449091034769
       }
@@ -7213,6 +7657,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -7244,6 +7690,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -7275,6 +7723,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -7306,6 +7756,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -7336,6 +7788,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9769765748575159
     },
@@ -7365,6 +7819,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7512515104436389
     }
@@ -7394,6 +7850,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.745229946734853
    }
@@ -7414,7 +7872,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "7c3eb7a9ea684262f53b4722ca265ef0f86348ef93cbbb3a1ab79a38e262e549",
+  "full_sha256": "8e94a95989f977f7fe6ee36b8ffe8910cf3e9f5fb66ffd31e85694ae61f9b60c",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7429,6 +7887,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -7463,6 +7922,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015496492501209483
       }
@@ -7494,6 +7955,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01013486790064863
       }
@@ -7524,6 +7987,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012254901960784314
     },
@@ -7555,6 +8020,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12112609415661225
       }
@@ -7586,6 +8053,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12386811363793461
       }
@@ -7617,6 +8086,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12112609415661225
       }
@@ -7648,6 +8119,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12112609415661225
       }
@@ -7679,6 +8152,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12112609415661225
       }
@@ -7710,6 +8185,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12112609415661225
       }
@@ -7740,6 +8217,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.12212207185718948
     },
@@ -7769,6 +8248,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.0333833874916107
     }
@@ -7819,6 +8300,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9842604829989187
       }
@@ -7850,6 +8333,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4942084942084942
       }
@@ -7880,6 +8365,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6580183943130247
     },
@@ -7911,6 +8398,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -7942,6 +8431,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9909449091034769
       }
@@ -7973,6 +8464,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8004,6 +8497,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8035,6 +8530,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8066,6 +8563,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8096,6 +8595,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9769765748575159
     },
@@ -8125,6 +8626,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8542825361512792
     }
@@ -8154,6 +8657,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.8175293498063004
    }
@@ -8174,7 +8679,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "cc3b1b4f7dc3521331a3e63d718365fa948737e0340e64c3a936b7c192d6cb94",
+  "full_sha256": "a66971cd8ea3fd38b0e0393c40839ffaed9cdd0c70bcb4c0fc3c9b140fd6cdbf",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8189,6 +8694,7 @@
    "kv_cache_bits": 16,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -8223,6 +8729,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01084518368037921
       }
@@ -8253,6 +8761,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01084518368037921
     },
@@ -8284,6 +8794,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -8315,6 +8827,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015560418186238755
       }
@@ -8346,6 +8860,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -8377,6 +8893,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -8408,6 +8926,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -8439,6 +8959,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01536983669548511
       }
@@ -8469,6 +8991,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.015432843019049916
     },
@@ -8498,6 +9022,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.013955880749945498
     }
@@ -8548,6 +9074,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5657458563535912
       }
@@ -8578,6 +9106,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5657458563535912
     },
@@ -8609,6 +9139,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8640,6 +9172,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9920678171359371
       }
@@ -8671,6 +9205,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8702,6 +9238,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8733,6 +9271,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8764,6 +9304,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.969008753252898
       }
@@ -8794,6 +9336,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9765750730166299
     },
@@ -8823,6 +9367,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8265250785082796
     }
@@ -8852,6 +9398,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7470112117835459
    }
@@ -8872,7 +9420,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "7e8ffcbd6263bee93c0504a69b46b5d388d1642d07b4a260692f1fdefee21f1b",
+  "full_sha256": "b0d5874de6f8b0facd9c7dfa2548b81e7a41bd445af3126887ebe6b115c0e695",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -8887,6 +9435,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -8921,6 +9470,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.03347048066875653
       }
@@ -8951,6 +9502,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.03347048066875653
     },
@@ -8982,6 +9535,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8871695680206318
       }
@@ -9013,6 +9568,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.99637943519189
       }
@@ -9044,6 +9601,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -9075,6 +9634,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -9106,6 +9667,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -9137,6 +9700,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -9167,6 +9732,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.96
     },
@@ -9196,6 +9763,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.10339934790484241
     }
@@ -9246,6 +9815,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5099601593625498
       }
@@ -9276,6 +9847,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5099601593625498
     },
@@ -9307,6 +9880,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -9338,6 +9913,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9853204439670605
       }
@@ -9369,6 +9946,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -9400,6 +9979,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -9431,6 +10012,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -9462,6 +10045,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -9492,6 +10077,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9682116450142774
     },
@@ -9521,6 +10108,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7631279274259546
     }
@@ -9550,6 +10139,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.754328760063029
    }
@@ -9570,7 +10161,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "ce629620887ba63aeafd233dedc9c945e1963033d68e51a4ae8596eac80d9271",
+  "full_sha256": "db993273a165d99e7bde6340bc11967c2680ca178afdeb3358d41c3963f69947",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -9585,6 +10176,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -9619,6 +10211,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.030633349675205295
       }
@@ -9650,6 +10244,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.38392857142857145
       }
@@ -9680,6 +10276,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05673950056753689
     },
@@ -9711,6 +10309,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8665377176015474
       }
@@ -9742,6 +10342,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9972175848636616
       }
@@ -9773,6 +10375,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -9804,6 +10408,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -9835,6 +10441,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -9866,6 +10474,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -9896,6 +10506,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8198213382774313
     },
@@ -9925,6 +10537,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.35801761537685445
     }
@@ -9975,6 +10589,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9258589511754068
       }
@@ -10006,6 +10622,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4383561643835616
       }
@@ -10036,6 +10654,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5950029052876235
     },
@@ -10067,6 +10687,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10098,6 +10720,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9886896551724138
       }
@@ -10129,6 +10753,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10160,6 +10786,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10191,6 +10819,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10222,6 +10852,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10252,6 +10884,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9713429855217174
     },
@@ -10281,6 +10915,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9161554192229039
     }
@@ -10310,6 +10946,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.8953275710102938
    }
@@ -10330,7 +10968,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "e4a731a52a05d49d3e500531b875575b684c84ec0df53a57bad22c3797ec02ad",
+  "full_sha256": "3c8f8506328cf76b30a17f6844ffdc721e8a88310e4ef42efd998f87276ae8b5",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10345,6 +10983,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -10379,6 +11018,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.03121044583683834
       }
@@ -10410,6 +11051,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.6775793650793651
       }
@@ -10440,6 +11083,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05967228577011529
     },
@@ -10471,6 +11116,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8665377176015474
       }
@@ -10502,6 +11149,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9972175848636616
       }
@@ -10533,6 +11182,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -10564,6 +11215,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -10595,6 +11248,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -10626,6 +11281,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -10656,6 +11313,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8198213382774313
     },
@@ -10685,6 +11344,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.09114816383255447
     }
@@ -10735,6 +11396,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9950200412972185
       }
@@ -10766,6 +11429,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4383561643835616
       }
@@ -10796,6 +11461,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.608595520225846
     },
@@ -10827,6 +11494,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10858,6 +11527,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9886896551724138
       }
@@ -10889,6 +11560,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10920,6 +11593,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10951,6 +11626,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -10982,6 +11659,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11012,6 +11691,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9713429855217174
     },
@@ -11041,6 +11722,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7069525666016894
     }
@@ -11070,6 +11753,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7024655888023239
    }
@@ -11090,7 +11775,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "d297cbe28e05d8dd0ff347dde6c0201196d1359a5de350596b882d79b4128b16",
+  "full_sha256": "6bb8bb1d8483cdb0d30f0a11d03fd03f0d32de840a5ad0ab7f39b63b28f63fa0",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11105,6 +11790,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -11139,6 +11825,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.031210273578991362
       }
@@ -11170,6 +11858,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.6773313492063492
       }
@@ -11200,6 +11890,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05967100882303979
     },
@@ -11231,6 +11923,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11262,6 +11956,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9886896551724138
       }
@@ -11293,6 +11989,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11324,6 +12022,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11355,6 +12055,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11386,6 +12088,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11416,6 +12120,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9713429855217174
     },
@@ -11445,6 +12151,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.09175017379018192
     }
@@ -11495,6 +12203,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9950200412972185
       }
@@ -11526,6 +12236,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4383561643835616
       }
@@ -11556,6 +12268,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.608595520225846
     },
@@ -11587,6 +12301,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11618,6 +12334,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9886896551724138
       }
@@ -11649,6 +12367,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11680,6 +12400,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11711,6 +12433,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11742,6 +12466,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -11772,6 +12498,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9713429855217174
     },
@@ -11801,6 +12529,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7069525666016894
     }
@@ -11830,6 +12560,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7059415263519719
    }
@@ -11850,7 +12582,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "7237d828bce407842103aed1ec6344c1f9cbdee76af9d166f3ec51c249f0321f",
+  "full_sha256": "73ac256a2161f289bb35d661ab024e56419c69dfb6ae9b62a21c96eda0106622",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11865,6 +12597,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -11899,6 +12632,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.031092263638128517
       }
@@ -11930,6 +12665,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5084325396825397
       }
@@ -11960,6 +12697,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05860089645078668
     },
@@ -11991,6 +12730,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -12022,6 +12763,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24717241379310345
       }
@@ -12053,6 +12796,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -12084,6 +12829,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -12115,6 +12862,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -12146,6 +12895,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -12176,6 +12927,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.24283574638042935
     },
@@ -12205,6 +12958,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.12568075561146214
     }
@@ -12255,6 +13010,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9803733843944471
       }
@@ -12286,6 +13043,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4383561643835616
       }
@@ -12316,6 +13075,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6058275403046887
     },
@@ -12347,6 +13108,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -12378,6 +13141,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9886896551724138
       }
@@ -12409,6 +13174,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -12440,6 +13207,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -12471,6 +13240,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -12502,6 +13273,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -12532,6 +13305,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9713429855217174
     },
@@ -12561,6 +13336,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8240343347639485
     }
@@ -12590,6 +13367,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.815747388663641
    }
@@ -12610,7 +13389,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "4ebac52e0cf43ff6914a4dcd5d0ec9c543951f02099b6c6f177f4598176d2791",
+  "full_sha256": "c7432df9691d03165d6c8c431aaeed12082358853caa34029f698cb3e5755275",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12625,6 +13404,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -12659,6 +13439,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.03347048066875653
       }
@@ -12689,6 +13471,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.03347048066875653
     },
@@ -12720,6 +13504,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -12751,6 +13537,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.997564539698003
       }
@@ -12782,6 +13570,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -12813,6 +13603,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -12844,6 +13636,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -12875,6 +13669,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -12905,6 +13701,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9927290353853612
     },
@@ -12934,6 +13732,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.1215059981909041
     }
@@ -12984,6 +13784,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5099601593625498
       }
@@ -13014,6 +13816,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5099601593625498
     },
@@ -13045,6 +13849,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -13076,6 +13882,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9900894367899444
       }
@@ -13107,6 +13915,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -13138,6 +13948,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -13169,6 +13981,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -13200,6 +14014,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -13230,6 +14046,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9708461720786916
     },
@@ -13259,6 +14077,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7919184107496737
     }
@@ -13288,6 +14108,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7840101917935924
    }
@@ -13308,7 +14130,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "8b3e9202cc91019deaed236395acfa74126b5c70297fd029c65109a535fa17a3",
+  "full_sha256": "dbe02baa20531aa6b60444341e68661894fdbb905c8f0254cc5228f0b813d308",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -13323,6 +14145,7 @@
    "kv_cache_bits": 3,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -13357,6 +14180,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.044627307558342044
       }
@@ -13387,6 +14212,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.044627307558342044
     },
@@ -13418,6 +14245,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8871695680206318
       }
@@ -13449,6 +14278,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.99637943519189
       }
@@ -13480,6 +14311,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -13511,6 +14344,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -13542,6 +14377,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -13573,6 +14410,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -13603,6 +14442,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.96
     },
@@ -13632,6 +14473,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.13448248782786243
     }
@@ -13682,6 +14525,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.1570621468926554
       }
@@ -13712,6 +14557,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.1570621468926554
     },
@@ -13743,6 +14590,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -13774,6 +14623,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -13805,6 +14656,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -13836,6 +14689,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -13867,6 +14722,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -13898,6 +14755,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -13928,6 +14787,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9952618150892966
     },
@@ -13957,6 +14818,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.0387007708396285
     }
@@ -13986,6 +14849,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 1.0260875677436267
    }
@@ -14006,7 +14871,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "ab52823b56708636bbc9ef1b54efa80378a39f47cc85aaec069077a296705642",
+  "full_sha256": "a070519c08eeac7177d25ef7096b0219384f7f67e1d4f765bfe846e7ae62d3ff",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -14021,6 +14886,7 @@
    "kv_cache_bits": 3,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -14055,6 +14921,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.04084446623360706
       }
@@ -14086,6 +14954,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5119047619047619
       }
@@ -14116,6 +14986,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.07565266742338252
     },
@@ -14147,6 +15019,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8665377176015474
       }
@@ -14178,6 +15052,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9972175848636616
       }
@@ -14209,6 +15085,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -14240,6 +15118,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -14271,6 +15151,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -14302,6 +15184,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -14332,6 +15216,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8198213382774313
     },
@@ -14361,6 +15247,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.42184018231346887
     }
@@ -14411,6 +15299,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.3084171857530746
       }
@@ -14442,6 +15332,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.3084171857530746
       }
@@ -14472,6 +15364,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.3084171857530746
     },
@@ -14503,6 +15397,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -14534,6 +15430,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -14565,6 +15463,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -14596,6 +15496,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -14627,6 +15529,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -14658,6 +15562,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -14688,6 +15594,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.981312889314806
     },
@@ -14717,6 +15625,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.0052473500298011
     }
@@ -14746,6 +15656,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.984921402908493
    }
@@ -14766,7 +15678,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "7629cfba84315b62972d9f6f3605963062926aec8208db6122f1d6121001d60b",
+  "full_sha256": "87ae955f34888d7b379ce28c0a6d5f8d120d8c7120b910376d896773984bd7e3",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -14781,6 +15693,7 @@
    "kv_cache_bits": 3,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -14815,6 +15728,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.04161392778245112
       }
@@ -14846,6 +15761,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9034391534391535
       }
@@ -14876,6 +15793,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.07956304769348706
     },
@@ -14907,6 +15826,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8665377176015474
       }
@@ -14938,6 +15859,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9972175848636616
       }
@@ -14969,6 +15892,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -15000,6 +15925,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -15031,6 +15958,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -15062,6 +15991,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -15092,6 +16023,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8198213382774313
     },
@@ -15121,6 +16054,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.11987629226175231
     }
@@ -15171,6 +16106,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.331748305747757
       }
@@ -15202,6 +16139,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.331748305747757
       }
@@ -15232,6 +16171,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.331748305747757
     },
@@ -15263,6 +16204,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -15294,6 +16237,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -15325,6 +16270,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -15356,6 +16303,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -15387,6 +16336,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -15418,6 +16369,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -15448,6 +16401,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9988112293108178
     },
@@ -15477,6 +16432,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.184636574298877
     }
@@ -15506,6 +16463,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 1.1747713742367152
    }
@@ -15526,7 +16485,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "a763449983e1ca7d018c59e652a45d8b04bd2577a4bb0fa8eea74c0cbff7fced",
+  "full_sha256": "d30a00a08c4b20d8ffadaf27cde8951c1a3fb00455a81627ed1e007a52f6984c",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15541,6 +16500,7 @@
    "kv_cache_bits": 3,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -15575,6 +16535,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.04161369810532182
       }
@@ -15606,6 +16568,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9031084656084656
       }
@@ -15636,6 +16600,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.07956134509738638
     },
@@ -15667,6 +16633,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -15698,6 +16666,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9886896551724138
       }
@@ -15729,6 +16699,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -15760,6 +16732,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -15791,6 +16765,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -15822,6 +16798,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -15852,6 +16830,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9713429855217174
     },
@@ -15881,6 +16861,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.12091534179794085
     }
@@ -15931,6 +16913,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.331748305747757
       }
@@ -15962,6 +16946,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.331748305747757
       }
@@ -15992,6 +16978,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.331748305747757
     },
@@ -16023,6 +17011,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -16054,6 +17044,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -16085,6 +17077,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -16116,6 +17110,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -16147,6 +17143,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -16178,6 +17176,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -16208,6 +17208,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9999628080849502
     },
@@ -16237,6 +17239,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.1852396906957732
     }
@@ -16266,6 +17270,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 1.1830155020430704
    }
@@ -16286,7 +17292,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "bf45aaf63d72aff5258bd43d1ae31b6811a70525f0e42b059129e0ff5e1322b1",
+  "full_sha256": "7a36d9db8bf3ac9c21dbf30d77ce417bec0c7f19094b059e96d9b53efd85a9eb",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16301,6 +17307,7 @@
    "kv_cache_bits": 3,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -16335,6 +17342,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.041456351517504694
       }
@@ -16366,6 +17375,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.6779100529100529
       }
@@ -16396,6 +17407,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.07813452860104891
     },
@@ -16427,6 +17440,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -16458,6 +17473,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24717241379310345
       }
@@ -16489,6 +17506,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -16520,6 +17539,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -16551,6 +17572,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -16582,6 +17605,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -16612,6 +17637,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.24283574638042935
     },
@@ -16641,6 +17668,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.14943760968988562
     }
@@ -16691,6 +17720,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.3270157534523954
       }
@@ -16722,6 +17753,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.3270157534523954
       }
@@ -16752,6 +17785,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.3270157534523954
     },
@@ -16783,6 +17818,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -16814,6 +17851,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -16845,6 +17884,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -16876,6 +17917,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -16907,6 +17950,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -16938,6 +17983,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -16968,6 +18015,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9994052611513534
     },
@@ -16997,6 +18046,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.078280306127983
     }
@@ -17026,6 +18077,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 1.066164875072026
    }
@@ -17046,7 +18099,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "2636ed52c7119b678de18013f5126366b31651cd9ad76154adcdae5938d15bef",
+  "full_sha256": "e04c02545bdee4a04194cb36b0f70afc01599f69e3d8e99d8aa09e461ebe1658",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17061,6 +18114,7 @@
    "kv_cache_bits": 3,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -17095,6 +18149,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.044627307558342044
       }
@@ -17125,6 +18181,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.044627307558342044
     },
@@ -17156,6 +18214,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -17187,6 +18247,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.997564539698003
       }
@@ -17218,6 +18280,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -17249,6 +18313,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -17280,6 +18346,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -17311,6 +18379,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -17341,6 +18411,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9927290353853612
     },
@@ -17370,6 +18442,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.15719904076738608
     }
@@ -17420,6 +18494,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 1.1570621468926554
       }
@@ -17450,6 +18526,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.1570621468926554
     },
@@ -17481,6 +18559,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -17512,6 +18592,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -17543,6 +18625,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -17574,6 +18658,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -17605,6 +18691,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -17636,6 +18724,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -17666,6 +18756,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9952618150892966
     },
@@ -17695,6 +18787,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 1.031315897145375
     }
@@ -17724,6 +18818,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 1.0209374734588696
    }
@@ -17744,7 +18840,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "120b3d3087511c333c4c619203acf0f93a21c9d6e1d227aaa72d0d2fe5cd6c55",
+  "full_sha256": "2c7bbd730b40440cda40decb6de604c4bb56af86c8790af2b4c67a3ee639751a",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17759,6 +18855,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -17793,6 +18890,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.03347048066875653
       }
@@ -17823,6 +18922,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.03347048066875653
     },
@@ -17854,6 +18955,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8871695680206318
       }
@@ -17885,6 +18988,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.99637943519189
       }
@@ -17916,6 +19021,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -17947,6 +19054,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -17978,6 +19087,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -18009,6 +19120,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -18039,6 +19152,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.96
     },
@@ -18068,6 +19183,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.10339934790484241
     }
@@ -18118,6 +19235,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8677966101694915
       }
@@ -18148,6 +19267,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8677966101694915
     },
@@ -18179,6 +19300,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -18210,6 +19333,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -18241,6 +19366,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -18272,6 +19399,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -18303,6 +19432,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -18334,6 +19465,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -18364,6 +19497,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9952618150892966
     },
@@ -18393,6 +19528,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9533818067119496
     }
@@ -18422,6 +19559,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.9392657285858395
    }
@@ -18442,7 +19581,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "03a84a16b7017a066ae3008334f3285053cad616cb7cb3438f25eb20618d6b2a",
+  "full_sha256": "00620a1d18fd6e7d9df75afac427c7d8cd60612b206c460c68b94fe47599bb6b",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18457,6 +19596,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -18491,6 +19631,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.030633349675205295
       }
@@ -18522,6 +19664,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.38392857142857145
       }
@@ -18552,6 +19696,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05673950056753689
     },
@@ -18583,6 +19729,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8665377176015474
       }
@@ -18614,6 +19762,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9972175848636616
       }
@@ -18645,6 +19795,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -18676,6 +19828,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -18707,6 +19861,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -18738,6 +19894,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -18768,6 +19926,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8198213382774313
     },
@@ -18797,6 +19957,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.35801761537685445
     }
@@ -18847,6 +20009,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -18878,6 +20042,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -18908,6 +20074,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.981312889314806
     },
@@ -18939,6 +20107,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -18970,6 +20140,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -19001,6 +20173,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -19032,6 +20206,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -19063,6 +20239,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -19094,6 +20272,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.981312889314806
       }
@@ -19124,6 +20304,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.981312889314806
     },
@@ -19153,6 +20335,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.981312889314806
     }
@@ -19182,6 +20366,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.9564653112325431
    }
@@ -19202,7 +20388,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "a65ba03b167c2915dd03036755ccddaf394d766a44bba1c87b6989f0f11af15d",
+  "full_sha256": "04d093379e2d0cd1f0ba368bd516a53b261da6a2d47175598b5b592d0d52f6b4",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19217,6 +20403,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -19251,6 +20438,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.03121044583683834
       }
@@ -19282,6 +20471,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.6775793650793651
       }
@@ -19312,6 +20503,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05967228577011529
     },
@@ -19343,6 +20536,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8665377176015474
       }
@@ -19374,6 +20569,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9972175848636616
       }
@@ -19405,6 +20602,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -19436,6 +20635,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -19467,6 +20668,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -19498,6 +20701,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24758220502901354
       }
@@ -19528,6 +20733,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8198213382774313
     },
@@ -19557,6 +20764,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.09114816383255447
     }
@@ -19607,6 +20816,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19638,6 +20849,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19668,6 +20881,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9988112293108178
     },
@@ -19699,6 +20914,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19730,6 +20947,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19761,6 +20980,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19792,6 +21013,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19823,6 +21046,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19854,6 +21079,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -19884,6 +21111,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9988112293108178
     },
@@ -19913,6 +21142,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9988112293108178
     }
@@ -19942,6 +21173,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.9894953363111231
    }
@@ -19962,7 +21195,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "449882a3fa5fb009452929490a667d68648c731bb6f893cc0b1a43ea082cbba1",
+  "full_sha256": "0a1e4409a9184f000fcd5ecdfc72a593fc96780bada257f019c0c6f52ebf8372",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19977,6 +21210,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -20011,6 +21245,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.031210273578991362
       }
@@ -20042,6 +21278,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.6773313492063492
       }
@@ -20072,6 +21310,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05967100882303979
     },
@@ -20103,6 +21343,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -20134,6 +21376,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9886896551724138
       }
@@ -20165,6 +21409,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -20196,6 +21442,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -20227,6 +21475,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -20258,6 +21508,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9615023474178404
       }
@@ -20288,6 +21540,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9713429855217174
     },
@@ -20317,6 +21571,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.09175017379018192
     }
@@ -20367,6 +21623,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -20398,6 +21656,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9988112293108178
       }
@@ -20428,6 +21688,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9988112293108178
     },
@@ -20459,6 +21721,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -20490,6 +21754,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -20521,6 +21787,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -20552,6 +21820,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -20583,6 +21853,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -20614,6 +21886,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9999628080849502
       }
@@ -20644,6 +21918,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9999628080849502
     },
@@ -20673,6 +21949,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9992399387175015
     }
@@ -20702,6 +21980,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.9971333648924543
    }
@@ -20722,7 +22002,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "e04b4989b3db0dce0db9f7538e69b114823c34ae246fc194ea3e26791e5a0442",
+  "full_sha256": "e8f907f103ca1e88ac57844c75352082a26bc187d4b38b557f8e21e422f19f55",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20737,6 +22017,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -20771,6 +22052,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.031092263638128517
       }
@@ -20802,6 +22085,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5084325396825397
       }
@@ -20832,6 +22117,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.05860089645078668
     },
@@ -20863,6 +22150,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -20894,6 +22183,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.24717241379310345
       }
@@ -20925,6 +22216,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -20956,6 +22249,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -20987,6 +22282,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -21018,6 +22315,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.2403755868544601
       }
@@ -21048,6 +22347,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.24283574638042935
     },
@@ -21077,6 +22378,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.12568075561146214
     }
@@ -21127,6 +22430,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -21158,6 +22463,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -21188,6 +22495,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9952618150892966
     },
@@ -21219,6 +22528,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -21250,6 +22561,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -21281,6 +22594,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -21312,6 +22627,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -21343,6 +22660,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -21374,6 +22693,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9994052611513534
       }
@@ -21404,6 +22725,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9994052611513534
     },
@@ -21433,6 +22756,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9981739811779599
     }
@@ -21462,6 +22787,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.985664063693217
    }
@@ -21482,7 +22809,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "18e80c5f9960c6047efdda306be974e7449a2046f4a3a6c31cd619b2097498f1",
+  "full_sha256": "7da320f74a41f2f1724bd4fb0ad9431487b27499ac75d467294d2f09988b70d0",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21497,6 +22824,7 @@
    "kv_cache_bits": 4,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": false,
    "vpu_width": 128,
    "weight_bits": 4
@@ -21531,6 +22859,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.03347048066875653
       }
@@ -21561,6 +22891,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.03347048066875653
     },
@@ -21592,6 +22924,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -21623,6 +22957,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.997564539698003
       }
@@ -21654,6 +22990,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -21685,6 +23023,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -21716,6 +23056,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -21747,6 +23089,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9903288201160542
       }
@@ -21777,6 +23121,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9927290353853612
     },
@@ -21806,6 +23152,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.1215059981909041
     }
@@ -21856,6 +23204,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.8677966101694915
       }
@@ -21886,6 +23236,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8677966101694915
     },
@@ -21917,6 +23269,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -21948,6 +23302,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -21979,6 +23335,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -22010,6 +23368,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -22041,6 +23401,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -22072,6 +23434,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9952618150892966
       }
@@ -22102,6 +23466,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9952618150892966
     },
@@ -22131,6 +23497,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9600093750915536
     }
@@ -22160,6 +23528,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.9480488441392562
    }
@@ -22180,7 +23550,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "05dba5f4de124cf19402acfa7eedae245d9dd9af7ee147e18d49c0b0365a124a",
+  "full_sha256": "b17397f5c288980894e383d42f7509ebdc693060ce9e74907a8450c0d277de82",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -22195,6 +23565,7 @@
    "kv_cache_bits": 8,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": true,
    "vpu_width": 128,
    "weight_bits": 8
@@ -22229,6 +23600,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.010163810883706171
       }
@@ -22259,6 +23632,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.010163810883706171
     },
@@ -22290,6 +23665,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -22321,6 +23698,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015506671474936892
       }
@@ -22352,6 +23731,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -22383,6 +23764,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -22414,6 +23797,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -22445,6 +23830,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -22475,6 +23862,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01536658919344615
     },
@@ -22504,6 +23893,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.013325240924246492
     }
@@ -22554,6 +23945,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5372507869884575
       }
@@ -22584,6 +23977,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5372507869884575
     },
@@ -22615,6 +24010,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -22646,6 +24043,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9868220528910803
       }
@@ -22677,6 +24076,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -22708,6 +24109,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -22739,6 +24142,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -22770,6 +24175,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -22800,6 +24207,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9714125799826397
     },
@@ -22829,6 +24238,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7823372904909511
     }
@@ -22858,6 +24269,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7076712625654423
    }
@@ -22878,7 +24291,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "2ffe7bdffafdc7b7f869a4ec2a12db20d917159d622da1eb5129d44e8c5e1a2f",
+  "full_sha256": "4d1c9fdc7d37022b925f1a857245776d297f732b47fa17e2eab9f706747215a2",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -22893,6 +24306,7 @@
    "kv_cache_bits": 8,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": true,
    "vpu_width": 128,
    "weight_bits": 8
@@ -22927,6 +24341,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015013966480446927
       }
@@ -22958,6 +24374,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.009219554030874785
       }
@@ -22988,6 +24406,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.011424017003188097
     },
@@ -23019,6 +24439,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23050,6 +24472,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015533980582524271
       }
@@ -23081,6 +24505,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23112,6 +24538,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23143,6 +24571,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23174,6 +24604,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23204,6 +24636,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01539240506329114
     },
@@ -23233,6 +24667,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.014896114827448723
     }
@@ -23283,6 +24719,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9330296127562643
       }
@@ -23314,6 +24752,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.46545454545454545
       }
@@ -23344,6 +24784,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.621076573161486
     },
@@ -23375,6 +24817,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -23406,6 +24850,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9898501691638473
       }
@@ -23437,6 +24883,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -23468,6 +24916,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -23499,6 +24949,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -23530,6 +24982,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -23560,6 +25014,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9742369995743722
     },
@@ -23589,6 +25045,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.924187725631769
     }
@@ -23618,6 +25076,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.4836480563081105
    }
@@ -23638,7 +25098,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "7869e691dd59c838b4a285364354d1385b8b8de57701276d6741f050796b276a",
+  "full_sha256": "4aed43b953b58250057784cbf7dd90dafc1aaeda5581df8b47ad30aa9e2d5de4",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -23653,6 +25113,7 @@
    "kv_cache_bits": 8,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": true,
    "vpu_width": 128,
    "weight_bits": 8
@@ -23687,6 +25148,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015585067542898868
       }
@@ -23718,6 +25181,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.009420169921659494
       }
@@ -23748,6 +25213,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.011742658689223575
     },
@@ -23779,6 +25246,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23810,6 +25279,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015533980582524271
       }
@@ -23841,6 +25312,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23872,6 +25345,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23903,6 +25378,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23934,6 +25411,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -23964,6 +25443,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.01539240506329114
     },
@@ -23993,6 +25474,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.012880090890442302
     }
@@ -24043,6 +25526,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.995533951086131
       }
@@ -24074,6 +25559,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.46545454545454545
       }
@@ -24104,6 +25591,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6343318975947345
     },
@@ -24135,6 +25624,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -24166,6 +25657,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9898501691638473
       }
@@ -24197,6 +25690,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -24228,6 +25723,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -24259,6 +25756,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -24290,6 +25789,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -24320,6 +25821,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9742369995743722
     },
@@ -24349,6 +25852,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7291003518177249
     }
@@ -24378,6 +25883,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.6926839684840602
    }
@@ -24398,7 +25905,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "52e66cc4a2aafab9dd57152dbc2ac5cb1a9b4a4737e6b266876e0c7eb4444a55",
+  "full_sha256": "2b4b5ac6c21d54b2c2a0406aeae5eafc8c74078af5fa363b31c01d68433d75d8",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -24413,6 +25920,7 @@
    "kv_cache_bits": 8,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": true,
    "vpu_width": 128,
    "weight_bits": 8
@@ -24447,6 +25955,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015585052958363769
       }
@@ -24478,6 +25988,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.009416721836036632
       }
@@ -24508,6 +26020,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.011739975239012311
     },
@@ -24539,6 +26053,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4826773509309451
       }
@@ -24570,6 +26086,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.49492508458192364
       }
@@ -24601,6 +26119,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4826773509309451
       }
@@ -24632,6 +26152,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4826773509309451
       }
@@ -24663,6 +26185,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4826773509309451
       }
@@ -24694,6 +26218,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.4826773509309451
       }
@@ -24724,6 +26250,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.4871184997871861
     },
@@ -24753,6 +26281,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.018445809518797752
     }
@@ -24803,6 +26333,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.995533951086131
       }
@@ -24834,6 +26366,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.46545454545454545
       }
@@ -24864,6 +26398,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6343318975947345
     },
@@ -24895,6 +26431,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -24926,6 +26464,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9898501691638473
       }
@@ -24957,6 +26497,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -24988,6 +26530,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25019,6 +26563,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25050,6 +26596,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25080,6 +26628,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9742369995743722
     },
@@ -25109,6 +26659,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.7291003518177249
     }
@@ -25138,6 +26690,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7231495222043683
    }
@@ -25158,7 +26712,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "8c242291999f062b87519cb8338e2ab13d191790abaa5e0e4b1bf363bf98398b",
+  "full_sha256": "2193fd32d06076ede77a4809d239480f2d8798b6264eadd0cbc46f8d1331c63e",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25173,6 +26727,7 @@
    "kv_cache_bits": 8,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": true,
    "vpu_width": 128,
    "weight_bits": 8
@@ -25207,6 +26762,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015466562047320135
       }
@@ -25238,6 +26795,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.00936997221003364
       }
@@ -25268,6 +26827,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.011670006375808362
     },
@@ -25299,6 +26860,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12066933773273628
       }
@@ -25330,6 +26893,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12373127114548091
       }
@@ -25361,6 +26926,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12066933773273628
       }
@@ -25392,6 +26959,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12066933773273628
       }
@@ -25423,6 +26992,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12066933773273628
       }
@@ -25454,6 +27025,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.12066933773273628
       }
@@ -25484,6 +27057,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.12177962494679652
     },
@@ -25513,6 +27088,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.03206790195032583
     }
@@ -25563,6 +27140,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9823719870488068
       }
@@ -25594,6 +27173,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.46545454545454545
       }
@@ -25624,6 +27205,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.6316357608234705
     },
@@ -25655,6 +27238,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25686,6 +27271,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9898501691638473
       }
@@ -25717,6 +27304,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25748,6 +27337,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25779,6 +27370,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25810,6 +27403,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -25840,6 +27435,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9742369995743722
     },
@@ -25869,6 +27466,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.839344262295082
     }
@@ -25898,6 +27497,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.8024139971606274
    }
@@ -25918,7 +27519,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "f2e54fbbd5186393dec0f12d4e761acb1db05f399c9d752be948cb97037bbd1e",
+  "full_sha256": "ae2cb347306b18a3ab39147e670f136da021a456ed07e4ebca44154a9f960908",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25933,6 +27534,7 @@
    "kv_cache_bits": 8,
    "mu": 4,
    "replication": 1,
+   "sram_capacity_kb": 0,
    "tender_m1_opt": true,
    "vpu_width": 128,
    "weight_bits": 8
@@ -25967,6 +27569,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.010163810883706171
       }
@@ -25997,6 +27601,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.010163810883706171
     },
@@ -26028,6 +27634,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -26059,6 +27667,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.01554529997571047
       }
@@ -26090,6 +27700,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -26121,6 +27733,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -26152,6 +27766,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -26183,6 +27799,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.015311004784688996
       }
@@ -26213,6 +27831,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.015388314498677566
     },
@@ -26242,6 +27862,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.013634850905218317
     }
@@ -26292,6 +27914,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.5372507869884575
       }
@@ -26322,6 +27946,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.5372507869884575
     },
@@ -26353,6 +27979,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -26384,6 +28012,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9911076159941927
       }
@@ -26415,6 +28045,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -26446,6 +28078,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -26477,6 +28111,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -26508,6 +28144,8 @@
         0,
         0
        ],
+       "sram_overflow": false,
+       "sram_refetch_bytes": 0,
        "throughput": 0.0,
        "utilization": 0.9653547018618902
       }
@@ -26538,6 +28176,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.9737890044576523
     },
@@ -26567,6 +28207,8 @@
       0,
       0
      ],
+     "sram_overflow": false,
+     "sram_refetch_bytes": 0,
      "throughput": 0.0,
      "utilization": 0.8093761964160008
     }
@@ -26596,6 +28238,8 @@
      0,
      0
     ],
+    "sram_overflow": false,
+    "sram_refetch_bytes": 0,
     "throughput": 0.0,
     "utilization": 0.7313469142347531
    }

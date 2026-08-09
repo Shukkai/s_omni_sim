@@ -131,6 +131,12 @@ class HardwareConfig:
     freq_mhz: int = 500
     dram_bandwidth_gbps: float = 51.2   # DRAM bandwidth in GB/s
 
+    # --- On-chip memory ---
+    # 0 = unlimited: peak_sram_bytes is reported but never enforced, which is
+    # how every result predating this field was produced.  Set a real capacity
+    # to make an operation whose working set does not fit pay for the spill.
+    sram_capacity_kb: int = 0
+
     # --- Bit widths ---
     act_bits: int = 16
     accumulate_bits: int = 32
@@ -180,6 +186,11 @@ class OperationMetrics:
     # SRAM capacity requirement (bytes)
     peak_sram_bytes: int = 0
 
+    # Capacity enforcement (only meaningful when hw.sram_capacity_kb > 0)
+    sram_overflow: bool = False      # working set exceeded capacity
+    sram_refetch_bytes: int = 0      # extra DRAM reads charged by the spill policy
+                                     # (already included in dram_read)
+
     # --- Derived properties ---
     @property
     def dram_energy(self) -> float:
@@ -214,6 +225,8 @@ def _aggregate_metrics(metrics_list: List[OperationMetrics]) -> OperationMetrics
         total.sram_write_energy += m.sram_write_energy
         weighted_util += m.utilization * m.cycles
         max_peak_sram = max(max_peak_sram, m.peak_sram_bytes)
+        total.sram_overflow |= m.sram_overflow
+        total.sram_refetch_bytes += m.sram_refetch_bytes
 
     total.utilization = weighted_util / total.cycles if total.cycles > 0 else 0.0
     total.peak_sram_bytes = max_peak_sram
@@ -486,6 +499,8 @@ class SimulationResults:
                 "total": m.total_energy,
             },
             "peak_sram_bytes": m.peak_sram_bytes,
+            "sram_overflow": m.sram_overflow,
+            "sram_refetch_bytes": m.sram_refetch_bytes,
         }
 
 
@@ -828,10 +843,20 @@ class Simulator:
         metrics.sram_read = mem["sram_read"]
         metrics.sram_write = mem["sram_write"]
 
-        # 3. Peak SRAM footprint
+        # 3. Peak SRAM footprint, and the spill it forces if capacity is finite
         metrics.peak_sram_bytes = self._calculate_peak_sram(
             M, K, N, compute_mode, resolved_mode, batch_size,
         )
+        metrics.sram_overflow, metrics.sram_refetch_bytes = (
+            self._apply_sram_capacity(
+                M, K, N, compute_mode, resolved_mode, batch_size,
+                metrics.peak_sram_bytes,
+            )
+        )
+        # Re-fetch traffic is real DRAM traffic: fold it in before energy and
+        # roofline see the operation, not after.
+        metrics.dram_read += metrics.sram_refetch_bytes
+        mem["dram_read"] = metrics.dram_read
 
         # 4. Utilization
         metrics.utilization = (
@@ -950,6 +975,13 @@ class Simulator:
             sram_read=sram_read_bits // 8,
             sram_write=sram_write_bits // 8,
         )
+
+        # Capacity check.  FlashAttention is already tiled to a fixed block, so
+        # there is no resident operand to spill -- the fix is a smaller Br/Bc,
+        # which is a re-tiling and out of scope for policy v1.  Flag it so an
+        # infeasible block size is visible, and charge nothing.
+        cap = hw.sram_capacity_kb * 1024
+        metrics.sram_overflow = cap > 0 and metrics.peak_sram_bytes > cap
 
         # Utilization
         metrics.utilization = (
@@ -1240,6 +1272,60 @@ class Simulator:
             return A_bytes + B_bytes + C_bytes
 
         return A_bytes  # Fallback: at least A
+
+    def _column_tiles(self, N: int, mode: str) -> int:
+        """Number of column tiles the operation loops over.
+
+        This is the loop across which A is reused, so it is also the number of
+        times A must be re-read if it cannot stay resident.
+        """
+        hw = self.hw
+        if mode in ("LUT_OS", "LUT_OS_V", "LUT_WS"):
+            return math.ceil(N / (hw.array_n * self.NUM_RAC))
+        if mode in ("FPE_OS", "TENDER"):
+            return math.ceil(N / hw.FPE_array_size)
+        return 1   # VPU processes the whole operand
+
+    def _apply_sram_capacity(
+        self, M: int, K: int, N: int,
+        compute_mode: ComputeMode, mode: str,
+        batch_size: int, peak_bytes: int,
+    ) -> Tuple[bool, int]:
+        """Spill policy v1.  Returns (overflow, extra DRAM read bytes).
+
+        `_calculate_peak_sram` models the working set as A + B_tile + C_tile:
+        B and C are already charged per tile, so A is the one operand the
+        footprint assumes stays resident for the whole operation.  When the
+        working set does not fit, A is the thing that has to go, and it is
+        re-read from DRAM once per column tile instead of once per operation.
+
+        Deliberately *not* modelled: re-tiling.  Shrinking the tile to fit
+        would change the cycle count as well as the traffic, and the cycle
+        model is out of scope here.  Two consequences worth stating plainly:
+
+          - If a single B_tile already exceeds capacity (LUT_OS_V at long
+            context, where the KV tile grows with kv_len), spilling A does not
+            actually rescue the operation and this returns a charge that is a
+            lower bound.  `sram_overflow` is still set, so the shortfall is
+            visible rather than silent.
+          - A single-column-tile operation overflows at zero charge for the
+            same reason.
+
+        The charge is the cost *under the modelled loop nest* (A resident, B
+        streamed per tile).  A scheduler free to re-tile M would hold A-tiles
+        and re-read the smaller operand instead, paying less -- so on a large
+        A this reads high, and the flag, not the byte count, is the load-
+        bearing output.  `sram_overflow` is the honest signal ("this
+        configuration does not fit"); `sram_refetch_bytes` is a first-order
+        cost, not a full spill model.
+        """
+        cap = self.hw.sram_capacity_kb * 1024
+        if cap <= 0 or peak_bytes <= cap:
+            return False, 0
+
+        A_bytes = batch_size * M * K * self.hw.act_bits // 8
+        n_tiles = self._column_tiles(N, mode)
+        return True, A_bytes * (n_tiles - 1)
 
     # ---- Energy calculation -------------------------------------------------
 
@@ -1665,6 +1751,13 @@ class Simulator:
         f.write("-" * 80 + "\n")
         self._write_metrics_block(f, total)
         f.write(f"  Peak SRAM:           {peak_sram:,} bytes ({peak_sram / 1024:.2f} KB)\n")
+        cap_kb = self.hw.sram_capacity_kb
+        if cap_kb > 0:
+            verdict = "OVERFLOWS" if total.sram_overflow else "fits"
+            f.write(f"  SRAM capacity:       {cap_kb:,} KB -> {verdict}\n")
+            if total.sram_refetch_bytes:
+                f.write(f"  Spill re-fetch:      {total.sram_refetch_bytes:,} bytes "
+                        f"(included in DRAM read)\n")
         f.write("\n")
 
     def _write_kv_cache_summary(self, f, results: SimulationResults):

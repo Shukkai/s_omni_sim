@@ -74,34 +74,75 @@ coercion changed no number.
 
 ---
 
-## Stage 1 — SRAM capacity enforcement ⬜
+## Stage 1 — SRAM capacity enforcement ✅
 
-**Goal.** Convert existing latency results into capacity claims: "how much batch
-fits", which is what the accelerator story actually needs.
+**Goal.** Convert existing latency results into capacity claims — what the
+accelerator story actually needs.
 
-**Files.** `simulator/simulator.py`, new `analysis/capacity/`.
+**Files.** `simulator/simulator.py`, new `analysis/capacity/capacity_run.py`,
+`analysis/regression/baseline.json` (re-captured).
 
-- `HardwareConfig`: add `sram_capacity_kb: int = 0` (`0` = unlimited → today's
+- `HardwareConfig`: `sram_capacity_kb: int = 0` (`0` = unlimited → today's
   behaviour is the default).
-- `OperationMetrics`: add `sram_overflow: bool` and `sram_refetch_bytes: int`;
-  extend `_aggregate_metrics` to OR / sum them.
-- `_simulate_matmul`: after `peak_sram_bytes` is set, compare against capacity; on
-  overflow apply the spill policy and add re-fetch traffic to `dram_read` *before*
-  energy is computed.
-- **Spill policy v1** — do *not* re-tile. The working set is A-tile + B-tile +
-  C-accum; when it exceeds capacity, the operand carrying cross-tile reuse (weights
-  under `LUT_WS`, KV under `LUT_OS_V`) is re-read once per outer tile instead of
-  held. One helper, a multiplier on `dram_read`. Re-tiling is a later refinement and
-  must not gate this.
-- `_write_overall_summary` gains a fits/overflows line; `to_dict` gains the field.
-- New `analysis/capacity/` sweeps capacity × batch × context per KV budget.
-  `KVBudgetSimulator` and `ThinKSimulator` inherit it unchanged.
+- `OperationMetrics`: `sram_overflow: bool` and `sram_refetch_bytes: int`, OR'd /
+  summed in `_aggregate_metrics` and emitted by `_metrics_to_dict`.
+- `_simulate_matmul`: after `peak_sram_bytes` is set, `_apply_sram_capacity`
+  compares against capacity and folds the re-fetch into `dram_read` *before*
+  energy and roofline see the operation.
+- **Spill policy v1** — no re-tiling. A is the only operand the footprint assumes
+  stays resident (B and C are already charged per tile), so on overflow A is
+  re-read once per column tile: `A_bytes × (n_tiles − 1)`.
+- `_simulate_flash_attention` sets the flag only: it is already tiled to a fixed
+  block, so there is no resident operand to spill and the fix would be a smaller
+  `Br`/`Bc` — a re-tiling, out of scope for v1.
+- `_write_overall_summary` gains a fits/overflows line when capacity is finite.
 
-**Verification.** Gate clean at `sram_capacity_kb=0`. Hand-check one overflow: set a
-capacity just below a known `peak_sram_bytes` and confirm the extra DRAM traffic
-equals the re-read operand's size × tile count.
+**Two model gaps this exposed** — both pre-existing in `_calculate_peak_sram`,
+both surfaced only once capacity was enforced, and both recorded in
+`capacity_run.py`'s docstring rather than papered over:
 
-**Checkpoint.** `<stage-1-sha>`
+1. **Prefill holds the entire activation matrix.** `A_bytes = M·K·act/8` with `M`
+   = full prefill length, so prefill's working set is O(seq × d_model): 59 MB at
+   2K context, 2.1 GB at 32K. It overflows at every plausible capacity, so its
+   spill charge (a constant ~770 GB) prices a wrong assumption and is not usable.
+   A real accelerator tiles prefill over the sequence; the model does not.
+2. **Batch is a loop in one half of the model and a dimension in the other.**
+   `_calculate_peak_sram` has no batch term ("peak is per element"), yet
+   projections are issued as one GEMM with `proj_m = batch × seq_len`, so the
+   footprint scales with batch anyway. Peak went 239 MB → 1.91 GB from batch 1 → 8.
+
+Because of (1), the well-posed capacity question is **decode**, and there the
+result is the one the study wanted:
+
+| context | dense | any KV budget ≤ 4096 |
+|---------|-------|----------------------|
+| 2K / 8K | 1024 KB | 1024 KB |
+| 32K     | **2176 KB** | **1024 KB** |
+
+Decode's working set is floored at 924.5 KB by the FFN/projection tiles; the KV
+tile only becomes binding past ~16K context. That is exactly where a KV budget
+buys a smaller chip — 2.1× less SRAM at 32K — and below it, capacity is not the
+constraint at all.
+
+**Policy v1's known non-monotonicity** (documented in-code and in the report):
+past 1024 KB at 32K the binding term is the KV tile itself, which needs
+re-tiling, so v1 flags the overflow and charges nothing — the *larger* overflow
+prices lower. `sram_overflow` is the trustworthy output; `sram_refetch_bytes` is
+a first-order cost.
+
+**Verification.**
+- Gate at `sram_capacity_kb=0`: **zero pre-existing values changed, zero keys
+  missing**; the only differences were 1,644 added keys (all three new fields) and
+  the 36 tree hashes that necessarily follow. Baseline then re-captured
+  (19,860 values, 736 KB) and re-checked clean.
+- Overflow hand-check: capacity one KB below a known 17,833,984 B peak charges
+  `16,777,216 × (32 − 1) = 520,093,696` B — exact — folds into `dram_read`
+  exactly, reaches the energy model, and a capacity above the peak is inert.
+- Standing checks 2 and 3 pass; `think_run.py`'s dense baseline still reproduces
+  §3's roofline column (55.39 / 70.67 / 131.82 ms).
+
+**Checkpoint.** `<stage-1-sha>` — recorded by the following commit, per the note
+under Stage 0.
 
 ---
 
