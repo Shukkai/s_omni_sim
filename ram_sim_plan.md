@@ -195,7 +195,7 @@ but a design that serialises batch would show none of this.
 
 ---
 
-## Stage 2 — DRAM access granularity ⬜
+## Stage 2 — DRAM access granularity ✅
 
 **Goal.** One term, not a timing model: round every access up to a burst, so a
 packed cache and a scattered gather stop costing the same.
@@ -223,10 +223,46 @@ which is why energy is not exactly linear in bytes (Stage 1's hand-check saw a
 granular already and the *latency* side is not at all. Stage 2 must reconcile the
 two rather than add a second, independent burst notion on top.
 
-**Verification.** Gate clean at `dram_burst_bytes=0`. Hand-check one burst: a
-scattered KV read of `d_ret * kv_bits / 8` = 38 B against a 32 B burst charges 64 B.
+**As landed.** `_dram_effective_bytes(logical, run)` rounds each access up to a
+burst; `_calculate_memory_access` now tracks DRAM reads as `(bits, run_bytes)`
+components — KV, weights and attention scores have very different access shapes,
+and lumping them would average that away. `_kv_dram_run_entries` is the hook a
+page-selective reader overrides (Stage 3); it defaults to the whole per-head
+block, which is what a dense or compacted cache actually reads.
 
-**Checkpoint.** `<stage-2-sha>`
+**Result — alignment matters, not just run length.** A dense 4-bit KV entry is
+`128 × 4 / 8` = 64 B: exactly two 32 B bursts, so the term is **inert**. It bites
+only when the run is unaligned or the burst is coarse:
+
+| access | burst | charged | waste |
+|--------|-------|---------|-------|
+| dense entry, 64 B | 32 B | 64 B | 1.00× |
+| ThinK entry (`d_ret=77`), 38 B | 32 B | 64 B | **1.68×** |
+| dense entry, 64 B | 128 B | 128 B | **2.00×** |
+
+End-to-end at 8K context with a 128 B burst: contiguous KV is inert
+(1.00×, TPOT 69.629 ms), while a per-entry reader pays 1.09× on decode DRAM and
+72.252 ms TPOT — 3.8% slower. That gap is the thing a flat bandwidth model
+cannot see, and it is why Stage 3 needed this first.
+
+**Note this sharpens §5's "unverified" caveat rather than settling it.** ThinK's
+speedup was computed from K-cache bytes ÷ 51.2 GB/s. A pruned entry is 38 B — the
+one shape in the table that is *not* burst-aligned — so a compacted ThinK cache
+plausibly gives back part of its saving to burst rounding. Quantifying that needs
+the pruned-entry layout pinned down, which the current model does not specify.
+
+**Verification.**
+- Gate at `dram_burst_bytes=0`: zero pre-existing values changed, zero keys
+  missing; the only additions are `dram_burst_bytes`, `dram_read_eff` and
+  `dram_write_eff`. Re-captured (21,540 values) and re-checked clean.
+- Hand-checks: the plan's worked example (38 B run, 32 B burst → 64 B) exact;
+  16 MB contiguous is inert; `burst=0` is exactly inert; alignment cases as
+  tabled above; end-to-end a `_kv_dram_run_entries → 1` subclass moves both DRAM
+  bytes and roofline TPOT, proving the rewiring reaches the latency path.
+- Standing checks 2 and 3 pass; `think_run.py` still reproduces 55.39 / 70.67 /
+  131.82 ms.
+
+**Checkpoint.** `<stage-2-sha>` — recorded by the following commit.
 
 ---
 

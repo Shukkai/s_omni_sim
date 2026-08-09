@@ -152,6 +152,18 @@ class HardwareConfig:
     # which is what makes "how much batch fits" a well-posed question.
     sram_batch_model: str = "sequential"
 
+    # --- DRAM access granularity ---
+    # Minimum useful transfer size, in bytes.  A DRAM controller moves whole
+    # bursts, so an access that touches `run` contiguous bytes actually costs
+    # `ceil(run / burst) * burst`.  0 = disabled: bytes are charged exactly as
+    # requested, which is how every result predating this field was produced.
+    #
+    # This is inert for contiguous traffic (a 16 KB weight block rounded to a
+    # 32 B burst is still 16 KB) and only bites when the access pattern is
+    # short-run -- a page-selective KV read, say -- which is exactly the case a
+    # flat bandwidth number makes look ~100x cheaper than it is.
+    dram_burst_bytes: int = 0
+
     # --- Bit widths ---
     act_bits: int = 16
     accumulate_bits: int = 32
@@ -185,9 +197,15 @@ class OperationMetrics:
     utilization: float = 0.0
     throughput: float = 0.0
 
-    # Memory access (bytes)
+    # Memory access (bytes).  dram_read / dram_write are *logical* bytes: what
+    # the operation asked for.  The _eff pair is what the DRAM actually moved
+    # once each access is rounded up to a burst.  They are equal unless
+    # hw.dram_burst_bytes is set, and both are kept so a report can show the
+    # waste rather than silently changing what "dram_read" has always meant.
     dram_read: int = 0
     dram_write: int = 0
+    dram_read_eff: int = 0
+    dram_write_eff: int = 0
     sram_read: int = 0
     sram_write: int = 0
 
@@ -231,6 +249,8 @@ def _aggregate_metrics(metrics_list: List[OperationMetrics]) -> OperationMetrics
         total.flops += m.flops
         total.dram_read += m.dram_read
         total.dram_write += m.dram_write
+        total.dram_read_eff += m.dram_read_eff
+        total.dram_write_eff += m.dram_write_eff
         total.sram_read += m.sram_read
         total.sram_write += m.sram_write
         total.compute_energy += m.compute_energy
@@ -500,6 +520,8 @@ class SimulationResults:
             "memory": {
                 "dram_read": m.dram_read,
                 "dram_write": m.dram_write,
+                "dram_read_eff": m.dram_read_eff,
+                "dram_write_eff": m.dram_write_eff,
                 "sram_read": m.sram_read,
                 "sram_write": m.sram_write,
             },
@@ -859,6 +881,8 @@ class Simulator:
         )
         metrics.dram_read = mem["dram_read"]
         metrics.dram_write = mem["dram_write"]
+        metrics.dram_read_eff = mem["dram_read_eff"]
+        metrics.dram_write_eff = mem["dram_write_eff"]
         metrics.sram_read = mem["sram_read"]
         metrics.sram_write = mem["sram_write"]
 
@@ -874,9 +898,13 @@ class Simulator:
             )
         )
         # Re-fetch traffic is real DRAM traffic: fold it in before energy and
-        # roofline see the operation, not after.
+        # roofline see the operation, not after.  A spilled operand is re-read
+        # as a contiguous block, so it costs the same logically and effectively.
         metrics.dram_read += metrics.sram_refetch_bytes
+        metrics.dram_read_eff += self._dram_effective_bytes(
+            metrics.sram_refetch_bytes, metrics.sram_refetch_bytes)
         mem["dram_read"] = metrics.dram_read
+        mem["dram_read_eff"] = metrics.dram_read_eff
 
         # 4. Utilization
         metrics.utilization = (
@@ -1014,9 +1042,19 @@ class Simulator:
             if metrics.cycles > 0 else 0.0
         )
 
+        # Flash reads one contiguous K/V block per (batch, head), so its runs
+        # are long and the burst term is inert -- but compute it the same way
+        # rather than assuming, so a future short-run flash variant is covered.
+        metrics.dram_read_eff = self._dram_effective_bytes(
+            metrics.dram_read, metrics.dram_read)
+        metrics.dram_write_eff = self._dram_effective_bytes(
+            metrics.dram_write, metrics.dram_write)
+
         # Energy: memory
         mem_access = {
             "dram_read": metrics.dram_read, "dram_write": metrics.dram_write,
+            "dram_read_eff": metrics.dram_read_eff,
+            "dram_write_eff": metrics.dram_write_eff,
             "sram_read": metrics.sram_read, "sram_write": metrics.sram_write,
         }
         energy = self._calculate_memory_energy(mem_access)
@@ -1143,6 +1181,35 @@ class Simulator:
 
     # ---- Memory access calculation ------------------------------------------
 
+    def _dram_effective_bytes(self, logical: int, run_bytes: int) -> int:
+        """Round a DRAM access up to whole bursts.
+
+        `logical` is the total bytes wanted; `run_bytes` is how many of them
+        are *contiguous* per access.  Each run costs
+        `ceil(run / burst) * burst`, so the total scales by that ratio.
+
+        The distinction is the whole point: 1 MB read as one contiguous block
+        and 1 MB read as 27,000 scattered 38-byte snippets are the same
+        `logical` and wildly different costs.  With `dram_burst_bytes = 0`,
+        or a run at least as long as a burst and burst-aligned, this returns
+        `logical` unchanged.
+        """
+        burst = self.hw.dram_burst_bytes
+        if burst <= 0 or run_bytes <= 0:
+            return logical
+        moved_per_run = math.ceil(run_bytes / burst) * burst
+        return logical * moved_per_run // run_bytes
+
+    def _kv_dram_run_entries(self, kv_prev: int) -> int:
+        """Contiguous KV entries per DRAM access.
+
+        The cache is laid out per (batch, head), so a dense or compacted cache
+        reads one head's whole block contiguously -- the default here.  A
+        page-selective reader (Quest / TidalDecode / NSA) overrides this with
+        its page size, which is what makes the burst term bite.
+        """
+        return kv_prev
+
     def _calculate_memory_access(
         self, M: int, K: int, N: int,
         compute_mode: ComputeMode, op_type: OperationType,
@@ -1214,7 +1281,10 @@ class Simulator:
             sram_write_bits = C_accum_bits
 
         # ---- DRAM reads ----
-        dram_read_bits = 0
+        # Tracked as (bits, contiguous-run-bytes) so each component can be
+        # rounded up to a burst independently: they have very different access
+        # shapes, and lumping them together would average that away.
+        read_parts: List[Tuple[int, int]] = []
         # Effective KV batch for GQA (defaults to batch_size for MHA)
         eff_kv_batch = kv_batch_size if kv_batch_size > 0 else batch_size
 
@@ -1224,18 +1294,33 @@ class Simulator:
             # Decode attention: read cached KV from DRAM (scales with num_kv_heads)
             head_dim = K if op_type == OperationType.QK_MATMUL else N
             kv_prev = max(0, kv_len - 1)
-            dram_read_bits = eff_kv_batch * kv_prev * head_dim * kv_bits
+            # One run is however many consecutive entries the reader takes in
+            # one go, times the per-entry width.
+            run_entries = min(kv_prev, self._kv_dram_run_entries(kv_prev))
+            read_parts.append((eff_kv_batch * kv_prev * head_dim * kv_bits,
+                               run_entries * head_dim * kv_bits // 8))
 
         elif compute_mode == ComputeMode.AW:
-            # AW operations: weights loaded from DRAM
-            dram_read_bits = B_bits
+            # AW operations: weights loaded from DRAM -- one contiguous block
+            read_parts.append((B_bits, B_bits // 8))
 
-        # Attn·V reads attention scores (A operand) back from DRAM
+        # Attn·V reads attention scores (A operand) back from DRAM, contiguous
         if op_type == OperationType.ATTN_V_MATMUL:
-            dram_read_bits += batch_size * M * K * act_bits
+            score_bits = batch_size * M * K * act_bits
+            read_parts.append((score_bits, score_bits // 8))
+
+        dram_read_bits = sum(bits for bits, _ in read_parts)
+        dram_read_eff = sum(
+            self._dram_effective_bytes(bits // 8, run) for bits, run in read_parts
+        )
+        # Writes are contiguous in every path modelled so far.
+        dram_write_eff = self._dram_effective_bytes(
+            dram_write_bits // 8, dram_write_bits // 8)
 
         # Convert bits → bytes
         return {
+            "dram_read_eff":  dram_read_eff,
+            "dram_write_eff": dram_write_eff,
             "dram_read":  dram_read_bits  // 8,
             "dram_write": dram_write_bits // 8,
             "sram_read":  sram_read_bits  // 8,
@@ -1429,10 +1514,21 @@ class Simulator:
         return 0.0
 
     def _calculate_memory_energy(self, mem_access: dict) -> dict:
-        """Calculate DRAM and SRAM energy from byte-level access counts."""
+        """Calculate DRAM and SRAM energy from byte-level access counts.
+
+        DRAM energy is charged on the *effective* bytes: moving a burst costs
+        its energy whether or not every byte in it was wanted.  Note that
+        `dram_power_model.dram_energy` already models 1024 B rows and 8 B
+        bursts internally, so this is the coarser, access-pattern-level
+        rounding layered on top of that -- the two describe different things
+        (which bytes get fetched vs. what fetching them costs), and the
+        effective count is the right input to the latter.
+        """
+        dram_read = mem_access.get("dram_read_eff", mem_access["dram_read"])
+        dram_write = mem_access.get("dram_write_eff", mem_access["dram_write"])
         return {
-            "dram_read":  dram_power_model.dram_energy(mem_access["dram_read"],  is_write=False),
-            "dram_write": dram_power_model.dram_energy(mem_access["dram_write"], is_write=True),
+            "dram_read":  dram_power_model.dram_energy(dram_read,  is_write=False),
+            "dram_write": dram_power_model.dram_energy(dram_write, is_write=True),
             "sram_read":  sram_power_model.sram_energy(mem_access["sram_read"],  is_write=False),
             "sram_write": sram_power_model.sram_energy(mem_access["sram_write"], is_write=True),
         }
@@ -1866,6 +1962,12 @@ class Simulator:
         f.write(f"  Total FLOPs:         {m.flops:,}\n")
         f.write(f"  Avg Utilization:     {m.utilization:.2%}\n")
         f.write(f"  DRAM Read:           {m.dram_read:,} bytes ({m.dram_read / (1024**3):.2f} GB)\n")
+        if self.hw.dram_burst_bytes > 0:
+            moved = m.dram_read_eff + m.dram_write_eff
+            asked = m.dram_read + m.dram_write
+            waste = moved / asked if asked else 1.0
+            f.write(f"  DRAM moved (burst):  {moved:,} bytes "
+                    f"({moved / (1024**3):.2f} GB, {waste:.3f}x requested)\n")
         f.write(f"  DRAM Write:          {m.dram_write:,} bytes ({m.dram_write / (1024**3):.2f} GB)\n")
         f.write(f"  SRAM Read:           {m.sram_read:,} bytes ({m.sram_read / (1024**3):.2f} GB)\n")
         f.write(f"  SRAM Write:          {m.sram_write:,} bytes ({m.sram_write / (1024**3):.2f} GB)\n")
@@ -1950,7 +2052,7 @@ class Simulator:
 
             for m in op_list:
                 ct = m.cycles / freq
-                dram_bytes = m.dram_read + m.dram_write
+                dram_bytes = m.dram_read_eff + m.dram_write_eff
                 mt = dram_bytes / dram_bw if dram_bw > 0 else 0.0
                 rt = max(ct, mt)
 
@@ -2049,7 +2151,7 @@ class Simulator:
                 for op_list in ops_dict.values():
                     for m in op_list:
                         ct = m.cycles / freq
-                        mt = (m.dram_read + m.dram_write) / dram_bw
+                        mt = (m.dram_read_eff + m.dram_write_eff) / dram_bw
                         total += max(ct, mt)
             return total
 
@@ -2085,14 +2187,14 @@ class Simulator:
             for op_list in phase.aa_ops.values():
                 for m in op_list:
                     ct = m.cycles / freq
-                    mt = (m.dram_read + m.dram_write) / dram_bw if dram_bw > 0 else 0.0
+                    mt = (m.dram_read_eff + m.dram_write_eff) / dram_bw if dram_bw > 0 else 0.0
                     aa_time += max(ct, mt)
 
             # AW ops
             for op_list in phase.aw_ops.values():
                 for m in op_list:
                     ct = m.cycles / freq
-                    mt = (m.dram_read + m.dram_write) / dram_bw if dram_bw > 0 else 0.0
+                    mt = (m.dram_read_eff + m.dram_write_eff) / dram_bw if dram_bw > 0 else 0.0
                     aw_time += max(ct, mt)
 
             # Non-GEMM ops (VPU) — cycle-bound only, no DRAM access

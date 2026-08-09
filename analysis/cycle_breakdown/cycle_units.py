@@ -370,12 +370,13 @@ def compute_stage_cycle_breakdown(sim: Simulator, results: SimulationResults,
                 # so these match compute_roofline_latency* exactly.
                 eff_time = sum(
                     max(m.cycles / freq,
-                        (m.dram_read + m.dram_write) / dram_bw if dram_bw > 0 else 0.0)
+                        (m.dram_read_eff + m.dram_write_eff) / dram_bw
+                        if dram_bw > 0 else 0.0)
                     for m in op_list
                 )
                 stages[op_type.value] = _record(
                     op_type.value, category, len(op_list), total.cycles,
-                    total.flops, total.dram_read + total.dram_write,
+                    total.flops, total.dram_read_eff + total.dram_write_eff,
                     eff_time=eff_time,
                 )
 
