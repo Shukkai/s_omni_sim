@@ -191,7 +191,7 @@ but a design that serialises batch would show none of this.
 - Standing checks 2 and 3 still pass, and Stage 1's overflow hand-check still
   passes unchanged.
 
-**Checkpoint.** `<stage-1b-sha>` — recorded by the following commit.
+**Checkpoint.** `301f9d5` — recorded by the following commit.
 
 ---
 
