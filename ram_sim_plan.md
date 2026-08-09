@@ -141,7 +141,7 @@ a first-order cost.
 - Standing checks 2 and 3 pass; `think_run.py`'s dense baseline still reproduces
   §3's roofline column (55.39 / 70.67 / 131.82 ms).
 
-**Checkpoint.** `<stage-1-sha>` — recorded by the following commit, per the note
+**Checkpoint.** `9eaa1db` — recorded by the following commit, per the note
 under Stage 0.
 
 ---
@@ -166,6 +166,13 @@ packed cache and a scattered gather stop costing the same.
   `cycle_units.compute_stage_cycle_breakdown` (×2).
 - `_calculate_memory_energy` takes `*_eff` too — moving a burst costs its energy
   whether or not the bytes were wanted.
+
+**Found during Stage 1, relevant here.** `dram_power_model.dram_energy` already
+models granularity — 1024 B rows, 8 B bursts, plus a fixed per-call `ACT` term —
+which is why energy is not exactly linear in bytes (Stage 1's hand-check saw a
+63.0× byte ratio give a 62.9999× energy ratio). So the *energy* side is partly
+granular already and the *latency* side is not at all. Stage 2 must reconcile the
+two rather than add a second, independent burst notion on top.
 
 **Verification.** Gate clean at `dram_burst_bytes=0`. Hand-check one burst: a
 scattered KV read of `d_ret * kv_bits / 8` = 38 B against a 32 B burst charges 64 B.
