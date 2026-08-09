@@ -262,7 +262,7 @@ the pruned-entry layout pinned down, which the current model does not specify.
 - Standing checks 2 and 3 pass; `think_run.py` still reproduces 55.39 / 70.67 /
   131.82 ms.
 
-**Checkpoint.** `<stage-2-sha>` — recorded by the following commit.
+**Checkpoint.** `569b8ce` — recorded by the following commit.
 
 ---
 
