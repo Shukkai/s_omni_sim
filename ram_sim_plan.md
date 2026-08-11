@@ -86,7 +86,7 @@ coercion changed no number.
 **Goal.** Convert existing latency results into capacity claims — what the
 accelerator story actually needs.
 
-**Files.** `simulator/simulator.py`, new `analysis/capacity/capacity_run.py`,
+**Files.** `simulator/simulator.py`, new `analysis/memory/capacity_run.py`,
 `analysis/regression/baseline.json` (re-captured).
 
 - `HardwareConfig`: `sram_capacity_kb: int = 0` (`0` = unlimited → today's
@@ -106,7 +106,7 @@ accelerator story actually needs.
 
 **Two model gaps this exposed** — both pre-existing in `_calculate_peak_sram`,
 both surfaced only once capacity was enforced, and both recorded in
-`capacity_run.py`'s docstring rather than papered over:
+`analysis/memory/capacity_run.py`'s docstring rather than papered over:
 
 1. **Prefill holds the entire activation matrix.** `A_bytes = M·K·act/8` with `M`
    = full prefill length, so prefill's working set is O(seq × d_model): 59 MB at
@@ -158,7 +158,7 @@ under Stage 0.
 
 **Goal.** Close gap (2) above, so "how much batch fits" becomes answerable.
 
-**Files.** `simulator/simulator.py`, `analysis/capacity/capacity_run.py`,
+**Files.** `simulator/simulator.py`, `analysis/memory/capacity_run.py`,
 `analysis/regression/baseline.json` (re-captured).
 
 - `HardwareConfig.sram_batch_model: str = "sequential"` — `"sequential"` is the
@@ -277,7 +277,7 @@ the pruned-entry layout pinned down, which the current model does not specify.
 
 **Goal.** The first study that needs Stage 2 to be honest.
 
-**Files.** New `analysis/selective_attn/selective_attn.py`, `selective_run.py`,
+**Files.** New `analysis/memory/selective_attn.py`, `selective_run.py`,
 `selective_report.md`. No `simulator/` changes — pure add-on, as predicted.
 
 `SelectiveAttnSimulator(UnitAwareSimulator)` reads `k` of `n` KV *pages* per
@@ -335,7 +335,7 @@ logical whenever the burst term is off. Standing checks 2 and 3 pass.
 
 **Goal.** Stop charging for re-reads a real design would not pay.
 
-**Files.** `simulator/simulator.py`, new `analysis/kv_residency/`,
+**Files.** `simulator/simulator.py`, new `analysis/memory/residency_run.py`,
 `analysis/regression/baseline.json` (re-captured).
 
 **The gap.** `_calculate_memory_access` charged the decode KV read as

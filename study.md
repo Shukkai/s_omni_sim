@@ -224,8 +224,12 @@ At 32K, batch 1, λ=0.4 (77 of 128 channels retained):
   RAC columns can actually be power-gated is unmodelled and needs per-column
   characterization; the ceiling is small, since `attn_v` compute is only 2.0% of
   decode energy at batch 1 and 5.0% at batch 32.
-- **Build DRAM and SRAM latency models.** DRAM is one flat bandwidth number, so
-  scattered and contiguous KV reads look identical. SRAM capacity is reported but
-  never enforced, so §4(a)'s batch-32 row assumes memory that may not exist.
-  **Capacity enforcement is the higher-value half** — it turns "2x faster per
-  token" into "4x the batch fits", the claim this study cannot currently make.
+- **Build DRAM and SRAM latency models.** ✅ Done — see the companion
+  `study2.md` (scripts in `analysis/memory/`, staged record in
+  `ram_sim_plan.md`). SRAM capacity is now enforced and batch is a real capacity
+  axis, so the "N× the batch fits" claim is available: at 32K in 4 MB, dense
+  fits batch 1 while a 4096-entry budget fits 8. Two results there bear directly
+  on this file — §4's eviction numbers were measured at batch 1, where KV is
+  only 10–31% of decode DRAM and their speedups understate by several-fold; and
+  §5's ThinK grid may overstate, because a 38 B pruned entry is the one KV shape
+  that is not DRAM-burst-aligned.
