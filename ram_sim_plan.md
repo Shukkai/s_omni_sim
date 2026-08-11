@@ -327,7 +327,7 @@ reproduces dense; selecting every page reproduces dense at any page size; with
 burst off, selection and compacted eviction agree exactly; and effective ==
 logical whenever the burst term is off. Standing checks 2 and 3 pass.
 
-**Checkpoint.** `<stage-3-sha>` — recorded by the following commit.
+**Checkpoint.** `d63e355` — recorded by the following commit.
 
 ---
 
