@@ -28,6 +28,13 @@ gaps follow, both already in that file's TODO:
   study covers select-without-evict (Quest, TidalDecode, NSA), where a flat model
   makes 1% selection look ~100× cheaper than it is.
 
+  > **This premise turned out to be wrong, and Stage 3 is what disproved it.** A
+  > 4-bit KV entry is `128 × 4/8` = 64 B — exactly one DDR-class burst — so a
+  > page-gathering reader is burst-aligned at *every* page size, down to a single
+  > token. Selection costs nothing extra on this axis. Building Stage 2 was still
+  > what made the question answerable, and it did find a genuinely misaligned case
+  > (ThinK's 38 B pruned entry), but the motivating example was not real.
+
 Goal is the minimum change that makes the next study honest, not a full memory
 simulator. No claim here needs bank conflicts or refresh modelling.
 
@@ -266,23 +273,61 @@ the pruned-entry layout pinned down, which the current model does not specify.
 
 ---
 
-## Stage 3 — selective attention study ⬜
+## Stage 3 — selective attention study ✅
 
 **Goal.** The first study that needs Stage 2 to be honest.
 
-**Files.** New `analysis/selective_attn/`.
+**Files.** New `analysis/selective_attn/selective_attn.py`, `selective_run.py`,
+`selective_report.md`. No `simulator/` changes — pure add-on, as predicted.
 
-Same add-on pattern as `compact_breakdown/` and `channel_prune_breakdown/`: a
-subclass reading `k` of `n` KV *pages* per token rather than a prefix — Quest,
-TidalDecode, NSA. The selection cost and the burst term are the whole result; on a
-flat bandwidth model this is indistinguishable from compacted eviction, which is
-exactly why `kv_budget.py` deferred it to "a separate mask-granularity study".
+`SelectiveAttnSimulator(UnitAwareSimulator)` reads `k` of `n` KV *pages* per
+token: it clamps the decode GEMMs to the selected entries, overrides
+`_kv_dram_run_entries` to one page (the Stage 2 hook), and adds Quest-style
+per-page min/max metadata reads over the **full** context.
 
-**Verification.** Gate still clean (the study adds no `simulator/` changes). At page
-size = full context the selective simulator must reproduce the dense baseline
-exactly, the same way `ThinKSimulator` does at `d_ret = head_dim`.
+**Headline: the burst term is inert, and that is the finding.**
 
-**Checkpoint.** `<stage-3-sha>`
+A 4-bit KV entry is `128 × 4/8` = **64 B — exactly one DDR-class burst**. So a
+page-gathering reader is burst-aligned at every page size, down to `page = 1`
+(token-granular, TidalDecode-style). Selection and compacted eviction come out
+**byte-identical** at equal retained entries, at every `k` tested:
+
+| pages read | entries | evict (eff) | select (eff) | ratio |
+|-----------|---------|-------------|--------------|-------|
+| 16 | 256 | 17,913,118,720 | 17,913,118,720 | 1.000× |
+| 1024 | 16384 | 21,843,705,856 | 21,843,705,856 | 1.000× |
+
+Granularity here is a **bit-width** property, not a selection property. At 3-bit
+KV an entry is 48 B and a single-entry gather does pay 1.33× — but at 4 bits,
+`kv_budget.py`'s decision to defer this study turns out to have been *correct
+for this hardware*, not an oversight.
+
+**What actually costs: selection metadata.** It scales with the context, not
+with what was selected, so its share grows as selection gets more aggressive —
+a floor under how far selection can pay. Larger pages amortise it directly:
+
+| page | metadata overhead on decode DRAM |
+|------|----------------------------------|
+| 16 | 2.2 – 2.6% (grows as `k` shrinks) |
+| 64 | 0.5 – 0.6% |
+
+Decode speedup vs dense (page 16, 4-bit KV, 32K context) — burst costs nothing,
+metadata takes the top off:
+
+| read | flat model | + burst | + metadata |
+|------|-----------|---------|-----------|
+| 25% | 1.849× | 1.849× | 1.815× |
+| 3% | 2.464× | 2.464× | **2.404×** |
+
+**Verification.** Gate clean **without re-capturing** — the study adds no
+`simulator/` changes, so the archive should not move, and it did not. Five
+pre-flight assertions in `selective_run.py`: no selection parameters reproduces
+dense exactly (bytes and TPOT); page size = full context with one page selected
+reproduces dense; selecting every page reproduces dense at any page size; with
+burst off, selection and compacted eviction agree exactly; and effective ==
+logical whenever the burst term is off. Standing checks 2 and 3 pass.
+
+**Checkpoint.** `<stage-3-sha>` — recorded by the following commit.
 
 ---
 
