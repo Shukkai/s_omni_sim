@@ -391,7 +391,7 @@ result), and residency then removes what is left of the traffic.
 - All prior stages' hand-checks still pass; `think_run.py` still reproduces
   55.39 / 70.67 / 131.82 ms.
 
-**Checkpoint.** `<stage-4-sha>` — recorded by the following commit.
+**Checkpoint.** `5e3771f` — recorded by the following commit.
 
 ---
 
