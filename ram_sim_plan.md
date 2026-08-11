@@ -331,6 +331,70 @@ logical whenever the burst term is off. Standing checks 2 and 3 pass.
 
 ---
 
+## Stage 4 — KV residency across decode steps ✅
+
+**Goal.** Stop charging for re-reads a real design would not pay.
+
+**Files.** `simulator/simulator.py`, new `analysis/kv_residency/`,
+`analysis/regression/baseline.json` (re-captured).
+
+**The gap.** `_calculate_memory_access` charged the decode KV read as
+`eff_kv_batch × kv_prev × head_dim × kv_bits` on *every decode step*, with no
+reference to on-chip capacity — even though the cache is append-only and
+entries 1..n−1 are bit-identical between step *t* and *t+1*. Every decode DRAM
+number in `study.md` therefore assumed **zero** KV reuse across steps. Stage 1
+built the capacity machinery and nothing used it to suppress re-reads.
+
+- `HardwareConfig.kv_sram_kb: int = 0` — bytes of KV held on chip between decode
+  steps (`0` = old behaviour). A carve-out of `sram_capacity_kb`, not extra memory.
+- `OperationMetrics.kv_resident_bytes` for visibility, summed in `_aggregate_metrics`.
+- `_kv_resident_bytes(kv_bytes, share)` — whatever fits is not re-read. QK reads K
+  and Attn·V reads V, so each gets half the buffer; FlashAttention reads both in
+  one op and passes `share=1.0`.
+- **Steady-state model:** the one-time buffer fill after prefill is not charged,
+  which slightly favours residency — under 0.4% of KV traffic over 256 output
+  tokens, and a constant rather than a per-token term.
+
+**Result 1 — eviction's advantage is real, not a modelling artifact.** This is
+what the fix was built to test, and it came back negative. `evict-1024` at batch
+32 holds ~16× from a 0 KB buffer to a 128 MB one; at batch 1 it slips only
+2.460× → 2.295×. The dense K+V working set is 32 MB per layer at batch 1 and
+**1,024 MB at batch 32**, so no plausible buffer holds a meaningful fraction.
+Residency cannot rescue a cache that was never going to fit.
+
+**Result 2 — residency is an energy/capacity lever, not a latency one.** At 32K,
+batch 8, dense:
+
+| buffer | DRAM saved | energy saved | TPOT gain |
+|--------|-----------|--------------|-----------|
+| 8 MB | 2.3% | 1.5% | 0.4% |
+| 32 MB | 9.2% | 6.1% | 1.5% |
+| 128 MB | **36.8%** | **24.6%** | 6.2% |
+
+The bytes go away; the latency mostly does not. `attn_v` is compute-bound under
+a 4-bit KV cache, so removing its DRAM traffic moves a term that was not on the
+critical path — the same reason ThinK's byte saving never became speed. Report
+residency as energy and capacity, never as throughput.
+
+**So eviction and residency are complementary, and the order matters:** eviction
+shrinks the working set to a size a buffer can hold (the Stage 1b capacity
+result), and residency then removes what is left of the traffic.
+
+**Verification.**
+- Gate at `kv_sram_kb=0`: zero pre-existing values changed, zero keys missing;
+  only `kv_sram_kb` and `kv_resident_bytes` added. Re-captured (22,380 values)
+  and re-checked clean.
+- Hand-checks: disabled is exactly inert; a buffer ≥ the working set eliminates
+  the KV read entirely; a half-sized buffer removes exactly half, to the byte;
+  prefill is untouched; and end-to-end the weight traffic does not move while
+  decode DRAM falls.
+- All prior stages' hand-checks still pass; `think_run.py` still reproduces
+  55.39 / 70.67 / 131.82 ms.
+
+**Checkpoint.** `<stage-4-sha>` — recorded by the following commit.
+
+---
+
 ## Standing checks — run after *every* stage
 
 1. `python analysis/regression/baseline.py check` → *Identical to the baseline ✓*

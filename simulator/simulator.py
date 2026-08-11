@@ -164,6 +164,19 @@ class HardwareConfig:
     # flat bandwidth number makes look ~100x cheaper than it is.
     dram_burst_bytes: int = 0
 
+    # --- On-chip KV buffer ---
+    # Bytes of KV cache held on chip *between decode steps*, in KB.
+    #
+    # The KV cache is append-only: entries 1..n-1 are bit-identical at step t
+    # and step t+1.  With no buffer the whole cache is re-read from DRAM every
+    # token, which is what this model did unconditionally and what every decode
+    # number predating this field assumes.  0 keeps that behaviour.
+    #
+    # This is a carve-out of `sram_capacity_kb`, not additional memory; keeping
+    # the two consistent is the caller's job, and `capacity_run.py` reports the
+    # working set a given configuration needs.
+    kv_sram_kb: int = 0
+
     # --- Bit widths ---
     act_bits: int = 16
     accumulate_bits: int = 32
@@ -219,6 +232,10 @@ class OperationMetrics:
     # SRAM capacity requirement (bytes)
     peak_sram_bytes: int = 0
 
+    # KV bytes held on chip between decode steps, and so NOT re-read from DRAM
+    # (only meaningful when hw.kv_sram_kb > 0)
+    kv_resident_bytes: int = 0
+
     # Capacity enforcement (only meaningful when hw.sram_capacity_kb > 0)
     sram_overflow: bool = False      # working set exceeded capacity
     sram_refetch_bytes: int = 0      # extra DRAM reads charged by the spill policy
@@ -262,6 +279,7 @@ def _aggregate_metrics(metrics_list: List[OperationMetrics]) -> OperationMetrics
         max_peak_sram = max(max_peak_sram, m.peak_sram_bytes)
         total.sram_overflow |= m.sram_overflow
         total.sram_refetch_bytes += m.sram_refetch_bytes
+        total.kv_resident_bytes += m.kv_resident_bytes
 
     total.utilization = weighted_util / total.cycles if total.cycles > 0 else 0.0
     total.peak_sram_bytes = max_peak_sram
@@ -538,6 +556,7 @@ class SimulationResults:
             "peak_sram_bytes": m.peak_sram_bytes,
             "sram_overflow": m.sram_overflow,
             "sram_refetch_bytes": m.sram_refetch_bytes,
+            "kv_resident_bytes": m.kv_resident_bytes,
         }
 
 
@@ -883,6 +902,7 @@ class Simulator:
         metrics.dram_write = mem["dram_write"]
         metrics.dram_read_eff = mem["dram_read_eff"]
         metrics.dram_write_eff = mem["dram_write_eff"]
+        metrics.kv_resident_bytes = mem["kv_resident_bytes"]
         metrics.sram_read = mem["sram_read"]
         metrics.sram_write = mem["sram_write"]
 
@@ -996,9 +1016,14 @@ class Simulator:
         # KV DRAM reads scale with num_kv_heads (GQA), not num_heads
         eff_kv_batch = kv_batch_size if kv_batch_size > 0 else batch_size
         dram_read_bits = 0
+        kv_resident_bytes = 0
         if is_decode and kv_len > 1:
             kv_prev = kv_len - 1
             dram_read_bits = eff_kv_batch * kv_prev * head_dim * kv_bits * 2  # K + V
+            # One operation reads both K and V, so it gets the whole buffer.
+            kv_resident_bytes = self._kv_resident_bytes(
+                dram_read_bits // 8, share=1.0)
+            dram_read_bits -= kv_resident_bytes * 8
         dram_write_bits = 0  # Attention scores never written to DRAM
 
         # --- Peak SRAM footprint ---
@@ -1041,6 +1066,8 @@ class Simulator:
             (metrics.flops / 2) / (metrics.cycles * self.LANES_EQUIV)
             if metrics.cycles > 0 else 0.0
         )
+
+        metrics.kv_resident_bytes = kv_resident_bytes
 
         # Flash reads one contiguous K/V block per (batch, head), so its runs
         # are long and the burst term is inert -- but compute it the same way
@@ -1200,6 +1227,29 @@ class Simulator:
         moved_per_run = math.ceil(run_bytes / burst) * burst
         return logical * moved_per_run // run_bytes
 
+    def _kv_resident_bytes(self, kv_bytes: int, share: float = 0.5) -> int:
+        """How much of this op's KV working set stays on chip between steps.
+
+        The cache is append-only, so anything held in the KV buffer at step
+        `t` is still valid at `t+1` and costs no DRAM read.  Whatever does not
+        fit is streamed from DRAM every token, as before.
+
+        `share` splits the buffer between the two decode attention ops: QK
+        reads K, Attn·V reads V, so each gets half.  FlashAttention reads both
+        in one operation and passes `share=1.0`.
+
+        **Steady-state model.** The one-time cost of filling the buffer after
+        prefill is not charged, which slightly favours residency: over 256
+        output tokens the fill is under 0.4% of the KV traffic, and it is a
+        constant rather than a per-token term.  Charging it would need
+        `_calculate_memory_access` to know the decode step index, which it
+        deliberately does not.
+        """
+        buf = self.hw.kv_sram_kb * 1024
+        if buf <= 0:
+            return 0
+        return min(kv_bytes, int(buf * share))
+
     def _kv_dram_run_entries(self, kv_prev: int) -> int:
         """Contiguous KV entries per DRAM access.
 
@@ -1285,6 +1335,7 @@ class Simulator:
         # rounded up to a burst independently: they have very different access
         # shapes, and lumping them together would average that away.
         read_parts: List[Tuple[int, int]] = []
+        kv_resident_bytes = 0
         # Effective KV batch for GQA (defaults to batch_size for MHA)
         eff_kv_batch = kv_batch_size if kv_batch_size > 0 else batch_size
 
@@ -1297,7 +1348,11 @@ class Simulator:
             # One run is however many consecutive entries the reader takes in
             # one go, times the per-entry width.
             run_entries = min(kv_prev, self._kv_dram_run_entries(kv_prev))
-            read_parts.append((eff_kv_batch * kv_prev * head_dim * kv_bits,
+            kv_bits_total = eff_kv_batch * kv_prev * head_dim * kv_bits
+            # Whatever is held on chip between steps is not re-read.
+            resident = self._kv_resident_bytes(kv_bits_total // 8)
+            kv_resident_bytes = resident
+            read_parts.append(((kv_bits_total // 8 - resident) * 8,
                                run_entries * head_dim * kv_bits // 8))
 
         elif compute_mode == ComputeMode.AW:
@@ -1321,6 +1376,7 @@ class Simulator:
         return {
             "dram_read_eff":  dram_read_eff,
             "dram_write_eff": dram_write_eff,
+            "kv_resident_bytes": kv_resident_bytes,
             "dram_read":  dram_read_bits  // 8,
             "dram_write": dram_write_bits // 8,
             "sram_read":  sram_read_bits  // 8,

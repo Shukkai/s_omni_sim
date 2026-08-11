@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "3f65189e7c3a62082259eb42f95293acd111d9758f4935a27b80b425b25960a5",
+  "full_sha256": "6db446a856742c8f0c23e62691d5c54b3ffcc88d38aa2d335718691660dd1980",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -14,6 +14,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -40,6 +41,7 @@
         "total": 3.6082650283622377
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 64479559680,
         "dram_read_eff": 64479559680,
@@ -74,6 +76,7 @@
       "total": 3.6082650283622377
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 64479559680,
       "dram_read_eff": 64479559680,
@@ -109,6 +112,7 @@
         "total": 0.5674238377267181
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -144,6 +148,7 @@
         "total": 0.5674423284326382
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -179,6 +184,7 @@
         "total": 0.21130808408063842
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -214,6 +220,7 @@
         "total": 0.2111349768806384
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -249,6 +256,7 @@
         "total": 0.2111349768806384
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -284,6 +292,7 @@
         "total": 0.21130808408063842
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -318,6 +327,7 @@
       "total": 1.9797522880819083
      },
      "flops": 150994944000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 37748736000,
       "dram_read_eff": 37748736000,
@@ -351,6 +361,7 @@
       "total": 5.5880173164441
      },
      "flops": 215482368000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 102228295680,
       "dram_read_eff": 102228295680,
@@ -405,6 +416,7 @@
         "total": 19.367687999426558
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -439,6 +451,7 @@
       "total": 19.367687999426558
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -474,6 +487,7 @@
         "total": 9.306570999173118
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -509,6 +523,7 @@
         "total": 9.316669390032894
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -544,6 +559,7 @@
         "total": 3.557449786429439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -579,6 +595,7 @@
         "total": 3.462910174269439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -614,6 +631,7 @@
         "total": 3.462910174269439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -649,6 +667,7 @@
         "total": 3.557449786429439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -683,6 +702,7 @@
       "total": 32.66396031060377
      },
      "flops": 82463372083200,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -716,6 +736,7 @@
       "total": 52.03164831003014
      },
      "flops": 117647744172032,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -749,6 +770,7 @@
      "total": 57.61966562647424
     },
     "flops": 117863226540032,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 104744878080,
      "dram_read_eff": 104744878080,
@@ -785,7 +807,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "40a6fbb5df41e90793237f47e15bf91681377c57744cbc4919111dc432557df0",
+  "full_sha256": "e832d024ee58842fafa18c1aea094be7ff6ba69187d182aeb9df8214ebddf7c7",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -799,6 +821,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -825,6 +848,7 @@
         "total": 0.36752416973107305
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4322263040,
         "dram_read_eff": 4322263040,
@@ -860,6 +884,7 @@
         "total": 0.39577938839347326
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4191223808,
         "dram_read_eff": 4191223808,
@@ -894,6 +919,7 @@
       "total": 0.763303558124545
      },
      "flops": 33546043392,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 8513486848,
       "dram_read_eff": 8513486848,
@@ -929,6 +955,7 @@
         "total": 1.527205340983299
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -964,6 +991,7 @@
         "total": 1.5272619545026593
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -999,6 +1027,7 @@
         "total": 0.1091771409776648
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -1034,6 +1063,7 @@
         "total": 0.43634561888665047
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -1069,6 +1099,7 @@
         "total": 0.43634561888665047
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -1104,6 +1135,7 @@
         "total": 0.1091771409776648
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -1138,6 +1170,7 @@
       "total": 4.145512815214509
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -1171,6 +1204,7 @@
       "total": 4.908816373339218
      },
      "flops": 349763010560,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 87567728640,
       "dram_read_eff": 87567728640,
@@ -1225,6 +1259,7 @@
         "total": 0.9285510734520314
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8589934592,
         "dram_read_eff": 8589934592,
@@ -1260,6 +1295,7 @@
         "total": 1.0237288646942724
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -1294,6 +1330,7 @@
       "total": 1.9522799381463052
      },
      "flops": 2199023255552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 8589934592,
       "dram_read_eff": 8589934592,
@@ -1329,6 +1366,7 @@
         "total": 3.065784122445824
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -1364,6 +1402,7 @@
         "total": 3.0695242672087035
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -1399,6 +1438,7 @@
         "total": 0.22489335775641583
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -1434,6 +1474,7 @@
         "total": 0.8759383605616635
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -1469,6 +1510,7 @@
         "total": 0.8759383605616635
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -1504,6 +1546,7 @@
         "total": 0.22489335775641583
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -1538,6 +1581,7 @@
       "total": 8.336971826290698
      },
      "flops": 20890720927744,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -1571,6 +1615,7 @@
       "total": 10.289251764437017
      },
      "flops": 23089744183296,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 11140071424,
       "dram_read_eff": 11140071424,
@@ -1604,6 +1649,7 @@
      "total": 15.198068137776234
     },
     "flops": 23439507193856,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 98707800064,
      "dram_read_eff": 98707800064,
@@ -1640,7 +1686,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "d8c6429f157bd219718f51838eef2f290c807080fd639d426e2a38f59a405c90",
+  "full_sha256": "1a1a6955b168ad93ce4ca634d0f8fd12a5d5815b04c20da3ab51621632f8bb52",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1654,6 +1700,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -1680,6 +1727,7 @@
         "total": 5.815574405532721
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 68683857920,
         "dram_read_eff": 68683857920,
@@ -1715,6 +1763,7 @@
         "total": 6.220261211031491
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 66602467328,
         "dram_read_eff": 66602467328,
@@ -1749,6 +1798,7 @@
       "total": 12.035835616564201
      },
      "flops": 532835991552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 135286325248,
       "dram_read_eff": 135286325248,
@@ -1784,6 +1834,7 @@
         "total": 1.527205340983299
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -1819,6 +1870,7 @@
         "total": 1.5272619545026593
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -1854,6 +1906,7 @@
         "total": 0.1091771409776648
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -1889,6 +1942,7 @@
         "total": 0.43634561888665047
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -1924,6 +1978,7 @@
         "total": 0.43634561888665047
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -1959,6 +2014,7 @@
         "total": 0.1091771409776648
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -1993,6 +2049,7 @@
       "total": 4.145512815214509
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -2026,6 +2083,7 @@
       "total": 16.181348431779167
      },
      "flops": 849052958720,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 214340567040,
       "dram_read_eff": 214340567040,
@@ -2080,6 +2138,7 @@
         "total": 236.18621591280422
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2199023255552,
         "dram_read_eff": 2199023255552,
@@ -2115,6 +2174,7 @@
         "total": 262.0745751306937
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -2149,6 +2209,7 @@
       "total": 498.2607910434984
      },
      "flops": 562949953421312,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2199023255552,
       "dram_read_eff": 2199023255552,
@@ -2184,6 +2245,7 @@
         "total": 48.33779086233188
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -2219,6 +2281,7 @@
         "total": 48.39763317853796
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -2254,6 +2317,7 @@
         "total": 3.5472390112911345
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -2289,6 +2353,7 @@
         "total": 13.810797429100539
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -2324,6 +2389,7 @@
         "total": 13.810797429100539
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -2359,6 +2425,7 @@
         "total": 3.5472390112911345
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -2393,6 +2460,7 @@
       "total": 131.4514969216532
      },
      "flops": 334251534843904,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -2426,6 +2494,7 @@
       "total": 629.7122879651512
      },
      "flops": 897201488265216,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2201573392384,
       "dram_read_eff": 2201573392384,
@@ -2459,6 +2528,7 @@
      "total": 645.8936363969303
     },
     "flops": 898050541223936,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 2415913959424,
      "dram_read_eff": 2415913959424,
@@ -2495,7 +2565,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "35ee0358588b385ab0d4166f5c6db30a3dac6a85581c99d52ea9ab5612df361c",
+  "full_sha256": "3a7d75ae3341a35d98cdfb57eb8ea3795fc99e4784635845e54f6b5aecb8ead0",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2509,6 +2579,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -2535,6 +2606,7 @@
         "total": 42.00680704701655
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 496114597888,
         "dram_read_eff": 496114597888,
@@ -2570,6 +2642,7 @@
         "total": 44.938147158618115
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 481080377344,
         "dram_read_eff": 481080377344,
@@ -2604,6 +2677,7 @@
       "total": 86.94495420563435
      },
      "flops": 3848760459264,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 977194975232,
       "dram_read_eff": 977194975232,
@@ -2639,6 +2713,7 @@
         "total": 0.667956361796267
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -2674,6 +2749,7 @@
         "total": 0.668365440129707
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -2709,6 +2785,7 @@
         "total": 0.04835779833173317
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -2744,6 +2821,7 @@
         "total": 0.19084495383893266
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -2779,6 +2857,7 @@
         "total": 0.19084495383893266
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -2814,6 +2893,7 @@
         "total": 0.04835779833173317
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -2848,6 +2928,7 @@
       "total": 1.8147273062673108
      },
      "flops": 2284922601472,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 17850957824,
       "dram_read_eff": 17850957824,
@@ -2881,6 +2962,7 @@
       "total": 88.75968151190398
      },
      "flops": 6133683060736,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 995045933056,
       "dram_read_eff": 995045933056,
@@ -2935,6 +3017,7 @@
         "total": 7557.958907479688
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 70368744177664,
         "dram_read_eff": 70368744177664,
@@ -2970,6 +3053,7 @@
         "total": 8386.386402452152
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -3004,6 +3088,7 @@
       "total": 15944.345309931852
      },
      "flops": 18014398509481984,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70368744177664,
       "dram_read_eff": 70368744177664,
@@ -3039,6 +3124,7 @@
         "total": 1545.332147061232
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -3074,6 +3160,7 @@
         "total": 1547.2471011798268
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -3109,6 +3196,7 @@
         "total": 113.40613528817259
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -3144,6 +3232,7 @@
         "total": 441.52347062878636
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -3179,6 +3268,7 @@
         "total": 441.52347062878636
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -3214,6 +3304,7 @@
         "total": 113.40613528817259
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -3248,6 +3339,7 @@
       "total": 4202.438460074982
      },
      "flops": 10696049115004928,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -3281,6 +3373,7 @@
       "total": 20146.78377000684
      },
      "flops": 28710447624486912,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70371294314496,
       "dram_read_eff": 70371294314496,
@@ -3314,6 +3407,7 @@
      "total": 20235.543451518744
     },
     "flops": 28716581307547648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 71366340247552,
      "dram_read_eff": 71366340247552,
@@ -3350,7 +3444,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "f21a306151afa83cef93b49fc8dac2f3c99f0763e4bc525e303c3e74c43a9277",
+  "full_sha256": "d81d94306c220a348dd0b76208056e58422a9df3fa854a90ba8a7b4f88f3b01f",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3364,6 +3458,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -3390,6 +3485,7 @@
         "total": 5.635012554711039
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 66494791680,
         "dram_read_eff": 66494791680,
@@ -3425,6 +3521,7 @@
         "total": 6.038375687229464
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 64479559680,
         "dram_read_eff": 64479559680,
@@ -3459,6 +3556,7 @@
       "total": 11.673388241940485
      },
      "flops": 515899392000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 130974351360,
       "dram_read_eff": 130974351360,
@@ -3494,6 +3592,7 @@
         "total": 0.8953107502489572
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -3529,6 +3628,7 @@
         "total": 0.8955298993561573
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -3564,6 +3664,7 @@
         "total": 0.06429775960063958
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -3599,6 +3700,7 @@
         "total": 0.2558036694425583
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -3634,6 +3736,7 @@
         "total": 0.2558036694425583
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -3669,6 +3772,7 @@
         "total": 0.06429775960063958
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -3703,6 +3807,7 @@
       "total": 2.4310435076915384
      },
      "flops": 1224065679360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 38252052480,
       "dram_read_eff": 38252052480,
@@ -3736,6 +3841,7 @@
       "total": 14.104431749632779
      },
      "flops": 1739965071360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 169226403840,
       "dram_read_eff": 169226403840,
@@ -3790,6 +3896,7 @@
         "total": 118.24539245029379
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1099511627776,
         "dram_read_eff": 1099511627776,
@@ -3825,6 +3932,7 @@
         "total": 131.03728759325088
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -3859,6 +3967,7 @@
       "total": 249.2826800435446
      },
      "flops": 281474976710656,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1099511627776,
       "dram_read_eff": 1099511627776,
@@ -3894,6 +4003,7 @@
         "total": 96.62793138487709
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -3929,6 +4039,7 @@
         "total": 96.74761601728926
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -3964,6 +4075,7 @@
         "total": 7.091074375061499
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -3999,6 +4111,7 @@
         "total": 27.607980435541997
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -4034,6 +4147,7 @@
         "total": 27.607980435541997
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -4069,6 +4183,7 @@
         "total": 7.091074375061499
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -4103,6 +4218,7 @@
       "total": 262.7736570233732
      },
      "flops": 668503069687808,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -4136,6 +4252,7 @@
       "total": 512.0563370669199
      },
      "flops": 949978046398464,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1102061764608,
       "dram_read_eff": 1102061764608,
@@ -4169,6 +4286,7 @@
      "total": 526.1607688165527
     },
     "flops": 951718011469824,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 1271288168448,
      "dram_read_eff": 1271288168448,
@@ -4205,7 +4323,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "5f7bf6154b5d54d76a0e4e5f0959b7b63e5cdb6f55d546a906cf55922554f9cb",
+  "full_sha256": "899f2e61bf0701c3224def7ee5590902dbaef14f7ab3a995f7dcbb9b194d021d",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -4219,6 +4337,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -4245,6 +4364,7 @@
         "total": 3.6082650283622377
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 64479559680,
         "dram_read_eff": 64479559680,
@@ -4279,6 +4399,7 @@
       "total": 3.6082650283622377
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 64479559680,
       "dram_read_eff": 64479559680,
@@ -4314,6 +4435,7 @@
         "total": 0.8445373961625621
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -4349,6 +4471,7 @@
         "total": 0.844570268528642
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -4384,6 +4507,7 @@
         "total": 0.21130808408063842
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -4419,6 +4543,7 @@
         "total": 0.2111349768806384
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -4454,6 +4579,7 @@
         "total": 0.2111349768806384
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -4489,6 +4615,7 @@
         "total": 0.21130808408063842
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -4523,6 +4650,7 @@
       "total": 2.5339937866136957
      },
      "flops": 193273528320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 48318382080,
       "dram_read_eff": 48318382080,
@@ -4556,6 +4684,7 @@
       "total": 6.142258814975541
      },
      "flops": 257760952320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 112797941760,
       "dram_read_eff": 112797941760,
@@ -4610,6 +4739,7 @@
         "total": 19.367687999426558
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -4644,6 +4774,7 @@
       "total": 19.367687999426558
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -4679,6 +4810,7 @@
         "total": 13.851640529653753
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -4714,6 +4846,7 @@
         "total": 13.86959322451558
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -4749,6 +4882,7 @@
         "total": 3.557449786429439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -4784,6 +4918,7 @@
         "total": 3.462910174269439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -4819,6 +4954,7 @@
         "total": 3.462910174269439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -4854,6 +4990,7 @@
         "total": 3.557449786429439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -4888,6 +5025,7 @@
       "total": 41.761953675567135
      },
      "flops": 105553116266496,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -4921,6 +5059,7 @@
       "total": 61.12964167499372
      },
      "flops": 140737488355328,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -4954,6 +5093,7 @@
      "total": 67.27190048996925
     },
     "flops": 140995249307648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 116019167232,
      "dram_read_eff": 116019167232,
@@ -4990,7 +5130,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "e8946f2b8f7c03f2bf8351990685042ce0efe8d76217dc4a900d33e9b92f868a",
+  "full_sha256": "cbbacf3030e8404c7187ed43fde99f9b0462e631031ea51edaa4b779fa4ca5b5",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5004,6 +5144,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -5030,6 +5171,7 @@
         "total": 3.6082650283622377
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 64479559680,
         "dram_read_eff": 64479559680,
@@ -5064,6 +5206,7 @@
       "total": 3.6082650283622377
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 64479559680,
       "dram_read_eff": 64479559680,
@@ -5099,6 +5242,7 @@
         "total": 0.9317748682598336
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -5134,6 +5278,7 @@
         "total": 0.9304941660364736
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -5169,6 +5314,7 @@
         "total": 0.3468805605580794
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -5204,6 +5350,7 @@
         "total": 0.34670745335807934
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -5239,6 +5386,7 @@
         "total": 0.34670745335807934
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -5274,6 +5422,7 @@
         "total": 0.3468805605580794
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -5308,6 +5457,7 @@
       "total": 3.249445062128582
      },
      "flops": 150994944000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 37748736000,
       "dram_read_eff": 37748736000,
@@ -5341,6 +5491,7 @@
       "total": 6.857710090490904
      },
      "flops": 215482368000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 102228295680,
       "dram_read_eff": 102228295680,
@@ -5395,6 +5546,7 @@
         "total": 19.367687999426558
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -5429,6 +5581,7 @@
       "total": 19.367687999426558
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -5464,6 +5617,7 @@
         "total": 11.796988939964415
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -5499,6 +5653,7 @@
         "total": 11.754158933905412
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -5534,6 +5689,7 @@
         "total": 4.4841169271889925
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -5569,6 +5725,7 @@
         "total": 4.389577315028992
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -5604,6 +5761,7 @@
         "total": 4.389577315028992
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -5639,6 +5797,7 @@
         "total": 4.4841169271889925
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -5673,6 +5832,7 @@
       "total": 41.29853635830576
      },
      "flops": 82463372083200,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -5706,6 +5866,7 @@
       "total": 60.666224357732204
      },
      "flops": 117647744172032,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -5739,6 +5900,7 @@
      "total": 67.5239344482231
     },
     "flops": 117863226540032,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 104744878080,
      "dram_read_eff": 104744878080,
@@ -5775,7 +5937,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "f070cb69e68f037d4c839979c569accf884a288918380b54af0afaf6722f8171",
+  "full_sha256": "6edb10bd2336fe58733ff0d207d58c1799da65eacd1cba0aceda7ebb04cdfd8a",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5789,6 +5951,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -5815,6 +5978,7 @@
         "total": 0.36752416973107305
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4322263040,
         "dram_read_eff": 4322263040,
@@ -5850,6 +6014,7 @@
         "total": 0.39577938839347326
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4191223808,
         "dram_read_eff": 4191223808,
@@ -5884,6 +6049,7 @@
       "total": 0.763303558124545
      },
      "flops": 33546043392,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 8513486848,
       "dram_read_eff": 8513486848,
@@ -5919,6 +6085,7 @@
         "total": 2.507846254170103
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -5954,6 +6121,7 @@
         "total": 2.5039250918072216
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -5989,6 +6157,7 @@
         "total": 0.17922292049100808
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -6024,6 +6193,7 @@
         "total": 0.7165287369400235
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -6059,6 +6229,7 @@
         "total": 0.7165287369400235
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -6094,6 +6265,7 @@
         "total": 0.17922292049100808
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -6128,6 +6300,7 @@
       "total": 6.803274660839231
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -6161,6 +6334,7 @@
       "total": 7.566578218963949
      },
      "flops": 349763010560,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 87567728640,
       "dram_read_eff": 87567728640,
@@ -6215,6 +6389,7 @@
         "total": 0.9285510734520314
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8589934592,
         "dram_read_eff": 8589934592,
@@ -6250,6 +6425,7 @@
         "total": 1.0237288646942724
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -6284,6 +6460,7 @@
       "total": 1.9522799381463052
      },
      "flops": 2199023255552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 8589934592,
       "dram_read_eff": 8589934592,
@@ -6319,6 +6496,7 @@
         "total": 3.871900967866369
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -6354,6 +6532,7 @@
         "total": 3.856038002659329
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -6389,6 +6568,7 @@
         "total": 0.28247313242931205
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -6424,6 +6604,7 @@
         "total": 1.1062574592532481
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -6459,6 +6640,7 @@
         "total": 1.1062574592532481
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -6494,6 +6676,7 @@
         "total": 0.28247313242931205
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -6528,6 +6711,7 @@
       "total": 10.505400153890815
      },
      "flops": 20890720927744,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -6561,6 +6745,7 @@
       "total": 12.457680092037123
      },
      "flops": 23089744183296,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 11140071424,
       "dram_read_eff": 11140071424,
@@ -6594,6 +6779,7 @@
      "total": 20.024258311001073
     },
     "flops": 23439507193856,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 98707800064,
      "dram_read_eff": 98707800064,
@@ -6630,7 +6816,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "487d39db19fb054b0c9f8d1e86e4e5292baf4ca6489314263e6b607e6497373e",
+  "full_sha256": "6df2b59599b9e6b36bc8b4a943d8be1cea25c9209cae5c25cd00dee026781837",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6644,6 +6830,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -6670,6 +6857,7 @@
         "total": 5.815574405532721
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 68683857920,
         "dram_read_eff": 68683857920,
@@ -6705,6 +6893,7 @@
         "total": 6.220261211031491
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 66602467328,
         "dram_read_eff": 66602467328,
@@ -6739,6 +6928,7 @@
       "total": 12.035835616564201
      },
      "flops": 532835991552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 135286325248,
       "dram_read_eff": 135286325248,
@@ -6774,6 +6964,7 @@
         "total": 2.507846254170103
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -6809,6 +7000,7 @@
         "total": 2.5039250918072216
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -6844,6 +7036,7 @@
         "total": 0.17922292049100808
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -6879,6 +7072,7 @@
         "total": 0.7165287369400235
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -6914,6 +7108,7 @@
         "total": 0.7165287369400235
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -6949,6 +7144,7 @@
         "total": 0.17922292049100808
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -6983,6 +7179,7 @@
       "total": 6.803274660839231
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -7016,6 +7213,7 @@
       "total": 18.839110277403122
      },
      "flops": 849052958720,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 214340567040,
       "dram_read_eff": 214340567040,
@@ -7070,6 +7268,7 @@
         "total": 236.18621591280422
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2199023255552,
         "dram_read_eff": 2199023255552,
@@ -7105,6 +7304,7 @@
         "total": 262.0745751306937
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -7139,6 +7339,7 @@
       "total": 498.2607910434984
      },
      "flops": 562949953421312,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2199023255552,
       "dram_read_eff": 2199023255552,
@@ -7174,6 +7375,7 @@
         "total": 61.3299984439419
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -7209,6 +7411,7 @@
         "total": 61.076191000629265
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -7244,6 +7447,7 @@
         "total": 4.475253838548992
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -7279,6 +7483,7 @@
         "total": 17.52285673813197
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -7314,6 +7519,7 @@
         "total": 17.52285673813197
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -7349,6 +7555,7 @@
         "total": 4.475253838548992
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -7383,6 +7590,7 @@
       "total": 166.40241059793303
      },
      "flops": 334251534843904,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -7416,6 +7624,7 @@
       "total": 664.6632016414289
      },
      "flops": 897201488265216,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2201573392384,
       "dram_read_eff": 2201573392384,
@@ -7449,6 +7658,7 @@
      "total": 683.5023119188321
     },
     "flops": 898050541223936,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 2415913959424,
      "dram_read_eff": 2415913959424,
@@ -7485,7 +7695,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "8e417bca4018714c2236afdabe11ccb8c1566d0249ed0fecb04552833942a084",
+  "full_sha256": "16df84e96d78e240200e2bddb23a123a48e725296575c5d34981428d9eee84f9",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7499,6 +7709,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -7525,6 +7736,7 @@
         "total": 42.00680704701655
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 496114597888,
         "dram_read_eff": 496114597888,
@@ -7560,6 +7772,7 @@
         "total": 44.938147158618115
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 481080377344,
         "dram_read_eff": 481080377344,
@@ -7594,6 +7807,7 @@
       "total": 86.94495420563435
      },
      "flops": 3848760459264,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 977194975232,
       "dram_read_eff": 977194975232,
@@ -7629,6 +7843,7 @@
         "total": 1.1227084265349083
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -7664,6 +7879,7 @@
         "total": 1.1193587151953952
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -7699,6 +7915,7 @@
         "total": 0.08084008867020799
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -7734,6 +7951,7 @@
         "total": 0.32077411519283194
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -7769,6 +7987,7 @@
         "total": 0.32077411519283194
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -7804,6 +8023,7 @@
         "total": 0.08084008867020799
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -7838,6 +8058,7 @@
       "total": 3.0452955494563976
      },
      "flops": 2284922601472,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 17850957824,
       "dram_read_eff": 17850957824,
@@ -7871,6 +8092,7 @@
       "total": 89.99024975509218
      },
      "flops": 6133683060736,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 995045933056,
       "dram_read_eff": 995045933056,
@@ -7925,6 +8147,7 @@
         "total": 7557.958907479688
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 70368744177664,
         "dram_read_eff": 70368744177664,
@@ -7960,6 +8183,7 @@
         "total": 8386.386402452152
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -7994,6 +8218,7 @@
       "total": 15944.345309931852
      },
      "flops": 18014398509481984,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70368744177664,
       "dram_read_eff": 70368744177664,
@@ -8029,6 +8254,7 @@
         "total": 1961.2777549861728
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -8064,6 +8290,7 @@
         "total": 1953.1559168001684
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -8099,6 +8326,7 @@
         "total": 143.11653585423977
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -8134,6 +8362,7 @@
         "total": 560.3650728930551
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -8169,6 +8398,7 @@
         "total": 560.3650728930551
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -8204,6 +8434,7 @@
         "total": 143.11653585423977
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -8238,6 +8469,7 @@
       "total": 5321.396889280929
      },
      "flops": 10696049115004928,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -8271,6 +8503,7 @@
       "total": 21265.7421992127
      },
      "flops": 28710447624486912,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70371294314496,
       "dram_read_eff": 70371294314496,
@@ -8304,6 +8537,7 @@
      "total": 21355.732448967792
     },
     "flops": 28716581307547648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 71366340247552,
      "dram_read_eff": 71366340247552,
@@ -8340,7 +8574,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "cede5e1213977d844a2435b996f772a4989791872d1cb2980672ed8a6dfcdcaa",
+  "full_sha256": "a4fb4718e02b50ededa1ba86d49b377b63ee289200f55a69ce0691fefc9b5807",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8354,6 +8588,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -8380,6 +8615,7 @@
         "total": 5.635012554711039
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 66494791680,
         "dram_read_eff": 66494791680,
@@ -8415,6 +8651,7 @@
         "total": 6.038375687229464
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 64479559680,
         "dram_read_eff": 64479559680,
@@ -8449,6 +8686,7 @@
       "total": 11.673388241940485
      },
      "flops": 515899392000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 130974351360,
       "dram_read_eff": 130974351360,
@@ -8484,6 +8722,7 @@
         "total": 2.3981696584704126
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -8519,6 +8758,7 @@
         "total": 2.3911850646528143
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -8554,6 +8794,7 @@
         "total": 0.17164482447359963
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -8589,6 +8830,7 @@
         "total": 0.6851919289343986
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -8624,6 +8866,7 @@
         "total": 0.6851919289343986
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -8659,6 +8902,7 @@
         "total": 0.17164482447359963
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -8693,6 +8937,7 @@
       "total": 6.503028229939241
      },
      "flops": 1224065679360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 38252052480,
       "dram_read_eff": 38252052480,
@@ -8726,6 +8971,7 @@
       "total": 18.17641647187935
      },
      "flops": 1739965071360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 169226403840,
       "dram_read_eff": 169226403840,
@@ -8780,6 +9026,7 @@
         "total": 118.24539245029379
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1099511627776,
         "dram_read_eff": 1099511627776,
@@ -8815,6 +9062,7 @@
         "total": 131.03728759325088
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -8849,6 +9097,7 @@
       "total": 249.2826800435446
      },
      "flops": 281474976710656,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1099511627776,
       "dram_read_eff": 1099511627776,
@@ -8884,6 +9133,7 @@
         "total": 122.6186357517558
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -8919,6 +9169,7 @@
         "total": 122.11102086513053
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -8954,6 +9205,7 @@
         "total": 8.947553258409984
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -8989,6 +9241,7 @@
         "total": 35.03389596893594
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -9024,6 +9277,7 @@
         "total": 35.03389596893594
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -9059,6 +9313,7 @@
         "total": 8.947553258409984
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -9093,6 +9348,7 @@
       "total": 332.69255507157806
      },
      "flops": 668503069687808,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -9126,6 +9382,7 @@
       "total": 581.975235115121
      },
      "flops": 949978046398464,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1102061764608,
       "dram_read_eff": 1102061764608,
@@ -9159,6 +9416,7 @@
      "total": 600.1516515870003
     },
     "flops": 951718011469824,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 1271288168448,
      "dram_read_eff": 1271288168448,
@@ -9195,7 +9453,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "55d481b57a99e46fd0b8d53e8e8badb65f3a2d26f85782b13eebf464de59f29a",
+  "full_sha256": "837262d37fe4118bfa30f038c3b8df40cd81127edd4f63a47b14e61af8af0384",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -9209,6 +9467,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -9235,6 +9494,7 @@
         "total": 3.6082650283622377
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 64479559680,
         "dram_read_eff": 64479559680,
@@ -9269,6 +9529,7 @@
       "total": 3.6082650283622377
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 64479559680,
       "dram_read_eff": 64479559680,
@@ -9304,6 +9565,7 @@
         "total": 1.386827302072326
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -9339,6 +9601,7 @@
         "total": 1.3845504981196857
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -9374,6 +9637,7 @@
         "total": 0.3468805605580794
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -9409,6 +9673,7 @@
         "total": 0.34670745335807934
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -9444,6 +9709,7 @@
         "total": 0.34670745335807934
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -9479,6 +9745,7 @@
         "total": 0.3468805605580794
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -9513,6 +9780,7 @@
       "total": 4.158553828024187
      },
      "flops": 193273528320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 48318382080,
       "dram_read_eff": 48318382080,
@@ -9546,6 +9814,7 @@
       "total": 7.766818856386238
      },
      "flops": 257760952320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 112797941760,
       "dram_read_eff": 112797941760,
@@ -9600,6 +9869,7 @@
         "total": 19.367687999426558
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -9634,6 +9904,7 @@
       "total": 19.367687999426558
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -9669,6 +9940,7 @@
         "total": 17.55830909269197
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -9704,6 +9976,7 @@
         "total": 17.482166859698168
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -9739,6 +10012,7 @@
         "total": 4.4841169271889925
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -9774,6 +10048,7 @@
         "total": 4.389577315028992
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -9809,6 +10084,7 @@
         "total": 4.389577315028992
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -9844,6 +10120,7 @@
         "total": 4.4841169271889925
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -9878,6 +10155,7 @@
       "total": 52.78786443682623
      },
      "flops": 105553116266496,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -9911,6 +10189,7 @@
       "total": 72.15555243625279
      },
      "flops": 140737488355328,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -9944,6 +10223,7 @@
      "total": 79.92237129263903
     },
     "flops": 140995249307648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 116019167232,
      "dram_read_eff": 116019167232,
@@ -9980,7 +10260,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "baa8c97e4de99c115eaf9a4e188a92b99e664f26deee4114b3b8a192a0da3f1d",
+  "full_sha256": "160a4d6cd96aac13d22162d5dd7bdd0d2d601b5d659d03b082ac63fd67a28339",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -9994,6 +10274,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -10020,6 +10301,7 @@
         "total": 0.7503752629862416
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16119889920,
         "dram_read_eff": 16119889920,
@@ -10054,6 +10336,7 @@
       "total": 0.7503752629862416
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 16119889920,
       "dram_read_eff": 16119889920,
@@ -10089,6 +10372,7 @@
         "total": 0.5008641815385583
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -10124,6 +10408,7 @@
         "total": 0.5007683991551981
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -10159,6 +10444,7 @@
         "total": 0.1864118699827182
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -10194,6 +10480,7 @@
         "total": 0.18636859318271817
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -10229,6 +10516,7 @@
         "total": 0.18636859318271817
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -10264,6 +10552,7 @@
         "total": 0.1864118699827182
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -10298,6 +10587,7 @@
       "total": 1.747193507024611
      },
      "flops": 150994944000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 37748736000,
       "dram_read_eff": 37748736000,
@@ -10331,6 +10621,7 @@
       "total": 2.497568770011065
      },
      "flops": 215482368000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 53868625920,
       "dram_read_eff": 53868625920,
@@ -10385,6 +10676,7 @@
         "total": 13.594148102268242
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -10419,6 +10711,7 @@
       "total": 13.594148102268242
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -10454,6 +10747,7 @@
         "total": 7.8861851481579475
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -10489,6 +10783,7 @@
         "total": 7.822104668114947
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -10524,6 +10819,7 @@
         "total": 2.958029411815423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -10559,6 +10855,7 @@
         "total": 2.934394508775423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -10594,6 +10891,7 @@
         "total": 2.934394508775423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -10629,6 +10927,7 @@
         "total": 2.958029411815423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -10663,6 +10962,7 @@
       "total": 27.493137657454632
      },
      "flops": 82463372083200,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -10696,6 +10996,7 @@
       "total": 41.087285759723024
      },
      "flops": 117647744172032,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -10729,6 +11030,7 @@
      "total": 43.58485452973409
     },
     "flops": 117863226540032,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 56385208320,
      "dram_read_eff": 56385208320,
@@ -10765,7 +11067,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "cd79bc13859d286ca775dcf36322848351a6d44ede6296aff2885e48fd4b4e17",
+  "full_sha256": "35b27f5bf8479971bc1908682e2cd92ca275a802244360328c39284860e56846",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10779,6 +11081,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -10805,6 +11108,7 @@
         "total": 0.06144805954457584
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1178845184,
         "dram_read_eff": 1178845184,
@@ -10840,6 +11144,7 @@
         "total": 0.06317468816588868
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1047805952,
         "dram_read_eff": 1047805952,
@@ -10874,6 +11179,7 @@
       "total": 0.12462274771046537
      },
      "flops": 33546043392,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2226651136,
       "dram_read_eff": 2226651136,
@@ -10909,6 +11215,7 @@
         "total": 1.3480618322350133
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -10944,6 +11251,7 @@
         "total": 1.3477685725921336
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -10979,6 +11287,7 @@
         "total": 0.09631364070707284
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -11014,6 +11323,7 @@
         "total": 0.3851617592442826
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -11049,6 +11359,7 @@
         "total": 0.3851617592442826
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -11084,6 +11395,7 @@
         "total": 0.09631364070707284
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -11118,6 +11430,7 @@
       "total": 3.658781204729743
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -11151,6 +11464,7 @@
       "total": 3.7834039524402585
      },
      "flops": 349763010560,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 81280892928,
       "dram_read_eff": 81280892928,
@@ -11205,6 +11519,7 @@
         "total": 0.7482273318543359
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8589934592,
         "dram_read_eff": 8589934592,
@@ -11240,6 +11555,7 @@
         "total": 0.8424120779339094
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -11274,6 +11590,7 @@
       "total": 1.5906394097882464
      },
      "flops": 2199023255552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 8589934592,
       "dram_read_eff": 8589934592,
@@ -11309,6 +11626,7 @@
         "total": 2.598616012394496
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -11344,6 +11662,7 @@
         "total": 2.574882501267456
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -11379,6 +11698,7 @@
         "total": 0.18709266271846395
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -11414,6 +11734,7 @@
         "total": 0.7424617576898558
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -11449,6 +11770,7 @@
         "total": 0.7424617576898558
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -11484,6 +11806,7 @@
         "total": 0.18709266271846395
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -11518,6 +11841,7 @@
       "total": 7.0326073544785865
      },
      "flops": 20890720927744,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -11551,6 +11875,7 @@
       "total": 8.623246764266833
      },
      "flops": 23089744183296,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 11140071424,
       "dram_read_eff": 11140071424,
@@ -11584,6 +11909,7 @@
      "total": 12.406650716707093
     },
     "flops": 23439507193856,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 92420964352,
      "dram_read_eff": 92420964352,
@@ -11620,7 +11946,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "ecc7bfd5f2a304a4d1fe5f8a5bf43466ed3742b9b1a1b1df7ae5d8ae3c52b503",
+  "full_sha256": "b8b54d38f7baf55345c96f9e3b9812a240173d1908ff97f929a1fb9f681a5b41",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11634,6 +11960,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -11660,6 +11987,7 @@
         "total": 0.9744615619880932
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 18732007424,
         "dram_read_eff": 18732007424,
@@ -11695,6 +12023,7 @@
         "total": 0.9963073448058829
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16650616832,
         "dram_read_eff": 16650616832,
@@ -11729,6 +12058,7 @@
       "total": 1.970768906793974
      },
      "flops": 532835991552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 35382624256,
       "dram_read_eff": 35382624256,
@@ -11764,6 +12094,7 @@
         "total": 1.3480618322350133
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -11799,6 +12130,7 @@
         "total": 1.3477685725921336
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -11834,6 +12166,7 @@
         "total": 0.09631364070707284
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -11869,6 +12202,7 @@
         "total": 0.3851617592442826
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -11904,6 +12238,7 @@
         "total": 0.3851617592442826
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -11939,6 +12274,7 @@
         "total": 0.09631364070707284
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -11973,6 +12309,7 @@
       "total": 3.658781204729743
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -12006,6 +12343,7 @@
       "total": 5.629550111523811
      },
      "flops": 849052958720,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 114436866048,
       "dram_read_eff": 114436866048,
@@ -12060,6 +12398,7 @@
         "total": 189.26776565547414
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2199023255552,
         "dram_read_eff": 2199023255552,
@@ -12095,6 +12434,7 @@
         "total": 215.65747772004076
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -12129,6 +12469,7 @@
       "total": 404.92524337551527
      },
      "flops": 562949953421312,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2199023255552,
       "dram_read_eff": 2199023255552,
@@ -12164,6 +12505,7 @@
         "total": 40.957439156391935
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -12199,6 +12541,7 @@
         "total": 40.5777029783593
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -12234,6 +12577,7 @@
         "total": 2.9491663231754233
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -12269,6 +12613,7 @@
         "total": 11.702125513117693
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -12304,6 +12649,7 @@
         "total": 11.702125513117693
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -12339,6 +12685,7 @@
         "total": 2.9491663231754233
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -12373,6 +12720,7 @@
       "total": 110.83772580733738
      },
      "flops": 334251534843904,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -12406,6 +12754,7 @@
       "total": 515.7629691828538
      },
      "flops": 897201488265216,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2201573392384,
       "dram_read_eff": 2201573392384,
@@ -12439,6 +12788,7 @@
      "total": 521.3925192943776
     },
     "flops": 898050541223936,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 2316010258432,
      "dram_read_eff": 2316010258432,
@@ -12475,7 +12825,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "49231298a0bf433dac4b25c67e3496aa83fe7ae175c3533be485219bc87d8263",
+  "full_sha256": "961a8b544f809a57050245cb0f38714f057dc4e13ca15084c78898bf7d5b80d0",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12489,6 +12839,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -12515,6 +12866,7 @@
         "total": 7.038668266377234
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 135304314880,
         "dram_read_eff": 135304314880,
@@ -12550,6 +12902,7 @@
         "total": 7.1968589258711
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 120270094336,
         "dram_read_eff": 120270094336,
@@ -12584,6 +12937,7 @@
       "total": 14.235527192248329
      },
      "flops": 3848760459264,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 255574409216,
       "dram_read_eff": 255574409216,
@@ -12619,6 +12973,7 @@
         "total": 0.5692277049876474
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -12654,6 +13009,7 @@
         "total": 0.5666318522081278
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -12689,6 +13045,7 @@
         "total": 0.040821051256831935
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -12724,6 +13081,7 @@
         "total": 0.16263676617932776
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -12759,6 +13117,7 @@
         "total": 0.16263676617932776
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -12794,6 +13153,7 @@
         "total": 0.040821051256831935
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -12828,6 +13188,7 @@
       "total": 1.5427751920680837
      },
      "flops": 2284922601472,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 17850957824,
       "dram_read_eff": 17850957824,
@@ -12861,6 +13222,7 @@
       "total": 15.7783023843166
      },
      "flops": 6133683060736,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 273425367040,
       "dram_read_eff": 273425367040,
@@ -12915,6 +13277,7 @@
         "total": 6056.568499245126
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 70368744177664,
         "dram_read_eff": 70368744177664,
@@ -12950,6 +13313,7 @@
         "total": 6901.039285311258
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -12984,6 +13348,7 @@
       "total": 12957.607784556394
      },
      "flops": 18014398509481984,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70368744177664,
       "dram_read_eff": 70368744177664,
@@ -13019,6 +13384,7 @@
         "total": 1309.3558577845738
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -13054,6 +13420,7 @@
         "total": 1297.2043000875294
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -13089,6 +13456,7 @@
         "total": 94.28173536228553
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -13124,6 +13492,7 @@
         "total": 374.1016736925981
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -13159,6 +13528,7 @@
         "total": 374.1016736925981
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -13194,6 +13564,7 @@
         "total": 94.28173536228553
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -13228,6 +13599,7 @@
       "total": 3543.326975981868
      },
      "flops": 10696049115004928,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -13261,6 +13633,7 @@
       "total": 16500.934760538297
      },
      "flops": 28710447624486912,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70371294314496,
       "dram_read_eff": 70371294314496,
@@ -13294,6 +13667,7 @@
      "total": 16516.713062922612
     },
     "flops": 28716581307547648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 70644719681536,
      "dram_read_eff": 70644719681536,
@@ -13330,7 +13704,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "7c310c3c6131431d5a1258b23b346f57ba6446e535d4ff18b0bc85fd97eec353",
+  "full_sha256": "b5373558bf8990fb1cbbbcc0b86a4b36e21b62a144cd0cbf0b6746c38d42ce84",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -13344,6 +13718,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -13370,6 +13745,7 @@
         "total": 0.9437783152230352
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 18135121920,
         "dram_read_eff": 18135121920,
@@ -13405,6 +13781,7 @@
         "total": 0.9661607730176018
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16119889920,
         "dram_read_eff": 16119889920,
@@ -13439,6 +13816,7 @@
       "total": 1.909939088240642
      },
      "flops": 515899392000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 34255011840,
       "dram_read_eff": 34255011840,
@@ -13474,6 +13852,7 @@
         "total": 1.2047761308671978
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -13509,6 +13888,7 @@
         "total": 1.1994069482496026
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -13544,6 +13924,7 @@
         "total": 0.08614276884479943
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -13579,6 +13960,7 @@
         "total": 0.34422234961919773
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -13614,6 +13996,7 @@
         "total": 0.34422234961919773
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -13649,6 +14032,7 @@
         "total": 0.08614276884479943
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -13683,6 +14067,7 @@
       "total": 3.264913316044854
      },
      "flops": 1224065679360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 38252052480,
       "dram_read_eff": 38252052480,
@@ -13716,6 +14101,7 @@
       "total": 5.174852404285418
      },
      "flops": 1739965071360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 72507064320,
       "dram_read_eff": 72507064320,
@@ -13770,6 +14156,7 @@
         "total": 94.86172456246067
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1099511627776,
         "dram_read_eff": 1099511627776,
@@ -13805,6 +14192,7 @@
         "total": 107.82873888792443
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -13839,6 +14227,7 @@
       "total": 202.6904634503851
      },
      "flops": 281474976710656,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1099511627776,
       "dram_read_eff": 1099511627776,
@@ -13874,6 +14263,7 @@
         "total": 81.87351717665587
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -13909,6 +14299,7 @@
         "total": 81.11404482059059
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -13944,6 +14335,7 @@
         "total": 5.895378227662846
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -13979,6 +14371,7 @@
         "total": 23.392433518907385
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -14014,6 +14407,7 @@
         "total": 23.392433518907385
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -14049,6 +14443,7 @@
         "total": 5.895378227662846
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -14083,6 +14478,7 @@
       "total": 221.56318549038676
      },
      "flops": 668503069687808,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -14116,6 +14512,7 @@
       "total": 424.2536489407714
      },
      "flops": 949978046398464,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1102061764608,
       "dram_read_eff": 1102061764608,
@@ -14149,6 +14546,7 @@
      "total": 429.4285013450568
     },
     "flops": 951718011469824,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 1174568828928,
      "dram_read_eff": 1174568828928,
@@ -14185,7 +14583,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "ae92396db0066df7aa22611c4913c69d292e6222ae994ac478a0de9833ba24bd",
+  "full_sha256": "fd259de381a4686760223676d94fa648f7f17bd631f65d4413993f905806557c",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14199,6 +14597,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -14225,6 +14624,7 @@
         "total": 0.7503752629862416
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16119889920,
         "dram_read_eff": 16119889920,
@@ -14259,6 +14659,7 @@
       "total": 0.7503752629862416
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 16119889920,
       "dram_read_eff": 16119889920,
@@ -14294,6 +14695,7 @@
         "total": 0.7454718613708813
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -14329,6 +14731,7 @@
         "total": 0.7453015815782409
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -14364,6 +14767,7 @@
         "total": 0.1864118699827182
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -14399,6 +14803,7 @@
         "total": 0.18636859318271817
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -14434,6 +14839,7 @@
         "total": 0.18636859318271817
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -14469,6 +14875,7 @@
         "total": 0.1864118699827182
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -14503,6 +14910,7 @@
       "total": 2.2363343692799216
      },
      "flops": 193273528320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 48318382080,
       "dram_read_eff": 48318382080,
@@ -14536,6 +14944,7 @@
       "total": 2.986709632266377
      },
      "flops": 257760952320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 64438272000,
       "dram_read_eff": 64438272000,
@@ -14590,6 +14999,7 @@
         "total": 13.594148102268242
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -14624,6 +15034,7 @@
       "total": 13.594148102268242
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -14659,6 +15070,7 @@
         "total": 11.737577867677691
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -14694,6 +15106,7 @@
         "total": 11.623657014267897
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -14729,6 +15142,7 @@
         "total": 2.958029411815423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -14764,6 +15178,7 @@
         "total": 2.934394508775423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -14799,6 +15214,7 @@
         "total": 2.934394508775423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -14834,6 +15250,7 @@
         "total": 2.958029411815423
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -14868,6 +15285,7 @@
       "total": 35.14608272312727
      },
      "flops": 105553116266496,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -14901,6 +15319,7 @@
       "total": 48.740230825395614
      },
      "flops": 140737488355328,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -14934,6 +15353,7 @@
      "total": 51.72694045766198
     },
     "flops": 140995249307648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 67659497472,
      "dram_read_eff": 67659497472,
@@ -14970,7 +15390,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "c88272cb116db48cb7b5b62ea823dc5dc67be16b02eaafffffcf3b3067ee6ddd",
+  "full_sha256": "1cad45af883c4b539f3d8bd82f8935239f27929c6f39f37a358eb32ca478d392",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -14984,6 +15404,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -15010,6 +15431,7 @@
         "total": 0.5622090759782418
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 12089917440,
         "dram_read_eff": 12089917440,
@@ -15044,6 +15466,7 @@
       "total": 0.5622090759782418
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 12089917440,
       "dram_read_eff": 12089917440,
@@ -15079,6 +15502,7 @@
         "total": 0.49882385561855813
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -15114,6 +15538,7 @@
         "total": 0.498583193395198
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -15149,6 +15574,7 @@
         "total": 0.18564163894271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -15184,6 +15610,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -15219,6 +15646,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -15254,6 +15682,7 @@
         "total": 0.18564163894271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -15288,6 +15717,7 @@
       "total": 1.739909131184615
      },
      "flops": 150994944000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 37748736000,
       "dram_read_eff": 37748736000,
@@ -15321,6 +15751,7 @@
       "total": 2.3021182071629713
      },
      "flops": 215482368000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 49838653440,
       "dram_read_eff": 49838653440,
@@ -15375,6 +15806,7 @@
         "total": 11.463732296388612
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -15409,6 +15841,7 @@
       "total": 11.463732296388612
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -15444,6 +15877,7 @@
         "total": 11.399270352261121
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -15479,6 +15913,7 @@
         "total": 11.409368743120897
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -15514,6 +15949,7 @@
         "total": 4.25931518060544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -15549,6 +15985,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -15584,6 +16021,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -15619,6 +16057,7 @@
         "total": 4.25931518060544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -15653,6 +16092,7 @@
       "total": 39.8104474632438
      },
      "flops": 82463372083200,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -15686,6 +16126,7 @@
       "total": 51.274179759632325
      },
      "flops": 117647744172032,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -15719,6 +16160,7 @@
      "total": 53.576297966795295
     },
     "flops": 117863226540032,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 52355235840,
      "dram_read_eff": 52355235840,
@@ -15755,7 +16197,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "d3f2131686420567ad56647d22218d6d9f198505034312659f19232c30f4eaf8",
+  "full_sha256": "3ca9d2a210b1036cda6606ac8c3a66f564f42787efa2381cdfc8434b0c392d81",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15769,6 +16211,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -15795,6 +16238,7 @@
         "total": 0.04700348654272008
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 916893696,
         "dram_read_eff": 916893696,
@@ -15830,6 +16274,7 @@
         "total": 0.04868717254655977
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 785854464,
         "dram_read_eff": 785854464,
@@ -15864,6 +16309,7 @@
       "total": 0.09569065908927979
      },
      "flops": 33546043392,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1702748160,
       "dram_read_eff": 1702748160,
@@ -15899,6 +16345,7 @@
         "total": 1.3425703503790147
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -15934,6 +16381,7 @@
         "total": 1.3418335080161339
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -15969,6 +16417,7 @@
         "total": 0.09591591616307285
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -16004,6 +16453,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -16039,6 +16489,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -16074,6 +16525,7 @@
         "total": 0.09591591616307285
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -16108,6 +16560,7 @@
       "total": 3.6434212195777405
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -16141,6 +16594,7 @@
       "total": 3.7391118786670594
      },
      "flops": 349763010560,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 80756989952,
       "dram_read_eff": 80756989952,
@@ -16195,6 +16649,7 @@
         "total": 0.7749500615761916
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8589934592,
         "dram_read_eff": 8589934592,
@@ -16230,6 +16685,7 @@
         "total": 0.7581194101432316
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -16264,6 +16720,7 @@
       "total": 1.5330694717194246
      },
      "flops": 2199023255552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 8589934592,
       "dram_read_eff": 8589934592,
@@ -16299,6 +16756,7 @@
         "total": 3.7499852053258245
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -16334,6 +16792,7 @@
         "total": 3.7537253500887044
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -16369,6 +16828,7 @@
         "total": 0.268964023996416
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -16404,6 +16864,7 @@
         "total": 1.071424384241664
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -16439,6 +16900,7 @@
         "total": 1.071424384241664
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -16474,6 +16936,7 @@
         "total": 0.268964023996416
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -16508,6 +16971,7 @@
       "total": 10.184487371890668
      },
      "flops": 20890720927744,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -16541,6 +17005,7 @@
       "total": 11.717556843610094
      },
      "flops": 23089744183296,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 11140071424,
       "dram_read_eff": 11140071424,
@@ -16574,6 +17039,7 @@
      "total": 15.456668722277152
     },
     "flops": 23439507193856,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 91897061376,
      "dram_read_eff": 91897061376,
@@ -16610,7 +17076,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "839ca8442d6efdd88758d22b6727a840cb9447e726fbe7956d55dcdf314f8f4b",
+  "full_sha256": "8e9f3df61167404d5ffe8d9e9a3de5bad1147d34c2d5e447c1cb422d4bd8464e",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16624,6 +17090,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -16650,6 +17117,7 @@
         "total": 0.7434052492153637
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14569353216,
         "dram_read_eff": 14569353216,
@@ -16685,6 +17153,7 @@
         "total": 0.7680788580556804
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 12487962624,
         "dram_read_eff": 12487962624,
@@ -16719,6 +17188,7 @@
       "total": 1.5114841072710274
      },
      "flops": 532835991552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 27057315840,
       "dram_read_eff": 27057315840,
@@ -16754,6 +17224,7 @@
         "total": 1.3425703503790147
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -16789,6 +17260,7 @@
         "total": 1.3418335080161339
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -16824,6 +17296,7 @@
         "total": 0.09591591616307285
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -16859,6 +17332,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -16894,6 +17368,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -16929,6 +17404,7 @@
         "total": 0.09591591616307285
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -16963,6 +17439,7 @@
       "total": 3.6434212195777405
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -16996,6 +17473,7 @@
       "total": 5.154905326848827
      },
      "flops": 849052958720,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 106111557632,
       "dram_read_eff": 106111557632,
@@ -17050,6 +17528,7 @@
         "total": 198.396811605676
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2199023255552,
         "dram_read_eff": 2199023255552,
@@ -17085,6 +17564,7 @@
         "total": 193.81887441591087
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -17119,6 +17599,7 @@
       "total": 392.215686021587
      },
      "flops": 562949953421312,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2199023255552,
       "dram_read_eff": 2199023255552,
@@ -17154,6 +17635,7 @@
         "total": 59.227866039291875
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -17189,6 +17671,7 @@
         "total": 59.287708355497955
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -17224,6 +17707,7 @@
         "total": 4.248288089051133
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -17259,6 +17743,7 @@
         "total": 16.922247479660534
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -17294,6 +17779,7 @@
         "total": 16.922247479660534
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -17329,6 +17815,7 @@
         "total": 4.248288089051133
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -17363,6 +17850,7 @@
       "total": 160.8566455322133
      },
      "flops": 334251534843904,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -17396,6 +17884,7 @@
       "total": 553.0723315537999
      },
      "flops": 897201488265216,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2201573392384,
       "dram_read_eff": 2201573392384,
@@ -17429,6 +17918,7 @@
      "total": 558.2272368806487
     },
     "flops": 898050541223936,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 2307684950016,
      "dram_read_eff": 2307684950016,
@@ -17465,7 +17955,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "f17c359c65455309e5c4c0bf8233b1bb0591b6984daa07726a47a973488a7386",
+  "full_sha256": "2e48d5ed946cc442d22ede4e926869bed4afb39b71611b472a0586eee3e1471f",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17479,6 +17969,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -17505,6 +17996,7 @@
         "total": 5.369710114724877
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 105236791296,
         "dram_read_eff": 105236791296,
@@ -17540,6 +18032,7 @@
         "total": 5.548216910974964
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 90202570752,
         "dram_read_eff": 90202570752,
@@ -17574,6 +18067,7 @@
       "total": 10.917927025699791
      },
      "flops": 3848760459264,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 195439362048,
       "dram_read_eff": 195439362048,
@@ -17609,6 +18103,7 @@
         "total": 0.6935871146516502
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -17644,6 +18139,7 @@
         "total": 0.6906999543521295
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -17679,6 +18175,7 @@
         "total": 0.04966347455283188
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -17714,6 +18211,7 @@
         "total": 0.1981680260833275
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -17749,6 +18247,7 @@
         "total": 0.1981680260833275
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -17784,6 +18283,7 @@
         "total": 0.04966347455283188
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -17818,6 +18318,7 @@
       "total": 1.8799500702760983
      },
      "flops": 2284922601472,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 17850957824,
       "dram_read_eff": 17850957824,
@@ -17851,6 +18352,7 @@
       "total": 12.797877095975933
      },
      "flops": 6133683060736,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 213290319872,
       "dram_read_eff": 213290319872,
@@ -17905,6 +18407,7 @@
         "total": 6348.6979696515855
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 70368744177664,
         "dram_read_eff": 70368744177664,
@@ -17940,6 +18443,7 @@
         "total": 6202.2039795791015
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -17974,6 +18478,7 @@
       "total": 12550.901949230687
      },
      "flops": 18014398509481984,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70368744177664,
       "dram_read_eff": 70368744177664,
@@ -18009,6 +18514,7 @@
         "total": 1893.696458949103
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -18044,6 +18550,7 @@
         "total": 1895.6114130676979
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -18079,6 +18586,7 @@
         "total": 135.83127050686053
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -18114,6 +18622,7 @@
         "total": 541.0561311681781
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -18149,6 +18658,7 @@
         "total": 541.0561311681781
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -18184,6 +18694,7 @@
         "total": 135.83127050686053
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -18218,6 +18729,7 @@
       "total": 5143.082675366882
      },
      "flops": 10696049115004928,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -18251,6 +18763,7 @@
       "total": 17693.984624597568
      },
      "flops": 28710447624486912,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70371294314496,
       "dram_read_eff": 70371294314496,
@@ -18284,6 +18797,7 @@
      "total": 17706.782501693542
     },
     "flops": 28716581307547648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 70584584634368,
      "dram_read_eff": 70584584634368,
@@ -18320,7 +18834,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "9ad38499073684c7b67ddaf3dc5f82a9b3905419ccbc851e5050b9d197688008",
+  "full_sha256": "1dbc6b45d942d7e7200f13009122d20ef51113e3ef68c6dd6e29045b17910f7e",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18334,6 +18848,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -18360,6 +18875,7 @@
         "total": 0.7203826159590373
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14105149440,
         "dram_read_eff": 14105149440,
@@ -18395,6 +18911,7 @@
         "total": 0.7447779241472013
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 12089917440,
         "dram_read_eff": 12089917440,
@@ -18429,6 +18946,7 @@
       "total": 1.4651605401062426
      },
      "flops": 515899392000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 26195066880,
       "dram_read_eff": 26195066880,
@@ -18464,6 +18982,7 @@
         "total": 1.4712605801471947
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -18499,6 +19018,7 @@
         "total": 1.4652671671296065
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -18534,6 +19054,7 @@
         "total": 0.10515573396479921
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -18569,6 +19090,7 @@
         "total": 0.4203607636991969
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -18604,6 +19126,7 @@
         "total": 0.4203607636991969
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -18639,6 +19162,7 @@
         "total": 0.10515573396479921
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -18673,6 +19197,7 @@
       "total": 3.987560742604788
      },
      "flops": 1224065679360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 38252052480,
       "dram_read_eff": 38252052480,
@@ -18706,6 +19231,7 @@
       "total": 5.452721282710979
      },
      "flops": 1739965071360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 64447119360,
       "dram_read_eff": 64447119360,
@@ -18760,6 +19286,7 @@
         "total": 99.19744482342091
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1099511627776,
         "dram_read_eff": 1099511627776,
@@ -18795,6 +19322,7 @@
         "total": 96.93540527083108
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -18829,6 +19357,7 @@
       "total": 196.1328500942521
      },
      "flops": 281474976710656,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1099511627776,
       "dram_read_eff": 1099511627776,
@@ -18864,6 +19393,7 @@
         "total": 118.40427226218902
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -18899,6 +19429,7 @@
         "total": 118.52395689460118
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -18934,6 +19465,7 @@
         "total": 8.492900425109502
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -18969,6 +19501,7 @@
         "total": 33.82979211477401
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -19004,6 +19537,7 @@
         "total": 33.82979211477401
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -19039,6 +19573,7 @@
         "total": 8.492900425109502
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -19073,6 +19608,7 @@
       "total": 321.57361423655783
      },
      "flops": 668503069687808,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -19106,6 +19642,7 @@
       "total": 517.7064643308105
      },
      "flops": 949978046398464,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1102061764608,
       "dram_read_eff": 1102061764608,
@@ -19139,6 +19676,7 @@
      "total": 523.1591856135215
     },
     "flops": 951718011469824,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 1166508883968,
      "dram_read_eff": 1166508883968,
@@ -19175,7 +19713,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "08a74d6bb1358ba70eb3e40eb59175dee8131ceb11ab47c9aabd91923adb2782",
+  "full_sha256": "0599ef3da0fe6c4f35951824bebdd71efe283e65560f8ef966dac7fb6385270d",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19189,6 +19727,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -19215,6 +19754,7 @@
         "total": 0.5622090759782418
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 12089917440,
         "dram_read_eff": 12089917440,
@@ -19249,6 +19789,7 @@
       "total": 0.5622090759782418
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 12089917440,
       "dram_read_eff": 12089917440,
@@ -19284,6 +19825,7 @@
         "total": 0.7424350972108809
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -19319,6 +19861,7 @@
         "total": 0.7420072532582411
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -19354,6 +19897,7 @@
         "total": 0.18564163894271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -19389,6 +19933,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -19424,6 +19969,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -19459,6 +20005,7 @@
         "total": 0.18564163894271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -19493,6 +20040,7 @@
       "total": 2.2269444326399275
      },
      "flops": 193273528320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 48318382080,
       "dram_read_eff": 48318382080,
@@ -19526,6 +20074,7 @@
       "total": 2.7891535086183032
      },
      "flops": 257760952320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 60408299520,
       "dram_read_eff": 60408299520,
@@ -19580,6 +20129,7 @@
         "total": 11.463732296388612
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -19614,6 +20164,7 @@
       "total": 11.463732296388612
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -19649,6 +20200,7 @@
         "total": 16.966355845877757
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -19684,6 +20236,7 @@
         "total": 16.984308540739583
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -19719,6 +20272,7 @@
         "total": 4.25931518060544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -19754,6 +20308,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -19789,6 +20344,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -19824,6 +20380,7 @@
         "total": 4.25931518060544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -19858,6 +20415,7 @@
       "total": 50.95247275447912
      },
      "flops": 105553116266496,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -19891,6 +20449,7 @@
       "total": 62.41620505086786
      },
      "flops": 140737488355328,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -19924,6 +20483,7 @@
      "total": 65.20535855948617
     },
     "flops": 140995249307648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 63629524992,
      "dram_read_eff": 63629524992,
@@ -19960,7 +20520,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "8369e01cd264e5a6c8bd074e1acc91221feb9c53286af661f03616d02d857a45",
+  "full_sha256": "dab4883dc2730c40d1c967ece30394bde8ac846f47ad263f78e0a40135b4c07e",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19974,6 +20534,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -20000,6 +20561,7 @@
         "total": 0.7495956815462413
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16119889920,
         "dram_read_eff": 16119889920,
@@ -20034,6 +20596,7 @@
       "total": 0.7495956815462413
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 16119889920,
       "dram_read_eff": 16119889920,
@@ -20069,6 +20632,7 @@
         "total": 0.49882385561855813
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -20104,6 +20668,7 @@
         "total": 0.498583193395198
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 10821304320,
         "dram_read_eff": 10821304320,
@@ -20139,6 +20704,7 @@
         "total": 0.18565267894271809
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -20174,6 +20740,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -20209,6 +20776,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -20244,6 +20812,7 @@
         "total": 0.18565267894271809
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -20278,6 +20847,7 @@
       "total": 1.7399312111846152
      },
      "flops": 150994944000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 37748736000,
       "dram_read_eff": 37748736000,
@@ -20311,6 +20881,7 @@
       "total": 2.489526892731065
      },
      "flops": 215482368000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 53868625920,
       "dram_read_eff": 53868625920,
@@ -20365,6 +20936,7 @@
         "total": 15.276410735398906
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -20399,6 +20971,7 @@
       "total": 15.276410735398906
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -20434,6 +21007,7 @@
         "total": 11.399270352261121
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -20469,6 +21043,7 @@
         "total": 11.409368743120897
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 721420288,
         "dram_read_eff": 721420288,
@@ -20504,6 +21079,7 @@
         "total": 4.265223906365439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -20539,6 +21115,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -20574,6 +21151,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -20609,6 +21187,7 @@
         "total": 4.265223906365439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -20643,6 +21222,7 @@
       "total": 39.8222649147638
      },
      "flops": 82463372083200,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -20676,6 +21256,7 @@
       "total": 55.098675650162576
      },
      "flops": 117647744172032,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2516582400,
       "dram_read_eff": 2516582400,
@@ -20709,6 +21290,7 @@
      "total": 57.58820254289364
     },
     "flops": 117863226540032,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 56385208320,
      "dram_read_eff": 56385208320,
@@ -20745,7 +21327,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "830dae052246e690659f21e7a6816a8586ce3cff828d06c5ee3fa89d2d25bb9e",
+  "full_sha256": "f2b017ed6c259771b50051aa8108650a34f3aa0de60b75333d9048fdb9076fda",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20759,6 +21341,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -20785,6 +21368,7 @@
         "total": 0.06074479650457579
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1178845184,
         "dram_read_eff": 1178845184,
@@ -20820,6 +21404,7 @@
         "total": 0.06295532125388875
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1047805952,
         "dram_read_eff": 1047805952,
@@ -20854,6 +21439,7 @@
       "total": 0.12370011775846539
      },
      "flops": 33546043392,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2226651136,
       "dram_read_eff": 2226651136,
@@ -20889,6 +21475,7 @@
         "total": 1.3425703503790147
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -20924,6 +21511,7 @@
         "total": 1.3418335080161339
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -20959,6 +21547,7 @@
         "total": 0.09592139200307286
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -20994,6 +21583,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -21029,6 +21619,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -21064,6 +21655,7 @@
         "total": 0.09592139200307286
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -21098,6 +21690,7 @@
       "total": 3.64343217125774
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -21131,6 +21724,7 @@
       "total": 3.767132289016265
      },
      "flops": 349763010560,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 81280892928,
       "dram_read_eff": 81280892928,
@@ -21185,6 +21779,7 @@
         "total": 0.9072139139522558
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8589934592,
         "dram_read_eff": 8589934592,
@@ -21220,6 +21815,7 @@
         "total": 0.8847730453749758
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -21254,6 +21850,7 @@
       "total": 1.7919869593272326
      },
      "flops": 2199023255552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 8589934592,
       "dram_read_eff": 8589934592,
@@ -21289,6 +21886,7 @@
         "total": 3.7499852053258245
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -21324,6 +21922,7 @@
         "total": 3.7537253500887044
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -21359,6 +21958,7 @@
         "total": 0.26933331935641597
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -21394,6 +21994,7 @@
         "total": 1.071424384241664
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -21429,6 +22030,7 @@
         "total": 1.071424384241664
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -21464,6 +22066,7 @@
         "total": 0.26933331935641597
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -21498,6 +22101,7 @@
       "total": 10.18522596261067
      },
      "flops": 20890720927744,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -21531,6 +22135,7 @@
       "total": 11.977212921937907
      },
      "flops": 23089744183296,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 11140071424,
       "dram_read_eff": 11140071424,
@@ -21564,6 +22169,7 @@
      "total": 15.74434521095417
     },
     "flops": 23439507193856,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 92420964352,
      "dram_read_eff": 92420964352,
@@ -21600,7 +22206,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "996170925f6ca77debc27cb028f6343ab3dbcfd6f3da277a17c2fae17210dee8",
+  "full_sha256": "02ae733ace7d90fa98e36bda441dac98ebc9b2c8f4dbb8f9a464b5685c316534",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21614,6 +22220,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -21640,6 +22247,7 @@
         "total": 0.960660089668094
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 18732007424,
         "dram_read_eff": 18732007424,
@@ -21675,6 +22283,7 @@
         "total": 0.9929910332538836
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16650616832,
         "dram_read_eff": 16650616832,
@@ -21709,6 +22318,7 @@
       "total": 1.9536511229219786
      },
      "flops": 532835991552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 35382624256,
       "dram_read_eff": 35382624256,
@@ -21744,6 +22354,7 @@
         "total": 1.3425703503790147
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -21779,6 +22390,7 @@
         "total": 1.3418335080161339
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 29125246976,
         "dram_read_eff": 29125246976,
@@ -21814,6 +22426,7 @@
         "total": 0.09592139200307286
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -21849,6 +22462,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -21884,6 +22498,7 @@
         "total": 0.38359276442828266
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8321499136,
         "dram_read_eff": 8321499136,
@@ -21919,6 +22534,7 @@
         "total": 0.09592139200307286
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2080374784,
         "dram_read_eff": 2080374784,
@@ -21953,6 +22569,7 @@
       "total": 3.64343217125774
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 79054241792,
       "dram_read_eff": 79054241792,
@@ -21986,6 +22603,7 @@
       "total": 5.597083294179809
      },
      "flops": 849052958720,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 114436866048,
       "dram_read_eff": 114436866048,
@@ -22040,6 +22658,7 @@
         "total": 232.25956117168525
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2199023255552,
         "dram_read_eff": 2199023255552,
@@ -22075,6 +22694,7 @@
         "total": 226.15564491866508
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -22109,6 +22729,7 @@
       "total": 458.4152060903506
      },
      "flops": 562949953421312,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2199023255552,
       "dram_read_eff": 2199023255552,
@@ -22144,6 +22765,7 @@
         "total": 59.227866039291875
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -22179,6 +22801,7 @@
         "total": 59.287708355497955
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -22214,6 +22837,7 @@
         "total": 4.2541968148111335
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -22249,6 +22873,7 @@
         "total": 16.922247479660534
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -22284,6 +22909,7 @@
         "total": 16.922247479660534
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -22319,6 +22945,7 @@
         "total": 4.2541968148111335
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -22353,6 +22980,7 @@
       "total": 160.8684629837333
      },
      "flops": 334251534843904,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -22386,6 +23014,7 @@
       "total": 619.2836690740834
      },
      "flops": 897201488265216,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2201573392384,
       "dram_read_eff": 2201573392384,
@@ -22419,6 +23048,7 @@
      "total": 624.8807523682633
     },
     "flops": 898050541223936,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 2316010258432,
      "dram_read_eff": 2316010258432,
@@ -22455,7 +23085,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "a87ee70f5df5929a86b1820c2e814c89d0ddf628e4bf661442ffafce56a7f9ad",
+  "full_sha256": "e827a6404541b0b50380d5e064bb50e40c94c0437377e4818e98cbbdc0563130",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -22469,6 +23099,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -22495,6 +23126,7 @@
         "total": 6.938977958281236
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 135304314880,
         "dram_read_eff": 135304314880,
@@ -22530,6 +23162,7 @@
         "total": 7.172895900463102
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 120270094336,
         "dram_read_eff": 120270094336,
@@ -22564,6 +23197,7 @@
       "total": 14.111873858744307
      },
      "flops": 3848760459264,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 255574409216,
       "dram_read_eff": 255574409216,
@@ -22599,6 +23233,7 @@
         "total": 0.6935871146516502
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -22634,6 +23269,7 @@
         "total": 0.6906999543521295
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 6576668672,
         "dram_read_eff": 6576668672,
@@ -22669,6 +23305,7 @@
         "total": 0.04970386623283187
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -22704,6 +23341,7 @@
         "total": 0.1981680260833275
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -22739,6 +23377,7 @@
         "total": 0.1981680260833275
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -22774,6 +23413,7 @@
         "total": 0.04970386623283187
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 469762048,
         "dram_read_eff": 469762048,
@@ -22808,6 +23448,7 @@
       "total": 1.8800308536360981
      },
      "flops": 2284922601472,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 17850957824,
       "dram_read_eff": 17850957824,
@@ -22841,6 +23482,7 @@
       "total": 15.991904712380418
      },
      "flops": 6133683060736,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 273425367040,
       "dram_read_eff": 273425367040,
@@ -22895,6 +23537,7 @@
         "total": 7432.305955763881
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 70368744177664,
         "dram_read_eff": 70368744177664,
@@ -22930,6 +23573,7 @@
         "total": 7236.980635667235
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -22964,6 +23608,7 @@
       "total": 14669.286591431122
      },
      "flops": 18014398509481984,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70368744177664,
       "dram_read_eff": 70368744177664,
@@ -22999,6 +23644,7 @@
         "total": 1893.696458949103
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -23034,6 +23680,7 @@
         "total": 1895.6114130676979
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -23069,6 +23716,7 @@
         "total": 136.02034973118054
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -23104,6 +23752,7 @@
         "total": 541.0561311681781
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -23139,6 +23788,7 @@
         "total": 541.0561311681781
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -23174,6 +23824,7 @@
         "total": 136.02034973118054
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -23208,6 +23859,7 @@
       "total": 5143.460833815522
      },
      "flops": 10696049115004928,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -23241,6 +23893,7 @@
       "total": 19812.74742524668
      },
      "flops": 28710447624486912,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 70371294314496,
       "dram_read_eff": 70371294314496,
@@ -23274,6 +23927,7 @@
      "total": 19828.739329959062
     },
     "flops": 28716581307547648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 70644719681536,
      "dram_read_eff": 70644719681536,
@@ -23310,7 +23964,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "e151f4c48e996e4464fe980d87e5e6d1faa0464bbd74586f5d249b317259d31f",
+  "full_sha256": "5f100fdd56257657bb1ad9cb34162910cfa2be5e5f1591fbab13db21b9621392",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23324,6 +23978,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -23350,6 +24005,7 @@
         "total": 0.9309285762150351
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 18135121920,
         "dram_read_eff": 18135121920,
@@ -23385,6 +24041,7 @@
         "total": 0.9629139762176018
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16119889920,
         "dram_read_eff": 16119889920,
@@ -23419,6 +24076,7 @@
       "total": 1.8938425524326423
      },
      "flops": 515899392000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 34255011840,
       "dram_read_eff": 34255011840,
@@ -23454,6 +24112,7 @@
         "total": 1.4712605801471947
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -23489,6 +24148,7 @@
         "total": 1.4652671671296065
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 14092861440,
         "dram_read_eff": 14092861440,
@@ -23524,6 +24184,7 @@
         "total": 0.10517737236479921
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -23559,6 +24220,7 @@
         "total": 0.4203607636991969
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -23594,6 +24256,7 @@
         "total": 0.4203607636991969
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -23629,6 +24292,7 @@
         "total": 0.10517737236479921
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1006632960,
         "dram_read_eff": 1006632960,
@@ -23663,6 +24327,7 @@
       "total": 3.987604019404788
      },
      "flops": 1224065679360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 38252052480,
       "dram_read_eff": 38252052480,
@@ -23696,6 +24361,7 @@
       "total": 5.881446571837312
      },
      "flops": 1739965071360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 72507064320,
       "dram_read_eff": 72507064320,
@@ -23750,6 +24416,7 @@
         "total": 116.12849927065191
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1099511627776,
         "dram_read_eff": 1099511627776,
@@ -23785,6 +24452,7 @@
         "total": 113.11244653386548
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -23819,6 +24487,7 @@
       "total": 229.2409458045172
      },
      "flops": 281474976710656,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1099511627776,
       "dram_read_eff": 1099511627776,
@@ -23854,6 +24523,7 @@
         "total": 118.40427226218902
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -23889,6 +24559,7 @@
         "total": 118.52395689460118
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -23924,6 +24595,7 @@
         "total": 8.504717876629503
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -23959,6 +24631,7 @@
         "total": 33.82979211477401
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -23994,6 +24667,7 @@
         "total": 33.82979211477401
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -24029,6 +24703,7 @@
         "total": 8.504717876629503
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 67108864,
         "dram_read_eff": 67108864,
@@ -24063,6 +24738,7 @@
       "total": 321.59724913959786
      },
      "flops": 668503069687808,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 2550136832,
       "dram_read_eff": 2550136832,
@@ -24096,6 +24772,7 @@
       "total": 550.8381949441161
      },
      "flops": 949978046398464,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1102061764608,
       "dram_read_eff": 1102061764608,
@@ -24129,6 +24806,7 @@
      "total": 556.7196415159534
     },
     "flops": 951718011469824,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 1174568828928,
      "dram_read_eff": 1174568828928,
@@ -24165,7 +24843,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "d584b4b11a829f252db7e5972578ef5c787fcb5a5afdc0e312c19dccec3ff807",
+  "full_sha256": "2fea51b77af164ca161a785794b5a7111bc455c0620692b19547edebcab34e00",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24179,6 +24857,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -24205,6 +24884,7 @@
         "total": 0.7495956815462413
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16119889920,
         "dram_read_eff": 16119889920,
@@ -24239,6 +24919,7 @@
       "total": 0.7495956815462413
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 16119889920,
       "dram_read_eff": 16119889920,
@@ -24274,6 +24955,7 @@
         "total": 0.7424350972108809
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -24309,6 +24991,7 @@
         "total": 0.7420072532582411
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16106127360,
         "dram_read_eff": 16106127360,
@@ -24344,6 +25027,7 @@
         "total": 0.18565267894271809
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -24379,6 +25063,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -24414,6 +25099,7 @@
         "total": 0.18560940214271807
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -24449,6 +25135,7 @@
         "total": 0.18565267894271809
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4026531840,
         "dram_read_eff": 4026531840,
@@ -24483,6 +25170,7 @@
       "total": 2.2269665126399274
      },
      "flops": 193273528320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 48318382080,
       "dram_read_eff": 48318382080,
@@ -24516,6 +25204,7 @@
       "total": 2.976562194186383
      },
      "flops": 257760952320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 64438272000,
       "dram_read_eff": 64438272000,
@@ -24570,6 +25259,7 @@
         "total": 15.276410735398906
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -24604,6 +25294,7 @@
       "total": 15.276410735398906
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -24639,6 +25330,7 @@
         "total": 16.966355845877757
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -24674,6 +25366,7 @@
         "total": 16.984308540739583
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1073741824,
         "dram_read_eff": 1073741824,
@@ -24709,6 +25402,7 @@
         "total": 4.265223906365439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -24744,6 +25438,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -24779,6 +25474,7 @@
         "total": 4.24158900332544
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -24814,6 +25510,7 @@
         "total": 4.265223906365439
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 268435456,
         "dram_read_eff": 268435456,
@@ -24848,6 +25545,7 @@
       "total": 50.96429020599912
      },
      "flops": 105553116266496,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -24881,6 +25579,7 @@
       "total": 66.24070094139819
      },
      "flops": 140737488355328,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 3221225472,
       "dram_read_eff": 3221225472,
@@ -24914,6 +25613,7 @@
      "total": 69.21726313558456
     },
     "flops": 140995249307648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 67659497472,
      "dram_read_eff": 67659497472,
@@ -24950,7 +25650,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "6ee497883d8eb0c527ade0cb6476beef5559f14e50f0e55f2111467f45578e0d",
+  "full_sha256": "9be7345a7d900235cc2626f1048da6f240b1bd04dbdb465c695f8d8fd8df20bb",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -24964,6 +25664,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -24990,6 +25691,7 @@
         "total": 1.7586978208665613
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 32239779840,
         "dram_read_eff": 32239779840,
@@ -25024,6 +25726,7 @@
       "total": 1.7586978208665613
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 32239779840,
       "dram_read_eff": 32239779840,
@@ -25059,6 +25762,7 @@
         "total": 1.0990669492070526
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 21642608640,
         "dram_read_eff": 21642608640,
@@ -25094,6 +25798,7 @@
         "total": 1.0970094764236926
        },
        "flops": 43285217280,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 21642608640,
         "dram_read_eff": 21642608640,
@@ -25129,6 +25834,7 @@
         "total": 0.40904222312447963
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -25164,6 +25870,7 @@
         "total": 0.40895566952447965
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -25199,6 +25906,7 @@
         "total": 0.40895566952447965
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -25234,6 +25942,7 @@
         "total": 0.40904222312447963
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -25268,6 +25977,7 @@
       "total": 3.832072210928699
      },
      "flops": 150994944000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 75497472000,
       "dram_read_eff": 75497472000,
@@ -25301,6 +26011,7 @@
       "total": 5.590770031795256
      },
      "flops": 215482368000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 107737251840,
       "dram_read_eff": 107737251840,
@@ -25355,6 +26066,7 @@
         "total": 6.677248674598916
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -25389,6 +26101,7 @@
       "total": 6.677248674598916
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -25424,6 +26137,7 @@
         "total": 3.982700875321343
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1442840576,
         "dram_read_eff": 1442840576,
@@ -25459,6 +26173,7 @@
         "total": 3.9612982904463334
        },
        "flops": 23639499997184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1442840576,
         "dram_read_eff": 1442840576,
@@ -25494,6 +26209,7 @@
         "total": 1.5292050505441288
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -25529,6 +26245,7 @@
         "total": 1.481935244464129
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -25564,6 +26281,7 @@
         "total": 1.481935244464129
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -25599,6 +26317,7 @@
         "total": 1.5292050505441288
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -25633,6 +26352,7 @@
       "total": 13.966279755784177
      },
      "flops": 82463372083200,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 5033164800,
       "dram_read_eff": 5033164800,
@@ -25666,6 +26386,7 @@
       "total": 20.64352843038307
      },
      "flops": 117647744172032,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 5033164800,
       "dram_read_eff": 5033164800,
@@ -25699,6 +26420,7 @@
      "total": 26.234298462178327
     },
     "flops": 117863226540032,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 112770416640,
      "dram_read_eff": 112770416640,
@@ -25735,7 +26457,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "1a6c205e6b06e69062e5df160825cf1766ec82b5151dcc5b8797ca885585553d",
+  "full_sha256": "96ebe1eb8a3a86d59cfd407625719fe0f447b2c944029f888fd2b4d45de912cd",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25749,6 +26471,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -25775,6 +26498,7 @@
         "total": 0.15307991529011153
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2161131520,
         "dram_read_eff": 2161131520,
@@ -25810,6 +26534,7 @@
         "total": 0.1933515531530262
        },
        "flops": 16773021696,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2095611904,
         "dram_read_eff": 2095611904,
@@ -25844,6 +26569,7 @@
       "total": 0.3464314684431382
      },
      "flops": 33546043392,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 4256743424,
       "dram_read_eff": 4256743424,
@@ -25879,6 +26605,7 @@
         "total": 2.9581083511070148
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 58250493952,
         "dram_read_eff": 58250493952,
@@ -25914,6 +26641,7 @@
         "total": 2.95180892826413
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 58250493952,
         "dram_read_eff": 58250493952,
@@ -25949,6 +26677,7 @@
         "total": 0.21133977948365007
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4160749568,
         "dram_read_eff": 4160749568,
@@ -25984,6 +26713,7 @@
         "total": 0.8451750503505833
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16642998272,
         "dram_read_eff": 16642998272,
@@ -26019,6 +26749,7 @@
         "total": 0.8451750503505833
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16642998272,
         "dram_read_eff": 16642998272,
@@ -26054,6 +26785,7 @@
         "total": 0.21133977948365007
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4160749568,
         "dram_read_eff": 4160749568,
@@ -26088,6 +26820,7 @@
       "total": 8.022946939039928
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 158108483584,
       "dram_read_eff": 158108483584,
@@ -26121,6 +26854,7 @@
       "total": 8.369378407483246
      },
      "flops": 349763010560,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 162365227008,
       "dram_read_eff": 162365227008,
@@ -26175,6 +26909,7 @@
         "total": 0.3729521924874241
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4294967296,
         "dram_read_eff": 4294967296,
@@ -26210,6 +26945,7 @@
         "total": 0.4205134922096641
        },
        "flops": 1099511627776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -26244,6 +26980,7 @@
       "total": 0.7934656846970887
      },
      "flops": 2199023255552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 4294967296,
       "dram_read_eff": 4294967296,
@@ -26279,6 +27016,7 @@
         "total": 1.3587349663621127
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -26314,6 +27052,7 @@
         "total": 1.350808083075072
        },
        "flops": 7696581394432,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -26349,6 +27088,7 @@
         "total": 0.10000691229900806
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -26384,6 +27124,7 @@
         "total": 0.3882100302520322
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -26419,6 +27160,7 @@
         "total": 0.3882100302520322
        },
        "flops": 2199023255552,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -26454,6 +27196,7 @@
         "total": 0.10000691229900806
        },
        "flops": 549755813888,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -26488,6 +27231,7 @@
       "total": 3.68597693453927
      },
      "flops": 20890720927744,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 5100273664,
       "dram_read_eff": 5100273664,
@@ -26521,6 +27265,7 @@
       "total": 4.479442619236355
      },
      "flops": 23089744183296,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 9395240960,
       "dram_read_eff": 9395240960,
@@ -26554,6 +27299,7 @@
      "total": 12.848821026719603
     },
     "flops": 23439507193856,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 171760467968,
      "dram_read_eff": 171760467968,
@@ -26590,7 +27336,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "3959ba215f6a300cb77e2b63102a9f0647b102e23291e62f7e4f29ea584154e7",
+  "full_sha256": "d6fe3f4470feff4ec18e73b7df62d19eceea575bb8d37950fdd169f32a913bd4",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -26604,6 +27350,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -26630,6 +27377,7 @@
         "total": 2.3945759170308833
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 34341928960,
         "dram_read_eff": 34341928960,
@@ -26665,6 +27413,7 @@
         "total": 3.0395921478102945
        },
        "flops": 266417995776,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 33301233664,
         "dram_read_eff": 33301233664,
@@ -26699,6 +27448,7 @@
       "total": 5.434168064841217
      },
      "flops": 532835991552,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 67643162624,
       "dram_read_eff": 67643162624,
@@ -26734,6 +27484,7 @@
         "total": 2.9581083511070148
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 58250493952,
         "dram_read_eff": 58250493952,
@@ -26769,6 +27520,7 @@
         "total": 2.95180892826413
        },
        "flops": 116500987904,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 58250493952,
         "dram_read_eff": 58250493952,
@@ -26804,6 +27556,7 @@
         "total": 0.21133977948365007
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4160749568,
         "dram_read_eff": 4160749568,
@@ -26839,6 +27592,7 @@
         "total": 0.8451750503505833
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16642998272,
         "dram_read_eff": 16642998272,
@@ -26874,6 +27628,7 @@
         "total": 0.8451750503505833
        },
        "flops": 33285996544,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 16642998272,
         "dram_read_eff": 16642998272,
@@ -26909,6 +27664,7 @@
         "total": 0.21133977948365007
        },
        "flops": 8321499136,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 4160749568,
         "dram_read_eff": 4160749568,
@@ -26943,6 +27699,7 @@
       "total": 8.022946939039928
      },
      "flops": 316216967168,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 158108483584,
       "dram_read_eff": 158108483584,
@@ -26976,6 +27733,7 @@
       "total": 13.457115003881174
      },
      "flops": 849052958720,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 225751646208,
       "dram_read_eff": 225751646208,
@@ -27030,6 +27788,7 @@
         "total": 94.71476625018475
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1099511627776,
         "dram_read_eff": 1099511627776,
@@ -27065,6 +27824,7 @@
         "total": 107.651439774634
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -27099,6 +27859,7 @@
       "total": 202.36620602481875
      },
      "flops": 562949953421312,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1099511627776,
       "dram_read_eff": 1099511627776,
@@ -27134,6 +27895,7 @@
         "total": 20.498926215073805
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -27169,6 +27931,7 @@
         "total": 20.372096082481153
        },
        "flops": 123145302310912,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -27204,6 +27967,7 @@
         "total": 1.5114788732641289
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -27239,6 +28003,7 @@
         "total": 5.856836101312515
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -27274,6 +28039,7 @@
         "total": 5.856836101312515
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -27309,6 +28075,7 @@
         "total": 1.5114788732641289
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -27343,6 +28110,7 @@
       "total": 55.60765224670831
      },
      "flops": 334251534843904,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 5100273664,
       "dram_read_eff": 5100273664,
@@ -27376,6 +28144,7 @@
       "total": 257.9738582715267
      },
      "flops": 897201488265216,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 1104611901440,
       "dram_read_eff": 1104611901440,
@@ -27409,6 +28178,7 @@
      "total": 271.43097327540784
     },
     "flops": 898050541223936,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 1330363547648,
      "dram_read_eff": 1330363547648,
@@ -27445,7 +28215,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "04ea08ff6106a27dab50892e08d915d9d3ff0b5846ac3bb53901af94901f01b7",
+  "full_sha256": "4c528a686bdb81bad8d31586717667fd77b02be8cbc4ffa859a938845c515234",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27459,6 +28229,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -27485,6 +28256,7 @@
         "total": 17.296384244400137
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 248057298944,
         "dram_read_eff": 248057298944,
@@ -27520,6 +28292,7 @@
         "total": 21.959369727332362
        },
        "flops": 1924380229632,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 240540188672,
         "dram_read_eff": 240540188672,
@@ -27554,6 +28327,7 @@
       "total": 39.255753971732524
      },
      "flops": 3848760459264,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 488597487616,
       "dram_read_eff": 488597487616,
@@ -27589,6 +28363,7 @@
         "total": 0.8557240282931227
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 13153337344,
         "dram_read_eff": 13153337344,
@@ -27624,6 +28399,7 @@
         "total": 0.8541103348736023
        },
        "flops": 841813590016,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 13153337344,
         "dram_read_eff": 13153337344,
@@ -27659,6 +28435,7 @@
         "total": 0.06144664107007983
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -27694,6 +28471,7 @@
         "total": 0.24449285855231934
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 3758096384,
         "dram_read_eff": 3758096384,
@@ -27729,6 +28507,7 @@
         "total": 0.24449285855231934
        },
        "flops": 240518168576,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 3758096384,
         "dram_read_eff": 3758096384,
@@ -27764,6 +28543,7 @@
         "total": 0.06144664107007983
        },
        "flops": 60129542144,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 939524096,
         "dram_read_eff": 939524096,
@@ -27798,6 +28578,7 @@
       "total": 2.321713362411503
      },
      "flops": 2284922601472,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 35701915648,
       "dram_read_eff": 35701915648,
@@ -27831,6 +28612,7 @@
       "total": 41.577467334144366
      },
      "flops": 6133683060736,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 524299403264,
       "dram_read_eff": 524299403264,
@@ -27885,6 +28667,7 @@
         "total": 3030.872518275864
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 35184372088832,
         "dram_read_eff": 35184372088832,
@@ -27920,6 +28703,7 @@
         "total": 3444.84607105824
        },
        "flops": 9007199254740992,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -27954,6 +28738,7 @@
       "total": 6475.718589334104
      },
      "flops": 18014398509481984,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 35184372088832,
       "dram_read_eff": 35184372088832,
@@ -27989,6 +28774,7 @@
         "total": 653.4012501724737
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -28024,6 +28810,7 @@
         "total": 649.3426859295089
        },
        "flops": 3940649673949184,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -28059,6 +28846,7 @@
         "total": 48.18415171584412
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -28094,6 +28882,7 @@
         "total": 186.6860715177125
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -28129,6 +28918,7 @@
         "total": 186.6860715177125
        },
        "flops": 1125899906842624,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -28164,6 +28954,7 @@
         "total": 48.18415171584412
        },
        "flops": 281474976710656,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -28198,6 +28989,7 @@
       "total": 1772.484382569098
      },
      "flops": 10696049115004928,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 5100273664,
       "dram_read_eff": 5100273664,
@@ -28231,6 +29023,7 @@
       "total": 8248.202971903183
      },
      "flops": 28710447624486912,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 35189472362496,
       "dram_read_eff": 35189472362496,
@@ -28264,6 +29057,7 @@
      "total": 8289.780439237327
     },
     "flops": 28716581307547648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 35713771765760,
      "dram_read_eff": 35713771765760,
@@ -28300,7 +29094,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "cc870eb230ed90199bc289b8d8c7daee55d1a5e914bcd103329c4c7cf867f7af",
+  "full_sha256": "7136eda5656ae24c5001b0c0f6772f61a457d84ce3a0ec3fbae909deb0ce343c",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -28314,6 +29108,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -28340,6 +29135,7 @@
         "total": 2.325644587223042
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 33247395840,
         "dram_read_eff": 33247395840,
@@ -28375,6 +29171,7 @@
         "total": 2.9505208850227076
        },
        "flops": 257949696000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 32239779840,
         "dram_read_eff": 32239779840,
@@ -28409,6 +29206,7 @@
       "total": 5.276165472245782
      },
      "flops": 515899392000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 65487175680,
       "dram_read_eff": 65487175680,
@@ -28444,6 +29242,7 @@
         "total": 1.8297419386675142
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 28185722880,
         "dram_read_eff": 28185722880,
@@ -28479,6 +29278,7 @@
         "total": 1.8264773832499088
        },
        "flops": 450971566080,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 28185722880,
         "dram_read_eff": 28185722880,
@@ -28514,6 +29314,7 @@
         "total": 0.13086973728767895
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2013265920,
         "dram_read_eff": 2013265920,
@@ -28549,6 +29350,7 @@
         "total": 0.5227840089907198
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -28584,6 +29386,7 @@
         "total": 0.5227840089907198
        },
        "flops": 128849018880,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -28619,6 +29422,7 @@
         "total": 0.13086973728767895
        },
        "flops": 32212254720,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2013265920,
         "dram_read_eff": 2013265920,
@@ -28653,6 +29457,7 @@
       "total": 4.963526814474206
      },
      "flops": 1224065679360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 76504104960,
       "dram_read_eff": 76504104960,
@@ -28686,6 +29491,7 @@
       "total": 10.23969228672025
      },
      "flops": 1739965071360,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 141991280640,
       "dram_read_eff": 141991280640,
@@ -28740,6 +29546,7 @@
         "total": 47.43348123255195
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 549755813888,
         "dram_read_eff": 549755813888,
@@ -28775,6 +29582,7 @@
         "total": 53.82571991522101
        },
        "flops": 140737488355328,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -28809,6 +29617,7 @@
       "total": 101.259201147773
      },
      "flops": 281474976710656,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 549755813888,
       "dram_read_eff": 549755813888,
@@ -28844,6 +29653,7 @@
         "total": 40.915130213699605
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -28879,6 +29689,7 @@
         "total": 40.6614699485143
        },
        "flops": 246290604621824,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 1879048192,
         "dram_read_eff": 1879048192,
@@ -28914,6 +29725,7 @@
         "total": 3.017048964960258
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -28949,6 +29761,7 @@
         "total": 11.69003724377703
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -28984,6 +29797,7 @@
         "total": 11.69003724377703
        },
        "flops": 70368744177664,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -29019,6 +29833,7 @@
         "total": 3.017048964960258
        },
        "flops": 17592186044416,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 134217728,
         "dram_read_eff": 134217728,
@@ -29053,6 +29868,7 @@
       "total": 110.99077257968862
      },
      "flops": 668503069687808,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 5100273664,
       "dram_read_eff": 5100273664,
@@ -29086,6 +29902,7 @@
       "total": 212.2499737274617
      },
      "flops": 949978046398464,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 554856087552,
       "dram_read_eff": 554856087552,
@@ -29119,6 +29936,7 @@
      "total": 222.48966601418195
     },
     "flops": 951718011469824,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 696847368192,
      "dram_read_eff": 696847368192,
@@ -29155,7 +29973,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "d1bd8be63e50aacc0857f77ab879531fc1b81ba393a789119f4c46ee4e61c08b",
+  "full_sha256": "667bede0074cb6a1f6daed9e8604a37cc06d5827c003e702b13a12dbe8681e14",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29169,6 +29987,7 @@
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
+   "kv_sram_kb": 0,
    "mu": 4,
    "replication": 1,
    "sram_batch_model": "sequential",
@@ -29195,6 +30014,7 @@
         "total": 1.7586978208665613
        },
        "flops": 64487424000,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 32239779840,
         "dram_read_eff": 32239779840,
@@ -29229,6 +30049,7 @@
       "total": 1.7586978208665613
      },
      "flops": 64487424000,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 32239779840,
       "dram_read_eff": 32239779840,
@@ -29264,6 +30085,7 @@
         "total": 1.6358201667379093
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 32212254720,
         "dram_read_eff": 32212254720,
@@ -29299,6 +30121,7 @@
         "total": 1.6321624373452706
        },
        "flops": 64424509440,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 32212254720,
         "dram_read_eff": 32212254720,
@@ -29334,6 +30157,7 @@
         "total": 0.40904222312447963
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -29369,6 +30193,7 @@
         "total": 0.40895566952447965
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -29404,6 +30229,7 @@
         "total": 0.40895566952447965
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -29439,6 +30265,7 @@
         "total": 0.40904222312447963
        },
        "flops": 16106127360,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 8053063680,
         "dram_read_eff": 8053063680,
@@ -29473,6 +30300,7 @@
       "total": 4.903978389381055
      },
      "flops": 193273528320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 96636764160,
       "dram_read_eff": 96636764160,
@@ -29506,6 +30334,7 @@
       "total": 6.66267621024756
      },
      "flops": 257760952320,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 128876544000,
       "dram_read_eff": 128876544000,
@@ -29560,6 +30389,7 @@
         "total": 6.677248674598916
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 0,
         "dram_read_eff": 0,
@@ -29594,6 +30424,7 @@
       "total": 6.677248674598916
      },
      "flops": 35184372088832,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 0,
       "dram_read_eff": 0,
@@ -29629,6 +30460,7 @@
         "total": 5.927740810432516
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2147483648,
         "dram_read_eff": 2147483648,
@@ -29664,6 +30496,7 @@
         "total": 5.889691770654723
        },
        "flops": 35184372088832,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 2147483648,
         "dram_read_eff": 2147483648,
@@ -29699,6 +30532,7 @@
         "total": 1.5292050505441288
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -29734,6 +30568,7 @@
         "total": 1.481935244464129
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -29769,6 +30604,7 @@
         "total": 1.481935244464129
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -29804,6 +30640,7 @@
         "total": 1.5292050505441288
        },
        "flops": 8796093022208,
+       "kv_resident_bytes": 0,
        "memory": {
         "dram_read": 536870912,
         "dram_read_eff": 536870912,
@@ -29838,6 +30675,7 @@
       "total": 17.839713171103732
      },
      "flops": 105553116266496,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 6442450944,
       "dram_read_eff": 6442450944,
@@ -29871,6 +30709,7 @@
       "total": 24.516961845702582
      },
      "flops": 140737488355328,
+     "kv_resident_bytes": 0,
      "memory": {
       "dram_read": 6442450944,
       "dram_read_eff": 6442450944,
@@ -29904,6 +30743,7 @@
      "total": 31.179638055950143
     },
     "flops": 140995249307648,
+    "kv_resident_bytes": 0,
     "memory": {
      "dram_read": 135318994944,
      "dram_read_eff": 135318994944,
