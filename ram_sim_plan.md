@@ -465,7 +465,7 @@ scores — a correction to those sections, not an overturning.
 row the run produces — `context + output_tokens` — because decode grows `kv_len`.
 Sized for prefill alone, the scores silently spill again the moment decoding starts.
 
-**Checkpoint.** `<stage-5-sha>` — recorded by the following commit.
+**Checkpoint.** `00a79b7` — recorded by the following commit.
 
 ---
 
