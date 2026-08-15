@@ -16,16 +16,14 @@ Usage:
 """
 
 import argparse
-import contextlib
 import csv
-import io
 import math
 import os
 import sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _root = os.path.abspath(os.path.join(_here, '..', '..'))
-for p in ('simulator', 'analysis/cycle_breakdown'):
+for p in ('simulator', 'analysis', 'analysis/cycle_breakdown'):
     sys.path.insert(0, os.path.join(_root, *p.split('/')))
 sys.path.insert(0, _here)
 
@@ -37,6 +35,7 @@ from cycle_units import UnitAwareSimulator, cycle_units          # noqa: E402
 from array_pack import (                                         # noqa: E402
     PackedOSVSimulator, max_useful_pack, packed_osv_cycles, row_slot_waste,
 )
+from report import Report                                        # noqa: E402
 
 MODEL = 'LLaMA-3-8B'
 HEAD_DIM = 128
@@ -191,32 +190,56 @@ def preflight():
 
 # -------------------------------------------------------------------- sweeps
 
-def sweep():
+def sweep(report_path):
     rows = []
     preflight()
     h = hw()
+    rep = Report(
+        report_path,
+        "OS-V array packing",
+        subtitle="Filling the idle 31 of 32 rows in decode attention",
+        source="analysis/array_packing/pack_run.py",
+        setup=["Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, standard attention.",
+               "Packs P independent attention instances into one OS-V pass, each "
+               "with its own LGU driving `array_m / P` rows."])
 
-    # ---- A. Cycle recovery per stage ---------------------------------------
-    print("A. Decode attention cycles vs pack factor  (batch 1)\n")
-    print(f"  {'context':>8} {'P':>3} | {'qk':>13} {'attn_v':>15} "
-          f"{'attn total':>15} {'speedup':>8} {'av occ':>8}")
+    rep.summary([
+        "Decode `attn_v` is `(M=1, K=kv_len, N=128)`, so `n_tiles = 1` and "
+        "`rounds = 1`: **one of 32 PE rows works, at any context length** — 3.12% "
+        "occupancy. Packing recovers exactly **32x** on that stage.",
+        "**But 32x on the stage is not 32x on the token.** `attn_v` was "
+        "compute-bound, so packing drives it under its own memory time and TPOT "
+        "saturates at **P=8**: 1.755x / 2.637x / 3.118x at batch 1 / 8 / 32. "
+        "P=16 and P=32 buy nothing.",
+        "**Which makes it affordable.** P=8 with GQA-aware sharing needs 4.5 MB "
+        "and fits 16 MB; P=32 independent needs 66 MB and does not. The two "
+        "results meet at P=8.",
+        "The result **rests on an unmodelled cost**: P=8 needs ~1.0 TB/s of "
+        "KV-SRAM reads and the simulator has no bandwidth term at all.",
+    ])
+
+    # ---- A ------------------------------------------------------------------
+    rep.section("A. Decode attention cycles vs pack factor", "Batch 1.")
     for ctx in CONTEXTS:
-        for p in PACKS:
-            r = run(p, 1, ctx)
+        trows = []
+        for p_ in PACKS:
+            r = run(p_, 1, ctx)
             rows.append({'section': 'A', **r})
-            if p == 1:
+            if p_ == 1:
                 base = r['attn_cycles']
-            print(f"  {ctx:>8} {p:>3} | {r['qk_cycles']:>13,} "
-                  f"{r['av_cycles']:>15,} {r['attn_cycles']:>15,} "
-                  f"{base / r['attn_cycles']:>7.2f}x {r['av_util']:>7.1%}")
-        print()
+            trows.append([str(p_), f"{r['qk_cycles']:,}", f"{r['av_cycles']:,}",
+                          f"{r['attn_cycles']:,}",
+                          f"{base / r['attn_cycles']:.2f}x",
+                          f"{r['av_util']:.1%}"])
+        rep.table(["P", "qk", "attn_v", "attn total", "speedup",
+                   "attn_v occupancy"], trows, caption=f"context {ctx:,}")
 
-    # ---- B. Where the headroom is, and why there are two kinds -------------
-    print("B. Two different sources of headroom\n")
-    print("   qk is evaluated at kv_len = context + 1, the first decode step,\n"
-          "   because that is what the array actually sees.\n")
-    print(f"  {'kv_len':>8} {'n_tiles':>8} {'max P':>6} {'idle rows':>10} "
-          f"{'P=32 gain':>10} {'source':>22}")
+    # ---- B ------------------------------------------------------------------
+    rep.section(
+        "B. Two different sources of headroom",
+        "`qk` is evaluated at `kv_len = context + 1`, the first decode step, "
+        "because that is what the array actually sees.")
+    trows = []
     for ctx in CONTEXTS + [131072]:
         kv = ctx + 1
         n_tiles = math.ceil(kv / (h.array_n * Simulator.NUM_RAC))
@@ -228,102 +251,112 @@ def sweep():
         rows.append({'section': 'B', 'context': ctx, 'kv_len': kv,
                      'n_tiles': n_tiles, 'max_pack_qk': mq,
                      'idle_row_frac': waste, 'qk_gain_p32': gain})
-        print(f"  {kv:>8} {n_tiles:>8,} {mq:>6} {waste:>9.1%} {gain:>9.2f}x "
-              f"{src:>22}")
-    print(f"\n  attn_v is not in this table: n_tiles = 1 for any head_dim <= 128,\n"
-          f"  so it is permanently in the 'idle rows' regime and packs {h.array_m}x at\n"
-          f"  every context.\n")
+        trows.append([f"{kv:,}", f"{n_tiles:,}", str(mq), f"{waste:.1%}",
+                      f"{gain:.2f}x", src])
+    rep.table(["kv_len", "n_tiles", "max P", "idle rows", "P=32 gain", "source"],
+              trows, aligns="rrrrrl")
     cross = h.array_m * h.array_n * Simulator.NUM_RAC
-    print(f"  For qk the two regimes split at kv_len = array_m x array_n x\n"
-          f"  NUM_RAC = {cross:,}.  Below it rows genuinely sit idle.  At or above\n"
-          f"  it the body is full and the only waste is the TAIL: rounds =\n"
-          f"  ceil(n_tiles/{h.array_m}) rounds up to whole {h.array_m}-row passes, leaving up to\n"
-          f"  {h.array_m - 1} rows idle in the last one.  Packing subdivides the array into a\n"
-          f"  finer quantum and recovers exactly that, worth {h.array_m}*ceil(n_tiles/{h.array_m})/n_tiles\n"
-          f"  -- large just past a tile boundary, decaying as 1/n_tiles.  Packing is\n"
-          f"  neutral only when n_tiles is an exact multiple of {h.array_m}, and decode\n"
-          f"  kv_len = context + token_idx almost never is.\n")
+    rep.note(
+        f"`attn_v` is not in this table: `n_tiles = 1` for any `head_dim <= 128`, "
+        f"so it is permanently in the 'idle rows' regime and packs {h.array_m}x at "
+        f"every context.\n"
+        f"For `qk` the regimes split at `kv_len = array_m x array_n x NUM_RAC = "
+        f"{cross:,}`. Below it rows genuinely sit idle. At or above it the body is "
+        f"full and the only waste is the **tail**: `rounds = ceil(n_tiles/"
+        f"{h.array_m})` rounds up to whole {h.array_m}-row passes, leaving up to "
+        f"{h.array_m - 1} rows idle in the last one. Packing recovers exactly "
+        f"`{h.array_m}*ceil(n_tiles/{h.array_m})/n_tiles` — large just past a tile "
+        f"boundary, decaying as `1/n_tiles`. It is neutral **only** when `n_tiles` "
+        f"is an exact multiple of {h.array_m}, and decode `kv_len = context + "
+        f"token_idx` almost never is.")
 
-    # ---- C. End-to-end, the honest table -----------------------------------
-    print("C. Token latency: 32x on the stage is not 32x on the token\n")
+    # ---- C ------------------------------------------------------------------
+    rep.section(
+        "C. Token latency — the honest table",
+        "Context 32,768. This is why section A alone would mislead.")
     for batch in BATCHES:
-        print(f"  batch {batch}, context 32,768")
-        print(f"  {'P':>3} {'attn_v cycles':>16} {'TPOT':>11} {'speedup':>9}")
         base = None
-        for p in PACKS:
-            r = run(p, batch, 32768)
+        trows = []
+        for p_ in PACKS:
+            r = run(p_, batch, 32768)
             rows.append({'section': 'C', **r})
             if base is None:
                 base = r['tpot_s']
-            print(f"  {p:>3} {r['av_cycles']:>16,} {r['tpot_s']*1e3:>9.2f} ms "
-                  f"{base / r['tpot_s']:>8.3f}x")
-        print()
-    print("  attn_v's cycles fall 32x but TPOT does not, because the stage was\n"
-          "  compute-bound and packing pushes it under its own memory time.  Past\n"
-          "  that point more packing buys nothing: the remaining cost is DRAM.\n")
+            trows.append([str(p_), f"{r['av_cycles']:,}",
+                          f"{r['tpot_s']*1e3:.2f} ms",
+                          f"{base / r['tpot_s']:.3f}x"])
+        rep.table(["P", "attn_v cycles", "TPOT", "speedup"], trows,
+                  caption=f"batch {batch}")
+    rep.note(
+        "`attn_v`'s cycles fall 32x but TPOT does not, because the stage was "
+        "compute-bound and packing pushes it under its own memory time. Past that "
+        "point more packing buys nothing: the remaining cost is DRAM.")
 
-    # ---- D. The cost that pays for it --------------------------------------
-    print("D. Co-residency: P instances means P working sets  (context 32,768,\n"
-          "   batch 1, decode peak SRAM)\n")
-    print(f"  {'P':>3} {'source':>16} {'independent':>14} {'GQA-shared':>14} "
-          f"{'fits 16 MB?':>12}")
-    for p in PACKS:
-        src = ('single' if p == 1 else
-               'intra-group' if p <= GQA_GROUP else 'cross-group')
-        ind = run(p, 1, 32768, gqa_share=False)
-        shr = run(p, 1, 32768, gqa_share=True)
-        cap = run(p, 1, 32768, gqa_share=True, sram_capacity_kb=16384)
+    # ---- D ------------------------------------------------------------------
+    rep.section(
+        "D. The co-residency that pays for it",
+        "Context 32,768, batch 1, decode peak SRAM. P instances means P working "
+        "sets resident.")
+    trows = []
+    for p_ in PACKS:
+        src = ('single' if p_ == 1 else
+               'intra-group' if p_ <= GQA_GROUP else 'cross-group')
+        ind = run(p_, 1, 32768, gqa_share=False)
+        shr = run(p_, 1, 32768, gqa_share=True)
+        cap = run(p_, 1, 32768, gqa_share=True, sram_capacity_kb=16384)
         rows.append({'section': 'D', 'variant': 'independent', **ind})
         rows.append({'section': 'D', 'variant': 'gqa_shared', **shr})
-        print(f"  {p:>3} {src:>16} {ind['decode_peak_sram']/2**20:>12.1f} MB "
-              f"{shr['decode_peak_sram']/2**20:>12.1f} MB "
-              f"{'no' if cap['sram_overflow'] else 'yes':>12}")
-    print("\n  A GQA group shares its K/V tile, so packing 4 query heads is nearly\n"
-          "  free.  Past the group size the tiles are distinct and the footprint\n"
-          "  grows with P -- which is what turns the 'free' 32x into a capacity\n"
-          "  problem.\n")
+        trows.append([str(p_), src, f"{ind['decode_peak_sram']/2**20:.1f} MB",
+                      f"{shr['decode_peak_sram']/2**20:.1f} MB",
+                      'no' if cap['sram_overflow'] else 'yes'])
+    rep.table(["P", "packing source", "independent", "GQA-shared", "fits 16 MB?"],
+              trows, aligns="rlrrc")
+    rep.note(
+        "A GQA group shares its K/V tile, so packing 4 query heads is nearly free. "
+        "Past the group size the tiles are distinct and the footprint grows with P "
+        "— which is what would turn the 'free' 32x into a capacity problem. "
+        "**Read against section C: the ceiling arrives at P=8, which costs 4.5 MB. "
+        "The full achievable speedup is affordable; the 32x is neither reachable "
+        "nor needed.**")
 
-    # ---- E. What the model does NOT charge for -----------------------------
-    print("E. Uncharged hardware cost (arithmetic, not a disclaimer)\n")
+    # ---- E ------------------------------------------------------------------
+    rep.section(
+        "E. What the model does not charge for",
+        "Computed arithmetic, not a disclaimer.")
     per_cycle = Simulator.MU * h.array_n * Simulator.NUM_RAC * h.kv_cache_bits // 8
     ghz = h.freq_mhz * 1e6
-    print(f"  Weight-FIFO / KV-SRAM read bandwidth")
-    print(f"    unpacked (1 row live) : {per_cycle:>6,} B/cycle  "
-          f"{per_cycle * ghz / 1e9:>8.1f} GB/s")
-    for p in (4, 32):
-        bw = per_cycle * p
-        print(f"    P={p:<2} ({p} rows live)   : {bw:>6,} B/cycle  "
-              f"{bw * ghz / 1e12:>8.2f} TB/s")
-        rows.append({'section': 'E', 'pack': p, 'fifo_bytes_per_cycle': bw})
-    print("    The simulator has no SRAM bandwidth term at all -- capacity is\n"
-          "    enforced, throughput is not.  Packing converts an idle-array\n"
-          "    problem into an SRAM-bandwidth problem it cannot bill.\n")
-    print("  LGU ungating: OS-V gates 31 of 32 LGUs specifically to save power\n"
-          "    (IV-D).  P=32 ungates all of them.  Cycles fall 32x and LGU dynamic\n"
-          "    energy rises up to 32x; the energy model sees neither.\n")
-    print("  Energy neutrality here is an ARTEFACT.  os_v_energy_model.py:23\n"
-          "    charges n_tiles/array_m and omni_energy_model.py divides M==1 OS\n"
-          "    energy by array_m -- energy is already amortized over all 32 rows\n"
-          "    while cycles charge a full round for one.  The model is internally\n"
-          "    inconsistent today, and packing is what would make it consistent.\n")
-    print("  Also uncharged: P live LUTs (16 entries x 128 lanes) plus a P-way\n"
-          "    segmented broadcast tree; per-instance output routing (OUTPUT_CYCLES\n"
-          "    unchanged at 2); and the scheduling tail when batch x heads < P.\n")
+    trows = [["unpacked (1 row live)", f"{per_cycle:,} B/cycle",
+              f"{per_cycle * ghz / 1e9:.1f} GB/s"]]
+    for p_ in (4, 8, 32):
+        bw = per_cycle * p_
+        rows.append({'section': 'E', 'pack': p_, 'fifo_bytes_per_cycle': bw})
+        trows.append([f"P={p_} ({p_} rows live)", f"{bw:,} B/cycle",
+                      f"{bw * ghz / 1e12:.2f} TB/s"])
+    rep.table(["configuration", "weight-FIFO / KV-SRAM reads", "bandwidth"],
+              trows, aligns="lrr")
+    rep.note(
+        "**The simulator has no SRAM bandwidth term at all** — capacity is "
+        "enforced, throughput is not. Packing converts an idle-array problem into "
+        "an SRAM-bandwidth problem it cannot bill. This is the first thing to "
+        "check before believing the result.")
+    rep.note(
+        "**LGU ungating.** Section IV-D gates 31 of 32 LGUs specifically to save "
+        "power; P=32 ungates all of them. Cycles fall 32x, LGU dynamic energy "
+        "rises up to 32x, and the energy model sees neither.")
+    rep.note(
+        "**Energy neutrality here is an artefact, not a finding.** "
+        "`os_v_energy_model.py:23` charges `n_tiles/array_m` and "
+        "`omni_energy_model.py` divides M==1 OS energy by `array_m` — energy is "
+        "*already* amortised over all 32 rows while cycles charge a full round for "
+        "one. The two halves of the model disagree today, and packing is what "
+        "would make them agree.")
+    rep.note(
+        "Also uncharged: P live LUTs (16 entries x 128 lanes) plus a P-way "
+        "segmented broadcast tree; per-instance output routing (`OUTPUT_CYCLES` "
+        "unchanged at 2); and the scheduling tail when `batch x heads < P`.")
+
+    rep.save()
     return rows
-
-
-class _Tee:
-    def __init__(self, *streams):
-        self._streams = streams
-
-    def write(self, s):
-        for st in self._streams:
-            st.write(s)
-        return len(s)
-
-    def flush(self):
-        for st in self._streams:
-            st.flush()
 
 
 def main():
@@ -332,25 +365,13 @@ def main():
     p.add_argument('--report', default=os.path.join(_here, 'pack_report.md'))
     args = p.parse_args()
 
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
-        rows = sweep()
+    rows = sweep(args.report)
 
     keys = sorted({k for r in rows for k in r})
     with open(args.csv, 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
-
-    with open(args.report, 'w') as f:
-        f.write("# OS-V array packing: filling the idle 31/32 rows\n\n")
-        f.write("Generated by `analysis/array_packing/pack_run.py`.\n"
-                "Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, standard attention.\n"
-                "See `array_pack.py`'s docstring for scope and what is not\n"
-                "modelled.\n\n")
-        f.write("```\n")
-        f.write(buf.getvalue())
-        f.write("```\n")
 
     print(f"Wrote {len(rows)} rows -> {args.csv}")
     print(f"Wrote report      -> {args.report}")

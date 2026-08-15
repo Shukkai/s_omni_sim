@@ -30,20 +30,20 @@ Usage:
 """
 
 import argparse
-import contextlib
 import csv
-import io
 import os
 import sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _root = os.path.abspath(os.path.join(_here, '..', '..'))
-for p in ('simulator', 'analysis/cycle_breakdown', 'analysis/compact_breakdown'):
+for p in ('simulator', 'analysis', 'analysis/cycle_breakdown',
+          'analysis/compact_breakdown'):
     sys.path.insert(0, os.path.join(_root, *p.split('/')))
 
 from simulator import HardwareConfig, WorkloadConfig, Simulator   # noqa: E402
 from model_configs import get_model_config                        # noqa: E402
 from kv_budget import KVBudgetSimulator                           # noqa: E402
+from report import Report                                         # noqa: E402
 
 MODEL = 'LLaMA-3-8B'
 CONTEXT = 32768
@@ -78,87 +78,96 @@ def kv_working_set(batch, entries, kv_heads=8, head_dim=128, kv_bits=4):
     return 2 * batch * kv_heads * entries * head_dim * kv_bits // 8
 
 
-def sweep():
+def sweep(report_path):
     rows = []
+    rep = Report(
+        report_path,
+        "KV residency across decode steps",
+        subtitle="The model charged for re-reads a real design would not pay",
+        source="analysis/memory/residency_run.py",
+        setup=["Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, context "
+               f"{CONTEXT:,}, standard attention."])
+
+    rep.summary([
+        "**Eviction's advantage is real** — this fix was built to test whether it "
+        "was an artifact of the baseline's re-reads, and the answer is no. "
+        "`evict-1024` at batch 32 holds ~16x from a 0 KB buffer to a 128 MB one.",
+        "**Residency is an energy and capacity lever, not a latency one.** At 128 MB "
+        "it removes 36.8% of decode DRAM and 24.6% of decode energy, for 6.2% TPOT.",
+        "The reason both hold: the dense K+V working set is **32 MB per layer at "
+        "batch 1 and 1,024 MB at batch 32**, so no plausible buffer holds a "
+        "meaningful fraction. Residency cannot rescue a cache that never fit.",
+    ])
 
     # ---- A. What residency alone buys --------------------------------------
-    print("A. Dense cache: decode DRAM and TPOT vs on-chip KV buffer\n"
-          f"   (context {CONTEXT:,})\n")
-    print(f"  {'batch':>6} {'buffer':>10} | {'decode DRAM':>16} {'vs none':>8} "
-          f"{'TPOT':>10} {'vs none':>8}")
+    rep.section(
+        "A. What residency alone buys",
+        "Dense cache, no eviction. The buffer holds whatever fits between decode "
+        "steps; the rest still streams from DRAM every token.")
     for b in BATCHES:
         base = run(b, 0)
+        trows = []
         for kb in BUFFERS_KB:
             r = run(b, kb)
             rows.append({'section': 'A', **r})
-            print(f"  {b:>6} {kb:>7,} KB | {r['decode_dram']:>16,} "
-                  f"{r['decode_dram']/base['decode_dram']:>7.3f}x "
-                  f"{r['tpot_s']*1e3:>8.2f} ms "
-                  f"{base['tpot_s']/r['tpot_s']:>7.3f}x")
+            trows.append([f"{kb:,} KB", f"{r['decode_dram']:,}",
+                          f"{r['decode_dram']/base['decode_dram']:.3f}x",
+                          f"{r['tpot_s']*1e3:.2f} ms",
+                          f"{base['tpot_s']/r['tpot_s']:.3f}x"])
         ws = kv_working_set(b, CONTEXT)
-        print(f"         (K+V working set per layer: {ws/1024/1024:,.0f} MB)\n")
+        rep.table(["buffer", "decode DRAM", "vs none", "TPOT", "vs none"],
+                  trows, aligns="lrrrr",
+                  caption=f"batch {b} — K+V working set {ws/1024/1024:,.0f} MB per layer")
 
     # ---- B. Does eviction's advantage survive a buffered baseline? ----------
-    print("B. Eviction speedup vs dense, as the baseline gets a KV buffer\n"
-          f"   (context {CONTEXT:,}; both sides get the same buffer)\n")
+    rep.section(
+        "B. Does eviction's advantage survive a buffered baseline?",
+        "Both the dense baseline and the evicted run get the same buffer, so any "
+        "collapse in the gap would mean eviction was really measuring residency.")
     for b in BATCHES:
-        print(f"  batch {b}")
-        print(f"  {'buffer':>10} {'evict 4096':>12} {'evict 1024':>12}")
+        trows = []
         for kb in BUFFERS_KB:
             base = run(b, kb, kv_budget=0)
-            cells = ''
+            cells = [f"{kb:,} KB"]
             for budget in (4096, 1024):
                 r = run(b, kb, kv_budget=budget)
                 sp = base['tpot_s'] / r['tpot_s'] if r['tpot_s'] else 0.0
                 rows.append({'section': 'B', 'speedup': sp, **r})
-                cells += f"{sp:>11.3f}x"
-            print(f"  {kb:>7,} KB{cells}")
-        print()
-    print("  ANSWER: no -- eviction's advantage is real, not an artifact of the\n"
-          "  baseline's re-reads.  evict-1024 at batch 32 holds ~16x from a 0 KB\n"
-          "  buffer to a 128 MB one; at batch 1 it slips only 2.460x -> 2.295x.\n"
-          "  The reason is scale: the dense K+V working set is 32 MB per layer at\n"
-          "  batch 1 and 1,024 MB at batch 32, so no plausible on-chip buffer holds\n"
-          "  a meaningful fraction of it.  Residency cannot rescue a cache that was\n"
-          "  never going to fit.\n")
-    print("  The two are complementary rather than competing.  Eviction shrinks the\n"
-          "  working set to a size a buffer can actually hold -- which is exactly\n"
-          "  the Stage 1b capacity result -- and residency then removes what is left\n"
-          "  of the traffic.  The order matters: shrink first, then keep resident.\n")
+                cells.append(f"{sp:.3f}x")
+            trows.append(cells)
+        rep.table(["buffer", "evict 4096", "evict 1024"], trows,
+                  aligns="lrr", caption=f"batch {b} — TPOT speedup vs dense")
+    rep.note(
+        "**No.** The gap barely moves: at batch 1 `evict-1024` slips only "
+        "2.460x to 2.295x across a 0 KB to 128 MB sweep, and at batch 32 it does "
+        "not move at all. The two are complementary rather than competing — "
+        "eviction shrinks the working set to a size a buffer can hold, and "
+        "residency then removes what is left. **Shrink first, then keep resident.**")
 
     # ---- C. Where the win actually lands ------------------------------------
-    print("C. Traffic vs latency: residency saves bytes, not cycles\n"
-          f"   (context {CONTEXT:,}, batch 8, dense)\n")
-    print(f"  {'buffer':>10} | {'DRAM saved':>10} {'energy saved':>13} "
-          f"{'TPOT gain':>10}")
+    rep.section(
+        "C. Where the win lands: bytes, not cycles",
+        "Context 32,768, batch 8, dense.")
     base = run(8, 0)
+    trows = []
     for kb in BUFFERS_KB[1:]:
         r = run(8, kb)
         rows.append({'section': 'C', **r})
-        print(f"  {kb:>7,} KB | "
-              f"{1 - r['decode_dram']/base['decode_dram']:>9.1%} "
-              f"{1 - r['decode_energy']/base['decode_energy']:>12.1%} "
-              f"{base['tpot_s']/r['tpot_s'] - 1:>9.1%}")
-    print("\n  The bytes go away; the latency mostly does not.  attn_v is\n"
-          "  compute-bound under a 4-bit KV cache, so removing its DRAM traffic\n"
-          "  moves a term that was not on the critical path -- the same reason\n"
-          "  ThinK's byte saving did not become speed.  Residency is an ENERGY\n"
-          "  and CAPACITY result, and should be reported as one.\n")
+        trows.append([f"{kb:,} KB",
+                      f"{1 - r['decode_dram']/base['decode_dram']:.1%}",
+                      f"{1 - r['decode_energy']/base['decode_energy']:.1%}",
+                      f"{base['tpot_s']/r['tpot_s'] - 1:.1%}"])
+    rep.table(["buffer", "DRAM saved", "energy saved", "TPOT gain"], trows,
+              aligns="lrrr")
+    rep.note(
+        "The bytes go away; the latency mostly does not. `attn_v` is compute-bound "
+        "under a 4-bit KV cache, so removing its DRAM traffic moves a term that was "
+        "never on the critical path — the same reason ThinK's byte saving did not "
+        "become speed. **Report residency as energy and capacity, never as "
+        "throughput.**")
+
+    rep.save()
     return rows
-
-
-class _Tee:
-    def __init__(self, *streams):
-        self._streams = streams
-
-    def write(self, s):
-        for st in self._streams:
-            st.write(s)
-        return len(s)
-
-    def flush(self):
-        for st in self._streams:
-            st.flush()
 
 
 def main():
@@ -168,24 +177,13 @@ def main():
                    default=os.path.join(_here, 'residency_report.md'))
     args = p.parse_args()
 
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
-        rows = sweep()
+    rows = sweep(args.report)
 
     keys = sorted({k for r in rows for k in r})
     with open(args.csv, 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
-
-    with open(args.report, 'w') as f:
-        f.write("# KV residency: the model was charging for re-reads "
-                "a real design would not pay\n\n")
-        f.write("Generated by `analysis/memory/residency_run.py`.\n"
-                "Model: LLaMA-3-8B on Omni-LUT, 4-bit KV.\n\n")
-        f.write("```\n")
-        f.write(buf.getvalue())
-        f.write("```\n")
 
     print(f"Wrote {len(rows)} rows -> {args.csv}")
     print(f"Wrote report      -> {args.report}")

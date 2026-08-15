@@ -45,21 +45,21 @@ can open is not a result.
 """
 
 import argparse
-import contextlib
 import csv
-import io
 import os
 import sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _root = os.path.abspath(os.path.join(_here, '..', '..'))
 sys.path.insert(0, os.path.join(_root, 'simulator'))
+sys.path.insert(0, os.path.join(_root, 'analysis'))
 sys.path.insert(0, os.path.join(_root, 'analysis', 'cycle_breakdown'))
 sys.path.insert(0, os.path.join(_root, 'analysis', 'compact_breakdown'))
 
 from simulator import HardwareConfig, WorkloadConfig      # noqa: E402
 from model_configs import get_model_config                # noqa: E402
 from kv_budget import KVBudgetSimulator                   # noqa: E402
+from report import Report                                # noqa: E402
 
 
 MODEL = 'LLaMA-3-8B'
@@ -125,58 +125,68 @@ def _label(kvb: int) -> str:
     return 'dense' if kvb == 0 else str(kvb)
 
 
-class _Tee:
-    """Write to the terminal and to the report buffer at the same time."""
-
-    def __init__(self, *streams):
-        self._streams = streams
-
-    def write(self, s):
-        for st in self._streams:
-            st.write(s)
-        return len(s)
-
-    def flush(self):
-        for st in self._streams:
-            st.flush()
-
-
-def sweep():
+def sweep(report_path):
     rows = []
+    rep = Report(
+        report_path,
+        "SRAM capacity",
+        subtitle="What actually fits on chip, and how much batch it supports",
+        source="analysis/memory/capacity_run.py",
+        setup=["Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, standard attention."])
 
-    # ---- A. Where the working set sits -------------------------------------
-    print("A. Peak working set, unlimited capacity\n")
-    print(f"  {'context':>8} {'kv_budget':>10} {'prefill':>16} {'decode':>14} "
-          f"{'decode':>10}")
-    print(f"  {'':>8} {'':>10} {'':>16} {'(bytes)':>14} {'(KB)':>10}")
+    rep.summary([
+        "**Decode's working set is floored at 924.5 KB** by the FFN/projection "
+        "tiles. The KV tile only becomes the binding term past ~16K context — "
+        "below that, capacity is not the constraint at all.",
+        "**At 32K a KV budget buys a smaller chip**: 2,176 KB dense vs 1,024 KB "
+        "for any budget ≤ 4096 — 2.1x less SRAM.",
+        "**Batch and capacity trade one-for-one** under `sram_batch_model="
+        "\"concurrent\"`. At 32K in 4 MB: dense fits batch 1, a 4096-entry budget "
+        "fits 8, a 1024-entry budget fits 32.",
+        "**Prefill is excluded and this is a model gap, not a result** — "
+        "`_calculate_peak_sram` holds the entire activation matrix, 2.1 GB at 32K, "
+        "so it overflows at every plausible capacity.",
+    ])
+
+    # ---- A ------------------------------------------------------------------
+    rep.section(
+        "A. Where the working set sits",
+        "Unlimited capacity, so these are requirements rather than outcomes.")
     unlimited = {}
+    trows = []
     for ctx in CONTEXTS:
         for kvb in KV_BUDGETS:
             r = run(0, ctx, kvb)
             unlimited[(ctx, kvb)] = r
             rows.append(r)
-            print(f"  {ctx:>8} {_label(kvb):>10} {r['prefill_peak']:>16,} "
-                  f"{r['decode_peak']:>14,} {r['decode_peak'] / 1024:>10.1f}")
-    print("\n  Prefill is O(seq x d_model) -- the whole activation matrix is\n"
-          "  modelled as resident, so it overflows at every capacity below.\n")
+            trows.append([f"{ctx:,}", _label(kvb), f"{r['prefill_peak']:,}",
+                          f"{r['decode_peak']:,}",
+                          f"{r['decode_peak'] / 1024:.1f} KB"])
+    rep.table(["context", "kv_budget", "prefill peak", "decode peak",
+               "decode peak"], trows)
+    rep.note(
+        "Prefill is O(seq x d_model) — the whole activation matrix is modelled as "
+        "resident — so it overflows at every capacity below and its spill charge "
+        "is a meaningless constant. **A real accelerator tiles prefill over the "
+        "sequence; the model does not.** Everything below is therefore decode.")
 
-    # ---- B. What decode fits into ------------------------------------------
-    print("B. Decode: fits / overflows by SRAM capacity  (. = fits, X = spills)\n")
-    header = ''.join(f"{c:>7}" for c in CAPACITIES_KB)
-    print(f"  {'context':>8} {'kv_budget':>10}{header}   (KB)")
+    # ---- B ------------------------------------------------------------------
+    rep.section("B. What decode fits into", "`.` = fits, `X` = spills.")
+    trows = []
     for ctx in CONTEXTS:
         for kvb in KV_BUDGETS:
-            cells = ''
+            cells = [f"{ctx:,}", _label(kvb)]
             for cap in CAPACITIES_KB:
                 r = run(cap, ctx, kvb)
                 rows.append(r)
-                cells += f"{'X' if r['decode_overflow'] else '.':>7}"
-            print(f"  {ctx:>8} {_label(kvb):>10}{cells}")
-    print()
+                cells.append('X' if r['decode_overflow'] else '.')
+            trows.append(cells)
+    rep.table(["context", "kv_budget"] + [f"{c:,} KB" for c in CAPACITIES_KB],
+              trows, aligns="rr")
 
-    # ---- C. Smallest capacity decode runs in --------------------------------
-    print("C. Smallest swept capacity with no decode overflow\n")
-    print(f"  {'context':>8} {'kv_budget':>10} {'min capacity':>16}")
+    # ---- C ------------------------------------------------------------------
+    rep.section("C. Smallest capacity decode runs in")
+    trows = []
     for ctx in CONTEXTS:
         for kvb in KV_BUDGETS:
             hit = 0
@@ -184,53 +194,65 @@ def sweep():
                 if not run(cap, ctx, kvb)['decode_overflow']:
                     hit = cap
                     break
-            shown = f"{hit:,} KB" if hit else f"> {CAPACITIES_KB[-1]:,} KB"
-            print(f"  {ctx:>8} {_label(kvb):>10} {shown:>16}")
-    print()
+            trows.append([f"{ctx:,}", _label(kvb),
+                          f"{hit:,} KB" if hit else f"> {CAPACITIES_KB[-1]:,} KB"])
+    rep.table(["context", "kv_budget", "min capacity"], trows)
 
-    # ---- D. What under-provisioning costs -----------------------------------
-    print("D. Cost of running decode under-provisioned  (context 32768, dense)\n")
-    print(f"  {'capacity':>10} {'decode refetch':>18} {'TPOT':>11} {'vs unlim':>9}")
+    # ---- D ------------------------------------------------------------------
+    rep.section(
+        "D. What under-provisioning costs",
+        "Context 32,768, dense.")
     ref = unlimited[(32768, 0)]
+    trows = []
     for cap in CAPACITIES_KB:
         r = run(cap, 32768, 0)
         f_p = r['tpot_s'] / ref['tpot_s'] if ref['tpot_s'] else 0.0
-        print(f"  {cap:>7,} KB {r['decode_refetch']:>18,} "
-              f"{r['tpot_s'] * 1e3:>9.3f} ms {f_p:>8.3f}x")
-    print("\n  Read the 1,024 KB row against table B: it is flagged as an overflow\n"
-          "  there but charged nothing here.  That is policy v1's documented lower\n"
-          "  bound -- past 1,024 KB the binding term is the KV tile itself, and a\n"
-          "  tile that does not fit needs re-tiling, which v1 refuses to model.  So\n"
-          "  the charge is non-monotonic: the *larger* overflow prices lower.  The\n"
-          "  flag is the trustworthy output; the bytes are a first-order cost.\n")
-    print("  Prefill's charge is omitted for the same reason squared: it overflows\n"
-          "  at every capacity here, so v1 prices the residency assumption of fact 1\n"
-          "  and returns a constant ~770 GB regardless of capacity.  Not usable.\n")
+        trows.append([f"{cap:,} KB", f"{r['decode_refetch']:,}",
+                      f"{r['tpot_s']*1e3:.3f} ms", f"{f_p:.3f}x"])
+    rep.table(["capacity", "decode re-fetch", "TPOT", "vs unlimited"], trows,
+              aligns="l")
+    rep.note(
+        "Read the 1,024 KB row against section B: flagged as an overflow there, "
+        "charged nothing here. That is spill policy v1's documented lower bound — "
+        "past 1,024 KB the binding term is the KV tile itself, and a tile that "
+        "does not fit needs re-tiling, which v1 refuses to model. **The charge is "
+        "non-monotonic: the larger overflow prices lower.** `sram_overflow` is the "
+        "trustworthy output; `sram_refetch_bytes` is a first-order cost.\n"
+        "Prefill's charge is omitted for the same reason squared: it overflows at "
+        "every capacity here, so v1 returns a constant ~770 GB regardless. Not "
+        "usable.")
 
-    # ---- E. The two batch-residency models side by side ---------------------
-    print("E. Decode peak vs batch under each residency model\n"
-          "   (context 32768, dense)\n")
-    print(f"  {'batch':>6} {'sequential':>16} {'concurrent':>16} {'concurrent':>12}")
-    print(f"  {'':>6} {'(bytes)':>16} {'(bytes)':>16} {'(MB)':>12}")
+    # ---- E ------------------------------------------------------------------
+    rep.section(
+        "E. The two batch-residency models",
+        "Context 32,768, dense. `_calculate_peak_sram` has no batch term, yet "
+        "projections issue as one GEMM with `proj_m = batch x seq_len` — so batch "
+        "was a dimension in one half of the model and a loop in the other.")
+    trows = []
     for b in BATCHES:
         rs = run(0, 32768, 0, batch=b, batch_model="sequential",
                  output_tokens=SHORT_DECODE)
         rc = run(0, 32768, 0, batch=b, batch_model="concurrent",
                  output_tokens=SHORT_DECODE)
         rows.extend([rs, rc])
-        print(f"  {b:>6} {rs['decode_peak']:>16,} {rc['decode_peak']:>16,} "
-              f"{rc['decode_peak'] / 1024 / 1024:>12.2f}")
-    print("\n  'sequential' is flat by construction -- attention runs one\n"
-          "  (batch, head) instance at a time.  'concurrent' is linear, which is\n"
-          "  what the projection side of the model already assumed.\n")
+        trows.append([str(b), f"{rs['decode_peak']:,}", f"{rc['decode_peak']:,}",
+                      f"{rc['decode_peak'] / 1024 / 1024:.2f} MB"])
+    rep.table(["batch", "sequential", "concurrent", "concurrent"], trows)
+    rep.note(
+        "`\"sequential\"` is flat by construction — attention runs one "
+        "(batch, head) instance at a time. `\"concurrent\"` is linear, which is "
+        "what the projection side already assumed. It remains a **scheduling "
+        "assumption, not a measurement**, and `\"sequential\"` stays the default.")
 
-    # ---- F. How much batch fits --------------------------------------------
-    print("F. Largest batch whose decode working set fits  (batch_model=concurrent)\n")
-    header = ''.join(f"{c:>8}" for c in BATCH_CAPACITIES_KB)
-    print(f"  {'context':>8} {'kv_budget':>10}{header}   (KB capacity)")
+    # ---- F ------------------------------------------------------------------
+    rep.section(
+        "F. How much batch fits",
+        f"`sram_batch_model=\"concurrent\"`. `-` = even batch 1 overflows; "
+        f"{BATCHES[-1]} is the sweep ceiling, so those cells mean 'at least that'.")
+    trows = []
     for ctx in CONTEXTS:
         for kvb in KV_BUDGETS:
-            cells = ''
+            cells = [f"{ctx:,}", _label(kvb)]
             for cap in BATCH_CAPACITIES_KB:
                 fits = 0
                 for b in BATCHES:
@@ -239,16 +261,18 @@ def sweep():
                     if r['decode_overflow']:
                         break
                     fits = b
-                cells += f"{fits if fits else '-':>8}"
-            print(f"  {ctx:>8} {_label(kvb):>10}{cells}")
-    print(f"\n  '-' = even batch 1 overflows; {BATCHES[-1]} is the sweep ceiling, not a\n"
-          "  hardware limit, so those cells mean 'at least that'.  Doubling capacity\n"
-          "  doubles the batch, and at fixed capacity a KV budget buys batch: at 32K\n"
-          "  context in 4 MB, dense fits batch 1, a 4096-entry budget fits 8, and a\n"
-          "  1024-entry budget fits 32.  That is the claim the study wanted and could\n"
-          "  not previously make -- but note it rests on 'concurrent', which is a\n"
-          "  scheduling assumption, not a measurement.\n")
+                cells.append(str(fits) if fits else '-')
+            trows.append(cells)
+    rep.table(["context", "kv_budget"] +
+              [f"{c:,} KB" for c in BATCH_CAPACITIES_KB], trows, aligns="rr")
+    rep.note(
+        "Doubling capacity doubles the batch, and at fixed capacity a KV budget "
+        "buys batch directly: **at 32K in 4 MB, dense fits batch 1, a 4096-entry "
+        "budget fits 8, and a 1024-entry budget fits 32.** This is the claim the "
+        "study wanted and could not previously make — but it rests on "
+        "`\"concurrent\"`, a scheduling assumption.")
 
+    rep.save()
     return rows
 
 
@@ -259,23 +283,13 @@ def main():
                    default=os.path.join(_here, 'capacity_report.md'))
     args = p.parse_args()
 
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
-        rows = sweep()
+    rows = sweep(args.report)
 
+    keys = sorted({k for r in rows for k in r})
     with open(args.csv, 'w', newline='') as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
-
-    with open(args.report, 'w') as f:
-        f.write("# SRAM capacity sweep\n\n")
-        f.write("Generated by `analysis/memory/capacity_run.py`; re-run it to\n"
-                "refresh.  Model: LLaMA-3-8B on Omni-LUT with a 4-bit KV cache.\n"
-                "See the script's docstring for what each section assumes.\n\n")
-        f.write("```\n")
-        f.write(buf.getvalue())
-        f.write("```\n")
 
     print(f"Wrote {len(rows)} rows -> {args.csv}")
     print(f"Wrote report      -> {args.report}")

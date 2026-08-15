@@ -33,22 +33,22 @@ Usage:
 """
 
 import argparse
-import contextlib
 import csv
-import io
 import math
 import os
 import sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _root = os.path.abspath(os.path.join(_here, '..', '..'))
-for p in ('simulator', 'analysis/cycle_breakdown', 'analysis/compact_breakdown'):
+for p in ('simulator', 'analysis', 'analysis/cycle_breakdown',
+          'analysis/compact_breakdown'):
     sys.path.insert(0, os.path.join(_root, *p.split('/')))
 
 from simulator import (                                          # noqa: E402
     ComputeMode, HardwareConfig, OperationType, Simulator, WorkloadConfig,
 )
 from model_configs import get_model_config                       # noqa: E402
+from report import Report                                       # noqa: E402
 
 MODEL = 'LLaMA-3-8B'
 ACT_BITS = 16
@@ -188,101 +188,129 @@ def preflight():
 
 # -------------------------------------------------------------------- sweeps
 
-def sweep():
+def sweep(report_path):
     rows = []
     preflight()
+    rep = Report(
+        report_path,
+        "Attention score staging",
+        subtitle="The largest DRAM term in the model was an assumption",
+        source="analysis/memory/prefill_run.py",
+        setup=["Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, FP16 activations, "
+               "standard attention."])
 
-    # ---- A. Prefill: the term that was 99.9% of it -------------------------
-    print("A. Prefill DRAM before and after staging  (batch 1)\n")
-    print(f"  {'context':>8} {'row buf':>9} | {'spilling':>16} {'staged':>14} "
-          f"{'staged+KV read':>16} {'reduction':>10}")
+    rep.summary([
+        "`QK` wrote the full score matrix to DRAM and `Attn.V` read it back — "
+        "**unconditionally, in both phases, regardless of capacity**. That was "
+        "**99.9% of prefill DRAM at 32K**.",
+        "Staging the scores on chip cuts prefill DRAM **937x** at 32K "
+        "(4,401.7 GB to 4.70 GB), and the corrected path then agrees with "
+        "FlashAttention **to the byte**.",
+        "**No published number moves.** TTFT is unchanged at 1.00x everywhere — "
+        "prefill is compute-bound, so removing 4.4 TB of traffic does not move it — "
+        "and no tracked markdown contained a prefill-DRAM or TTFT figure.",
+        "Decode is a smaller but real exposure: **11.1% of decode attention DRAM**, "
+        "1.2–10.4% of all decode DRAM by batch, TPOT shift 1.005x–1.016x.",
+    ])
+
+    # ---- A. Prefill --------------------------------------------------------
+    rep.section(
+        "A. Prefill DRAM, before and after",
+        "Batch 1. The buffer is one query row's score vector for **one** "
+        "(batch, head) instance — not multiplied by head count.")
+    trows = []
     for ctx in CONTEXTS:
         need = buf_kb(ctx)
         a = run(ctx, 1)
         b = run(ctx, 1, score_kb=need)
         c = run(ctx, 1, score_kb=need, prefill_kv=True)
         rows += [{'section': 'A', **x} for x in (a, b, c)]
-        print(f"  {ctx:>8} {need:>6,} KB | {a['prefill_dram']:>16,} "
-              f"{b['prefill_dram']:>14,} {c['prefill_dram']:>16,} "
-              f"{a['prefill_dram']/c['prefill_dram']:>9.1f}x")
-    print("\n  'staged' alone is the documented NON-configuration: scores stay on\n"
-          "  chip but prefill still reads no K/V, so it under-reads.  The usable\n"
-          "  column is the third.\n")
-    print("  The buffer is one query row's score vector for ONE (batch, head)\n"
-          "  instance, sized for the LONGEST row the run produces -- context plus\n"
-          "  output tokens, since decode grows kv_len.  Size it for prefill alone\n"
-          "  and the scores silently spill again as soon as decoding starts.\n")
+        trows.append([f"{ctx:,}", f"{need:,} KB", f"{a['prefill_dram']:,}",
+                      f"{b['prefill_dram']:,}", f"{c['prefill_dram']:,}",
+                      f"{a['prefill_dram']/c['prefill_dram']:.1f}x"])
+    rep.table(["context", "row buffer", "spilling", "staged only",
+               "staged + K/V read", "reduction"], trows, aligns="rrrrrr")
+    rep.note(
+        "**'staged only' is a documented non-configuration**, shown to make the "
+        "incoherence visible: the scores stay on chip but prefill still reads no "
+        "K/V, so it under-reads. The usable column is the last one.\n"
+        "The buffer must cover the **longest** row the run produces — context plus "
+        "output tokens — because decode grows `kv_len`. Size it for prefill alone "
+        "and the scores silently spill again the moment decoding starts.")
 
-    # ---- B. Convergence with FlashAttention --------------------------------
-    print("B. Does the corrected standard path agree with FlashAttention?\n")
-    print(f"  {'context':>8} | {'standard':>16} {'flash(block=seq)':>18} "
-          f"{'flash(block=256)':>18} {'256 penalty':>12}")
+    # ---- B. Flash convergence ----------------------------------------------
+    rep.section(
+        "B. Does the corrected path agree with FlashAttention?",
+        "The strongest check that the correction is right: at one Q block both "
+        "paths reduce to Q/K/V read once plus KV writeback, so they must agree "
+        "exactly, not approximately.")
+    trows = []
     for ctx in CONTEXTS:
         need = buf_kb(ctx)
-        s = run(ctx, 1, score_kb=need, prefill_kv=True)
+        st = run(ctx, 1, score_kb=need, prefill_kv=True)
         f1 = run(ctx, 1, score_kb=need, prefill_kv=True, flash=ctx)
         f2 = run(ctx, 1, score_kb=need, prefill_kv=True, flash=256)
-        rows += [{'section': 'B', **x} for x in (s, f1, f2)]
-        print(f"  {ctx:>8} | {s['prefill_dram']:>16,} {f1['prefill_dram']:>18,} "
-              f"{f2['prefill_dram']:>18,} {f2['prefill_dram']/f1['prefill_dram']:>11.1f}x")
-    print("\n  Exact agreement at one Q block is the check that the correction is\n"
-          "  right: both paths then reduce to Q/K/V read once plus KV writeback.\n"
-          "  The block=256 penalty is flash's real tiling cost -- K/V re-read once\n"
-          "  per Q block -- and is why a larger block is cheaper.\n")
+        rows += [{'section': 'B', **x} for x in (st, f1, f2)]
+        trows.append([f"{ctx:,}", f"{st['prefill_dram']:,}",
+                      f"{f1['prefill_dram']:,}", f"{f2['prefill_dram']:,}",
+                      f"{f2['prefill_dram']/f1['prefill_dram']:.1f}x"])
+    rep.table(["context", "standard (corrected)", "flash, block = seq",
+               "flash, block = 256", "256 penalty"], trows, aligns="rrrrr")
+    rep.note(
+        "Exact agreement at one Q block. The `block=256` penalty is flash's real "
+        "tiling cost — K/V re-read once per Q block — and is why a larger block is "
+        "cheaper. It also confirms the flash path is not being flattered.")
 
-    # ---- C. Prefill roofline ------------------------------------------------
-    print("C. What it does to TTFT  (batch 1)\n")
-    print(f"  {'context':>8} | {'TTFT before':>13} {'TTFT after':>13} {'change':>9}")
+    # ---- C. TTFT ------------------------------------------------------------
+    rep.section("C. What it does to TTFT", "Batch 1.")
+    trows = []
     for ctx in CONTEXTS:
         need = buf_kb(ctx)
         a = run(ctx, 1)
         c = run(ctx, 1, score_kb=need, prefill_kv=True)
-        print(f"  {ctx:>8} | {a['ttft_s']*1e3:>11.1f} ms {c['ttft_s']*1e3:>11.1f} ms "
-              f"{a['ttft_s']/c['ttft_s']:>8.2f}x")
-    print("\n  No published number moves: no tracked markdown contains a TTFT or a\n"
-          "  prefill DRAM figure, and every study that emits TTFT runs on the flash\n"
-          "  path, which never had the spill.  This is a cleanup before the claim.\n")
+        trows.append([f"{ctx:,}", f"{a['ttft_s']*1e3:.1f} ms",
+                      f"{c['ttft_s']*1e3:.1f} ms",
+                      f"{a['ttft_s']/c['ttft_s']:.2f}x"])
+    rep.table(["context", "TTFT before", "TTFT after", "change"], trows,
+              aligns="rrrr")
+    rep.note(
+        "Unchanged. Prefill is compute-bound, so removing even 4.4 TB of DRAM "
+        "traffic does not move the roofline. Nothing published moves either: no "
+        "tracked markdown contains a TTFT or prefill-DRAM figure, and every study "
+        "that emits TTFT runs the flash path, which never had the spill. **This is "
+        "a cleanup before the claim, not a retraction.**")
 
-    # ---- D. The part that DOES move published results ----------------------
-    print("D. Decode is not inert either -- scores are FP16 across 32 query heads\n"
-          "   while KV is 4-bit across 8 KV heads, so the spill is a real if\n"
-          "   secondary term\n")
-    print(f"  {'context':>8} {'batch':>6} | {'decode before':>16} "
-          f"{'decode after':>16} {'removed':>9} {'TPOT change':>12}")
+    # ---- D. Decode ----------------------------------------------------------
+    rep.section(
+        "D. Decode is not inert either",
+        "Scores are FP16 across 32 **query** heads while the KV cache is 4-bit "
+        "across only 8 **KV** heads, so the spill is a real if secondary term.")
+    trows = []
     for ctx in (8192, 32768):
         for b in BATCHES:
             need = buf_kb(ctx)
             a = run(ctx, b)
             c = run(ctx, b, score_kb=need, prefill_kv=True)
             rows += [{'section': 'D', **x} for x in (a, c)]
-            print(f"  {ctx:>8} {b:>6} | {a['decode_dram']:>16,} "
-                  f"{c['decode_dram']:>16,} "
-                  f"{1 - c['decode_dram']/a['decode_dram']:>8.1%} "
-                  f"{a['tpot_s']/c['tpot_s']:>11.3f}x")
-    print("\n  Isolated by differencing, the score spill is 11.1% of decode ATTENTION\n"
-          "  DRAM at every context -- the share of the decode total then follows the\n"
-          "  batch, since weights are fixed and attention scales with it.  Reading\n"
-          "  attn_v's dram_read directly would overstate this ~5x, because that field\n"
-          "  also carries the V-cache read.\n")
-    print("  study2.md sections 7-9 were produced with the spill on, so section 7's\n"
-          "  'KV share of decode DRAM' is really ATTENTION share and is ~11% scores.\n"
-          "  The TPOT shift is 1.005x-1.016x, so those sections need correcting\n"
-          "  rather than overturning.\n")
+            trows.append([f"{ctx:,}", str(b), f"{a['decode_dram']:,}",
+                          f"{c['decode_dram']:,}",
+                          f"{1 - c['decode_dram']/a['decode_dram']:.1%}",
+                          f"{a['tpot_s']/c['tpot_s']:.3f}x"])
+    rep.table(["context", "batch", "decode DRAM before", "after", "removed",
+               "TPOT change"], trows, aligns="rrrrrr")
+    rep.note(
+        "Isolated by **differencing** staged against unstaged, the score spill is "
+        "11.1% of decode attention DRAM at every context; its share of the decode "
+        "total then follows batch, since weights are fixed and attention scales. "
+        "Reading `attn_v.dram_read` directly would overstate this ~5x, because that "
+        "field also carries the V-cache read.\n"
+        "`study2.md` sections 7–9 were produced with the spill on, so section 7's "
+        "\"KV share of decode DRAM\" is really *attention* share and is ~11% scores. "
+        "At a 1.005x–1.016x TPOT shift those sections need **correcting, not "
+        "overturning**.")
+
+    rep.save()
     return rows
-
-
-class _Tee:
-    def __init__(self, *streams):
-        self._streams = streams
-
-    def write(self, s):
-        for st in self._streams:
-            st.write(s)
-        return len(s)
-
-    def flush(self):
-        for st in self._streams:
-            st.flush()
 
 
 def main():
@@ -291,24 +319,13 @@ def main():
     p.add_argument('--report', default=os.path.join(_here, 'prefill_report.md'))
     args = p.parse_args()
 
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
-        rows = sweep()
+    rows = sweep(args.report)
 
     keys = sorted({k for r in rows for k in r})
     with open(args.csv, 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
-
-    with open(args.report, 'w') as f:
-        f.write("# Attention score staging: the biggest DRAM term was an "
-                "assumption\n\n")
-        f.write("Generated by `analysis/memory/prefill_run.py`.\n"
-                "Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, FP16 activations.\n\n")
-        f.write("```\n")
-        f.write(buf.getvalue())
-        f.write("```\n")
 
     print(f"Wrote {len(rows)} rows -> {args.csv}")
     print(f"Wrote report      -> {args.report}")

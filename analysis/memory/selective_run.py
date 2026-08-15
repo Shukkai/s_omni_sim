@@ -13,15 +13,14 @@ Usage:
 """
 
 import argparse
-import contextlib
 import csv
-import io
 import os
 import sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _root = os.path.abspath(os.path.join(_here, '..', '..'))
 sys.path.insert(0, os.path.join(_root, 'simulator'))
+sys.path.insert(0, os.path.join(_root, 'analysis'))
 sys.path.insert(0, os.path.join(_root, 'analysis', 'cycle_breakdown'))
 sys.path.insert(0, os.path.join(_root, 'analysis', 'compact_breakdown'))
 sys.path.insert(0, _here)
@@ -30,6 +29,7 @@ from simulator import HardwareConfig, WorkloadConfig     # noqa: E402
 from model_configs import get_model_config               # noqa: E402
 from kv_budget import KVBudgetSimulator                  # noqa: E402
 from selective_attn import SelectiveAttnSimulator        # noqa: E402
+from report import Report                               # noqa: E402
 
 MODEL = 'LLaMA-3-8B'
 CONTEXT = 32768
@@ -107,40 +107,65 @@ def preflight():
     return checks
 
 
-def sweep():
+def sweep(report_path):
     rows = []
     preflight()
 
-    model_dense = run_sel()
-    dense_bytes = model_dense['dram_read']
-    dense_tpot = model_dense['tpot_s']
-    print(f"Dense decode baseline: {dense_bytes:,} B DRAM read, "
-          f"TPOT {dense_tpot * 1e3:.3f} ms\n")
+    dense = run_sel()
+    dense_bytes, dense_tpot = dense['dram_read'], dense['tpot_s']
 
-    # ---- A. Selection vs compacted eviction, at equal entries --------------
-    print("A. Same retained entries: selection vs compacted eviction\n"
-          f"   (context {CONTEXT:,}, page 16, 4-bit KV, {BURST} B burst)\n")
-    print(f"  {'pages':>6} {'entries':>8} | {'evict eff':>16} {'select eff':>16} "
-          f"{'ratio':>7}")
+    rep = Report(
+        report_path,
+        "Select-without-evict",
+        subtitle="What page selection actually costs, once granularity is charged",
+        source="analysis/memory/selective_run.py",
+        setup=[f"Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, context {CONTEXT:,}, "
+               f"{BURST} B DRAM burst.",
+               f"Dense decode baseline: {dense_bytes:,} B DRAM read, "
+               f"TPOT {dense_tpot * 1e3:.3f} ms."])
+
+    rep.summary([
+        "**Selection and compacted eviction are byte-identical** at equal retained "
+        "entries, at every `k` tested — so the flat-bandwidth model was right, and "
+        "`kv_budget.py`'s decision to defer this study was correct for this hardware.",
+        "The reason: a 4-bit KV entry is `128 x 4/8` = **64 B, exactly one "
+        "DDR-class burst**, so a page-gathering reader is burst-aligned at every "
+        "page size — down to a single token.",
+        "**Granularity is a bit-width property here, not a selection property.** At "
+        "3-bit KV an entry is 48 B and a single-entry gather does pay 1.33x.",
+        "What selection actually costs is **metadata**, which scales with the "
+        "context rather than with what was selected — so its share grows as "
+        "selection gets more aggressive.",
+    ])
+
+    # ---- A ------------------------------------------------------------------
+    rep.section(
+        "A. Selection vs compacted eviction, at equal retained entries",
+        "Page 16, 4-bit KV. If burst granularity separated the two, it would show "
+        "here.")
+    trows = []
     for k in (16, 64, 256, 1024):
         ps = 16
         e = run_evict(ps * k, burst=BURST)
-        s = run_sel(burst=BURST, page_size=ps, select_pages=k)
-        ratio = s['dram_read_eff'] / e['dram_read_eff']
+        sel = run_sel(burst=BURST, page_size=ps, select_pages=k)
+        ratio = sel['dram_read_eff'] / e['dram_read_eff']
         rows.append({'section': 'A', 'pages': k, 'entries': ps * k,
                      'evict_eff': e['dram_read_eff'],
-                     'select_eff': s['dram_read_eff'], 'ratio': ratio})
-        print(f"  {k:>6} {ps*k:>8} | {e['dram_read_eff']:>16,} "
-              f"{s['dram_read_eff']:>16,} {ratio:>7.3f}x")
-    print("\n  Identical.  A 4-bit KV entry is 128 x 4/8 = 64 B, so a page of 16 is\n"
-          "  1024 B -- a whole number of 64 B bursts.  Gathering pages costs nothing\n"
-          "  extra because every page boundary is already burst-aligned.\n")
+                     'select_eff': sel['dram_read_eff'], 'ratio': ratio})
+        trows.append([f"{k:,}", f"{ps*k:,}", f"{e['dram_read_eff']:,}",
+                      f"{sel['dram_read_eff']:,}", f"{ratio:.3f}x"])
+    rep.table(["pages read", "entries", "eviction (eff)", "selection (eff)",
+               "ratio"], trows)
+    rep.note(
+        "Identical. A page of 16 entries is 1,024 B — a whole number of 64 B "
+        "bursts — so every page boundary is already burst-aligned and gathering "
+        "costs nothing extra.")
 
-    # ---- B. Where granularity does bite ------------------------------------
-    print("B. Page size and KV bit-width vs burst alignment\n"
-          f"   (entry = head_dim 128 x kv_bits / 8; {BURST} B burst)\n")
-    print(f"  {'kv_bits':>8} {'entry B':>8} {'page':>6} {'run B':>8} "
-          f"{'charged':>9} {'waste':>7}")
+    # ---- B ------------------------------------------------------------------
+    rep.section(
+        "B. Where granularity *does* bite",
+        f"Entry width is `head_dim 128 x kv_bits / 8`, against a {BURST} B burst.")
+    trows = []
     for kv_bits in (4, 3):
         for ps in (1, 4, 16):
             entry_b = 128 * kv_bits // 8
@@ -149,18 +174,20 @@ def sweep():
             rows.append({'section': 'B', 'kv_bits': kv_bits, 'page_size': ps,
                          'run_bytes': run_b, 'charged': charged,
                          'ratio': charged / run_b})
-            print(f"  {kv_bits:>8} {entry_b:>8} {ps:>6} {run_b:>8} "
-                  f"{charged:>9} {charged / run_b:>6.2f}x")
-    print("\n  4-bit KV is burst-aligned at every page size, including page = 1\n"
-          "  (token-granular, TidalDecode-style).  3-bit KV is 48 B per entry and\n"
-          "  is NOT: a single-entry gather pays 1.33x.  Granularity is a bit-width\n"
-          "  property here, not a selection property.\n")
+            trows.append([str(kv_bits), f"{entry_b} B", str(ps), f"{run_b} B",
+                          f"{charged} B", f"{charged / run_b:.2f}x"])
+    rep.table(["kv_bits", "entry", "page", "run", "charged", "waste"], trows)
+    rep.note(
+        "4-bit KV is burst-aligned at **every** page size, including page = 1 "
+        "(token-granular, TidalDecode-style). 3-bit KV is 48 B per entry and is "
+        "not: a single-entry gather pays 1.33x.")
 
-    # ---- C. What selection metadata costs ----------------------------------
-    print("C. Selection metadata: Quest-style min/max per page, per token\n"
-          f"   (context {CONTEXT:,}, 4-bit KV, {BURST} B burst)\n")
-    print(f"  {'page':>6} {'read':>7} | {'no cost':>16} {'with metadata':>16} "
-          f"{'overhead':>9} {'TPOT':>10}")
+    # ---- C ------------------------------------------------------------------
+    rep.section(
+        "C. What selection metadata costs",
+        "Quest-style per-page min/max, read once per page per token over the "
+        "**full** context — not over what was selected.")
+    trows = []
     for ps in (16, 64):
         for frac in (0.5, 0.25, 0.1, 0.03):
             free = run_sel(burst=BURST, page_size=ps, select_frac=frac)
@@ -171,18 +198,21 @@ def sweep():
                          'free_eff': free['dram_read_eff'],
                          'paid_eff': paid['dram_read_eff'], 'overhead': oh,
                          'tpot_s': paid['tpot_s']})
-            print(f"  {ps:>6} {frac:>6.0%} | {free['dram_read_eff']:>16,} "
-                  f"{paid['dram_read_eff']:>16,} {oh:>8.3f}x "
-                  f"{paid['tpot_s']*1e3:>8.3f} ms")
-    print("\n  Metadata scales with the CONTEXT, not with what was selected, so its\n"
-          "  share grows as selection gets more aggressive -- the floor under how\n"
-          "  far selection can pay.  A larger page amortises it directly.\n")
+            trows.append([str(ps), f"{frac:.0%}", f"{free['dram_read_eff']:,}",
+                          f"{paid['dram_read_eff']:,}", f"{oh:.3f}x",
+                          f"{paid['tpot_s']*1e3:.3f} ms"])
+    rep.table(["page", "read", "no metadata", "with metadata", "overhead",
+               "TPOT"], trows)
+    rep.note(
+        "Metadata scales with the **context**, not with what was selected, so its "
+        "share grows as selection gets more aggressive — a floor under how far "
+        "selection can pay. A larger page amortises it directly.")
 
-    # ---- D. End-to-end speedup vs dense ------------------------------------
-    print("D. Decode speedup vs dense, and how much of it is real\n"
-          f"   (context {CONTEXT:,}, page 16, 4-bit KV)\n")
-    print(f"  {'read':>7} | {'flat model':>11} {'+ burst':>10} "
-          f"{'+ metadata':>11}")
+    # ---- D ------------------------------------------------------------------
+    rep.section(
+        "D. How much of the paper speedup survives",
+        "Page 16, 4-bit KV. Decode TPOT speedup vs dense.")
+    trows = []
     for frac in (0.5, 0.25, 0.1, 0.03):
         flat = run_sel(burst=0, page_size=16, select_frac=frac)
         bur = run_sel(burst=BURST, page_size=16, select_frac=frac)
@@ -192,27 +222,18 @@ def sweep():
                      'flat_speedup': dense_tpot / flat['tpot_s'],
                      'burst_speedup': dense_tpot / bur['tpot_s'],
                      'metadata_speedup': dense_tpot / met['tpot_s']})
-        print(f"  {frac:>6.0%} | {dense_tpot/flat['tpot_s']:>10.3f}x "
-              f"{dense_tpot/bur['tpot_s']:>9.3f}x "
-              f"{dense_tpot/met['tpot_s']:>10.3f}x")
-    print("\n  Burst granularity costs selection nothing at 4-bit KV.  Metadata is\n"
-          "  what bends the curve, and it bends it hardest exactly where the paper\n"
-          "  numbers look best.\n")
+        trows.append([f"{frac:.0%}", f"{dense_tpot/flat['tpot_s']:.3f}x",
+                      f"{dense_tpot/bur['tpot_s']:.3f}x",
+                      f"{dense_tpot/met['tpot_s']:.3f}x"])
+    rep.table(["read", "flat model", "+ burst granularity", "+ metadata"],
+              trows)
+    rep.note(
+        "Burst granularity costs selection **nothing** at 4-bit KV. Metadata is "
+        "what bends the curve, and it bends it hardest exactly where the paper "
+        "numbers look best.")
+
+    rep.save()
     return rows
-
-
-class _Tee:
-    def __init__(self, *streams):
-        self._streams = streams
-
-    def write(self, s):
-        for st in self._streams:
-            st.write(s)
-        return len(s)
-
-    def flush(self):
-        for st in self._streams:
-            st.flush()
 
 
 def main():
@@ -222,24 +243,13 @@ def main():
                    default=os.path.join(_here, 'selective_report.md'))
     args = p.parse_args()
 
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
-        rows = sweep()
+    rows = sweep(args.report)
 
     keys = sorted({k for r in rows for k in r})
     with open(args.csv, 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
-
-    with open(args.report, 'w') as f:
-        f.write("# Select-without-evict: what selection actually costs\n\n")
-        f.write("Generated by `analysis/memory/selective_run.py`.\n"
-                "Model: LLaMA-3-8B on Omni-LUT.  See the module docstring in\n"
-                "`selective_attn.py` for scope and assumptions.\n\n")
-        f.write("```\n")
-        f.write(buf.getvalue())
-        f.write("```\n")
 
     print(f"Wrote {len(rows)} rows -> {args.csv}")
     print(f"Wrote report      -> {args.report}")

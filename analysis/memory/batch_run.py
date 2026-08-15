@@ -28,16 +28,15 @@ Usage:
 """
 
 import argparse
-import contextlib
 import csv
-import io
 import os
 import sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _root = os.path.abspath(os.path.join(_here, '..', '..'))
-for p in ('simulator', 'analysis/cycle_breakdown', 'analysis/compact_breakdown',
-          'analysis/channel_prune_breakdown', 'analysis/memory'):
+for p in ('simulator', 'analysis', 'analysis/cycle_breakdown',
+          'analysis/compact_breakdown', 'analysis/channel_prune_breakdown',
+          'analysis/memory'):
     sys.path.insert(0, os.path.join(_root, *p.split('/')))
 
 from simulator import HardwareConfig, WorkloadConfig, Simulator   # noqa: E402
@@ -45,6 +44,7 @@ from model_configs import get_model_config                        # noqa: E402
 from kv_budget import KVBudgetSimulator                           # noqa: E402
 from think_prune import ThinKSimulator                            # noqa: E402
 from selective_attn import SelectiveAttnSimulator                 # noqa: E402
+from report import Report                                         # noqa: E402
 
 MODEL = 'LLaMA-3-8B'
 BATCHES = [1, 8, 32]
@@ -90,102 +90,114 @@ TECHNIQUES = [
 ]
 
 
-def sweep():
+def sweep(report_path):
     rows = []
+    rep = Report(
+        report_path,
+        "KV reduction vs batch",
+        subtitle="Were the KV studies measured in the right place?",
+        source="analysis/memory/batch_run.py",
+        setup=["Model: LLaMA-3-8B on Omni-LUT, 4-bit KV, standard attention."])
 
-    # ---- A. The ceiling itself ---------------------------------------------
-    print("A. KV share of decode DRAM -- the ceiling on any KV technique\n")
-    print(f"  {'context':>8} {'batch':>6} | {'weights (AW)':>17} "
-          f"{'KV+attn (AA)':>17} {'KV share':>9} {'max speedup':>12}")
+    rep.summary([
+        "Decode **weight traffic is constant in batch** — read once, reused across "
+        "it — while KV traffic scales linearly. So the KV share of decode DRAM, "
+        "the hard ceiling on any KV technique, runs from **10.1% at batch 1 / 8K "
+        "to 93.5% at batch 32 / 32K**.",
+        "**Entry-count techniques were measured in the wrong place.** At 32K, "
+        "`evict-1024` goes 2.460x to **15.957x** and `select-3%` goes 2.404x to "
+        "**12.854x** from batch 1 to 32. Their batch-1 numbers understate them "
+        "several-fold.",
+        "**Channel pruning does not recover** — ThinK-K holds ~1.05x at every "
+        "batch. That is a *different* ceiling and must not be conflated: the bytes "
+        "it saves were never on the critical path.",
+    ])
+
+    # ---- A ------------------------------------------------------------------
+    rep.section(
+        "A. The ceiling itself",
+        "'Max speedup' is what a technique removing **all** KV traffic could "
+        "achieve on decode DRAM.")
+    trows = []
     for ctx in CONTEXTS:
         for b in BATCHES:
             m = _measure(Simulator(hw()), b, ctx)
             ceiling = 1 / (1 - m['kv_share']) if m['kv_share'] < 1 else float('inf')
             rows.append({'section': 'A', 'context': ctx, 'batch': b,
                          'technique': 'dense', **m})
-            print(f"  {ctx:>8} {b:>6} | {m['aw_dram']:>17,} {m['aa_dram']:>17,} "
-                  f"{m['kv_share']:>8.1%} {ceiling:>11.2f}x")
-    print("\n  Weight traffic is constant in batch -- read once, reused across the\n"
-          "  batch -- while KV scales linearly.  'max speedup' is what a technique\n"
-          "  that removed *all* KV traffic could achieve on decode DRAM.\n")
+            trows.append([f"{ctx:,}", str(b), f"{m['aw_dram']:,}",
+                          f"{m['aa_dram']:,}", f"{m['kv_share']:.1%}",
+                          f"{ceiling:.2f}x"])
+    rep.table(["context", "batch", "weights (AW)", "KV + attn (AA)", "KV share",
+               "max speedup"], trows)
 
-    # ---- B. Each technique across batch ------------------------------------
-    print("B. Decode TPOT speedup vs dense, by batch\n")
+    # ---- B ------------------------------------------------------------------
+    rep.section("B. Decode TPOT speedup vs dense, by batch")
     for ctx in CONTEXTS:
-        print(f"  context {ctx:,}")
-        header = ''.join(f"{'batch ' + str(b):>13}" for b in BATCHES)
-        print(f"  {'technique':>16}{header}")
         base = {b: _measure(Simulator(hw()), b, ctx)['tpot_s'] for b in BATCHES}
+        trows = []
         for label, factory in TECHNIQUES:
             if label == 'dense':
                 continue
-            cells = ''
+            cells = [label]
             for b in BATCHES:
                 m = _measure(factory(), b, ctx)
                 sp = base[b] / m['tpot_s'] if m['tpot_s'] else 0.0
                 rows.append({'section': 'B', 'context': ctx, 'batch': b,
                              'technique': label, 'speedup': sp, **m})
-                cells += f"{sp:>12.3f}x"
-            print(f"  {label:>16}{cells}")
-        print()
-    print("  The same technique, the same hardware, the same context -- only the\n"
-          "  batch changes.  What looked marginal at batch 1 is the dominant\n"
-          "  effect at batch 32.\n")
+                cells.append(f"{sp:.3f}x")
+            trows.append(cells)
+        rep.table(["technique"] + [f"batch {b}" for b in BATCHES], trows,
+                  aligns="l", caption=f"context {ctx:,}")
+    rep.note(
+        "The same technique, the same hardware, the same context — only the batch "
+        "changes. What looked marginal at batch 1 is the dominant effect at "
+        "batch 32.")
 
-    # ---- C. DRAM reduction, to separate cause from effect ------------------
-    print("C. Decode DRAM vs dense (bytes), by batch  (context 32,768)\n")
-    header = ''.join(f"{'batch ' + str(b):>13}" for b in BATCHES)
-    print(f"  {'technique':>16}{header}")
+    # ---- C ------------------------------------------------------------------
+    rep.section(
+        "C. Fraction of dense decode DRAM remaining",
+        "Context 32,768. Separates cause from effect: how much traffic each "
+        "technique actually removes.")
     base = {b: _measure(Simulator(hw()), b, 32768)['decode_dram'] for b in BATCHES}
+    trows = []
     for label, factory in TECHNIQUES:
         if label == 'dense':
             continue
-        cells = ''
+        cells = [label]
         for b in BATCHES:
             m = _measure(factory(), b, 32768)
             frac = m['decode_dram'] / base[b] if base[b] else 0.0
             rows.append({'section': 'C', 'context': 32768, 'batch': b,
                          'technique': label, 'dram_frac': frac, **m})
-            cells += f"{frac:>12.3f}x"
-        print(f"  {label:>16}{cells}")
-    print("\n  Fraction of dense decode DRAM remaining.  At batch 1 even aggressive\n"
-          "  selection barely moves the total, because the weights it cannot touch\n"
-          "  are most of it.\n")
+            cells.append(f"{frac:.3f}x")
+        trows.append(cells)
+    rep.table(["technique"] + [f"batch {b}" for b in BATCHES], trows, aligns="l")
+    rep.note(
+        "At batch 1 even aggressive selection barely moves the total, because the "
+        "weights it cannot touch are most of it.")
 
-    # ---- D. Reading this ---------------------------------------------------
-    print("D. Two different stories, and they must not be conflated\n")
-    print("  ENTRY-COUNT techniques (eviction, selection) were measured in the\n"
-          "  wrong place.  They cut kv_len, so their saving is pure DRAM traffic,\n"
-          "  and traffic is exactly what batch makes dominant.  evict-1024 at 32K\n"
-          "  goes 2.46x -> 15.96x from batch 1 to 32; select-3% goes 2.40x ->\n"
-          "  12.85x.  Their batch-1 numbers understate them several-fold.\n")
-    print("  CHANNEL pruning (ThinK) does NOT recover: 1.034x -> 1.054x at 32K.\n"
-          "  This is not the same ceiling.  ThinK does cut bytes -- section C shows\n"
-          "  decode DRAM falling to 0.825x at batch 32 -- but latency barely moves,\n"
-          "  so the bytes it saves were not on the critical path.  attn_v is\n"
-          "  compute-bound under a 4-bit KV cache, and the LUT_OS_V round cost has\n"
-          "  no N term, so pruning head_dim idles array columns instead of saving\n"
-          "  cycles.  That is the cycle null from section 5, and it is a property\n"
-          "  of the dataflow, not of the measurement point.  More batch cannot fix\n"
-          "  it; a different dataflow or head-packing might.\n")
-    print("  So: re-baseline eviction and selection at the batch the accelerator is\n"
-          "  actually meant to serve.  Leave section 5's ThinK conclusion standing --\n"
-          "  it was right, for the reason it gave.\n")
+    # ---- D ------------------------------------------------------------------
+    rep.section("D. Two different stories, which must not be conflated")
+    rep.note(
+        "**Entry-count techniques (eviction, selection) were measured in the wrong "
+        "place.** They cut `kv_len`, so their saving is pure DRAM traffic — and "
+        "traffic is exactly what batch makes dominant. At 32K, `evict-1024` goes "
+        "2.460x to 15.957x and `select-3%` goes 2.404x to 12.854x from batch 1 to "
+        "32. Re-baseline them at the batch the accelerator is meant to serve.")
+    rep.note(
+        "**Channel pruning (ThinK) does not recover: 1.034x to 1.054x at 32K.** "
+        "This is not the same ceiling. ThinK *does* cut bytes — section C shows "
+        "decode DRAM falling to 0.825x at batch 32 — but latency barely moves, so "
+        "those bytes were never on the critical path. `attn_v` is compute-bound "
+        "under a 4-bit KV cache and the `LUT_OS_V` round cost has no N term, so "
+        "pruning `head_dim` idles array columns instead of saving cycles. That is "
+        "the cycle null from `study.md` section 5, a property of the dataflow "
+        "rather than of the measurement point. More batch cannot fix it; a "
+        "different dataflow or head packing might.")
+
+    rep.save()
     return rows
-
-
-class _Tee:
-    def __init__(self, *streams):
-        self._streams = streams
-
-    def write(self, s):
-        for st in self._streams:
-            st.write(s)
-        return len(s)
-
-    def flush(self):
-        for st in self._streams:
-            st.flush()
 
 
 def main():
@@ -195,24 +207,13 @@ def main():
                    default=os.path.join(_here, 'batch_scaling_report.md'))
     args = p.parse_args()
 
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
-        rows = sweep()
+    rows = sweep(args.report)
 
     keys = sorted({k for r in rows for k in r})
     with open(args.csv, 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
-
-    with open(args.report, 'w') as f:
-        f.write("# KV reduction vs batch: were we measuring in the right place?\n\n")
-        f.write("Generated by `analysis/memory/batch_run.py`.\n"
-                "Model: LLaMA-3-8B on Omni-LUT, 4-bit KV.  See the module\n"
-                "docstring for why batch is the axis that matters here.\n\n")
-        f.write("```\n")
-        f.write(buf.getvalue())
-        f.write("```\n")
 
     print(f"Wrote {len(rows)} rows -> {args.csv}")
     print(f"Wrote report      -> {args.report}")
