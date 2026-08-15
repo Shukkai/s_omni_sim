@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "6db446a856742c8f0c23e62691d5c54b3ffcc88d38aa2d335718691660dd1980",
+  "full_sha256": "59491efd6b86c0d727f9b83c82949623d2528457bd020a0b847506de2d44d049",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -16,7 +16,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -807,7 +809,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "e832d024ee58842fafa18c1aea094be7ff6ba69187d182aeb9df8214ebddf7c7",
+  "full_sha256": "89c76a79d1c349c0b2bbffae9c9fa160cd3f52d5eb68a9dd53798269b3a5a0ad",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -823,7 +825,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -1686,7 +1690,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "1a1a6955b168ad93ce4ca634d0f8fd12a5d5815b04c20da3ab51621632f8bb52",
+  "full_sha256": "ac6e7f5211b4385b42bac7527876963c1239e6026a59c3fb2e36d8ad1611fc28",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1702,7 +1706,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -2565,7 +2571,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "3a7d75ae3341a35d98cdfb57eb8ea3795fc99e4784635845e54f6b5aecb8ead0",
+  "full_sha256": "9c30a6d0e16d6e86ae53dab3016a2949be6413be6df41e152e9937be312f4fc8",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2581,7 +2587,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -3444,7 +3452,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "d81d94306c220a348dd0b76208056e58422a9df3fa854a90ba8a7b4f88f3b01f",
+  "full_sha256": "69f00393591309170b7d75e113613f211c4dde0ec88b147d1f811ba621e02300",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3460,7 +3468,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -4323,7 +4333,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "899f2e61bf0701c3224def7ee5590902dbaef14f7ab3a995f7dcbb9b194d021d",
+  "full_sha256": "eafd49ab2e7c0a8a74e3b47924020b2929f76815067c89ded0f10b8849ab5e50",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -4339,7 +4349,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -5130,7 +5142,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "cbbacf3030e8404c7187ed43fde99f9b0462e631031ea51edaa4b779fa4ca5b5",
+  "full_sha256": "b7ebc0367323f3bd973139a24dbec90eb64b3b71ae1f28e2803b62b8df1fe7ca",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5146,7 +5158,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -5937,7 +5951,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "6edb10bd2336fe58733ff0d207d58c1799da65eacd1cba0aceda7ebb04cdfd8a",
+  "full_sha256": "1bb280f0a5c4dd9aaaf6b1dadb79151e3c6eebd3dc8fb17cb8ea5474ae04ce87",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5953,7 +5967,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -6816,7 +6832,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "6df2b59599b9e6b36bc8b4a943d8be1cea25c9209cae5c25cd00dee026781837",
+  "full_sha256": "0a6432bcb66958857e77eb4461c6c63cc69c8a8bbaa9af814be44ec7a0788386",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6832,7 +6848,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -7695,7 +7713,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "16df84e96d78e240200e2bddb23a123a48e725296575c5d34981428d9eee84f9",
+  "full_sha256": "34ddf7e9fe58c14782165977d157d198eb0a4160c12a5522638a55cbcf7d42cb",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7711,7 +7729,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -8574,7 +8594,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "a4fb4718e02b50ededa1ba86d49b377b63ee289200f55a69ce0691fefc9b5807",
+  "full_sha256": "910b07c882cbf9839bd1d812c04945354f676afa16d0e8fe7b70f4613fbcef33",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8590,7 +8610,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -9453,7 +9475,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "837262d37fe4118bfa30f038c3b8df40cd81127edd4f63a47b14e61af8af0384",
+  "full_sha256": "5e7b5edc08a7673f7c08a47357861271e252d7dcdeccffcf7dcabe228e7ce81d",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -9469,7 +9491,9 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -10260,7 +10284,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "160a4d6cd96aac13d22162d5dd7bdd0d2d601b5d659d03b082ac63fd67a28339",
+  "full_sha256": "3c05914e851cad8cad70d5e273957f04dab24cda1f01f3e808de06b7ab5a7d81",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10276,7 +10300,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -11067,7 +11093,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "35b27f5bf8479971bc1908682e2cd92ca275a802244360328c39284860e56846",
+  "full_sha256": "4e9785a42dd277f6bd9b98005afedb405fae8f46740373550c2911470750209a",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11083,7 +11109,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -11946,7 +11974,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "b8b54d38f7baf55345c96f9e3b9812a240173d1908ff97f929a1fb9f681a5b41",
+  "full_sha256": "5ca63af35d47d5b36a04ca590069e90cbccaf572c14c624d88bd88856a12e62d",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11962,7 +11990,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -12825,7 +12855,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "961a8b544f809a57050245cb0f38714f057dc4e13ca15084c78898bf7d5b80d0",
+  "full_sha256": "c8d0821a260d3e2bc2316a0f98ba43ac623c7b0424adefc436f1c7e219f20303",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12841,7 +12871,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -13704,7 +13736,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "b5373558bf8990fb1cbbbcc0b86a4b36e21b62a144cd0cbf0b6746c38d42ce84",
+  "full_sha256": "c958a9d2319bc20dd9d0e519c09906e8267caa7ea222a0e02a374c23056a66d3",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -13720,7 +13752,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -14583,7 +14617,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "fd259de381a4686760223676d94fa648f7f17bd631f65d4413993f905806557c",
+  "full_sha256": "bc0492c46c469675ad76e5224e21895912f93ffbf2164c80d3276dedef9ca996",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14599,7 +14633,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -15390,7 +15426,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "1cad45af883c4b539f3d8bd82f8935239f27929c6f39f37a358eb32ca478d392",
+  "full_sha256": "11a5c046c1dfcbd7091af17e27d3fee57afd13d414a3836684ef513bbba0e299",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15406,7 +15442,9 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -16197,7 +16235,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "3ca9d2a210b1036cda6606ac8c3a66f564f42787efa2381cdfc8434b0c392d81",
+  "full_sha256": "52be71fd7fd8d75cea87105d830626ed2eb6c27d8767cfd0bb31567889eaf152",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16213,7 +16251,9 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -17076,7 +17116,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "8e9f3df61167404d5ffe8d9e9a3de5bad1147d34c2d5e447c1cb422d4bd8464e",
+  "full_sha256": "b3f446bb263c998f092ecb168dca9f6de65a0edf3ee4a5c6d9b71fa911977c96",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17092,7 +17132,9 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -17955,7 +17997,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "2e48d5ed946cc442d22ede4e926869bed4afb39b71611b472a0586eee3e1471f",
+  "full_sha256": "b60b467cd0daf8f2b4f60c1bc7d653d8476fc90854a4bf9a7fb9c7a680da0fe5",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17971,7 +18013,9 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -18834,7 +18878,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "1dbc6b45d942d7e7200f13009122d20ef51113e3ef68c6dd6e29045b17910f7e",
+  "full_sha256": "7536374c5c69d96347665bbc7287162254cec7a1fa09e45ed24b44bb770330eb",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18850,7 +18894,9 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -19713,7 +19759,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "0599ef3da0fe6c4f35951824bebdd71efe283e65560f8ef966dac7fb6385270d",
+  "full_sha256": "8a2ba30cf77925fe1721aff9b72fae2abb1e1c348e9e776063cdf89c47c6efc8",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19729,7 +19775,9 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -20520,7 +20568,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "dab4883dc2730c40d1c967ece30394bde8ac846f47ad263f78e0a40135b4c07e",
+  "full_sha256": "16add42b7530890188dfae57779ef7f7c25f1e2a7b0dbc853e90f246bffc160b",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20536,7 +20584,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -21327,7 +21377,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "f2b017ed6c259771b50051aa8108650a34f3aa0de60b75333d9048fdb9076fda",
+  "full_sha256": "0a8822a5bc802af6cea9d9cded3e55cc0d2a658f5368c873c59fa6a103db6acd",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21343,7 +21393,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -22206,7 +22258,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "02ae733ace7d90fa98e36bda441dac98ebc9b2c8f4dbb8f9a464b5685c316534",
+  "full_sha256": "96e1506d6dd7d30dc037abbddfc80db23f325aae601361ad2480c321c291c64c",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -22222,7 +22274,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -23085,7 +23139,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "e827a6404541b0b50380d5e064bb50e40c94c0437377e4818e98cbbdc0563130",
+  "full_sha256": "1af2d8beeeedb299d7d72bae69e549f03f3db4e3a01f2d38893d64f745d426de",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23101,7 +23155,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -23964,7 +24020,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "5f100fdd56257657bb1ad9cb34162910cfa2be5e5f1591fbab13db21b9621392",
+  "full_sha256": "6f5b575e76beb547e851e348893fa9bb0c62ad13e84e4da7f5ac5037955a27a7",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23980,7 +24036,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -24843,7 +24901,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "2fea51b77af164ca161a785794b5a7111bc455c0620692b19547edebcab34e00",
+  "full_sha256": "22d61df72380fe507e981f3ce60dcd9f4d2df5d0142b7b4d26e5efdfe3277a6f",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24859,7 +24917,9 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -25650,7 +25710,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "9be7345a7d900235cc2626f1048da6f240b1bd04dbdb465c695f8d8fd8df20bb",
+  "full_sha256": "e3845e4f1cff9afb5eb2df4d155abf91fb1ad92b46798d94328949240456a007",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25666,7 +25726,9 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -26457,7 +26519,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "96ebe1eb8a3a86d59cfd407625719fe0f447b2c944029f888fd2b4d45de912cd",
+  "full_sha256": "1d4fd9100b60b873150ffe7c6a1b208fd1c93c975e8abb4baa75d198fac4ceb8",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -26473,7 +26535,9 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -27336,7 +27400,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "d6fe3f4470feff4ec18e73b7df62d19eceea575bb8d37950fdd169f32a913bd4",
+  "full_sha256": "520b78aefd17e8539f43f5d6950dd11c2fdf217daef28344bf277b8808f6c2d0",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27352,7 +27416,9 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -28215,7 +28281,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "4c528a686bdb81bad8d31586717667fd77b02be8cbc4ffa859a938845c515234",
+  "full_sha256": "c43ca427b25cda15e6ccd333857dfed94f459cd2229c48012d39c5fb3f003e51",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -28231,7 +28297,9 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -29094,7 +29162,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "7136eda5656ae24c5001b0c0f6772f61a457d84ce3a0ec3fbae909deb0ce343c",
+  "full_sha256": "cd32d610e85d43be6a1994f0f730a0f7383f7f472028f57f172484bce59e26a9",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29110,7 +29178,9 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -29973,7 +30043,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "667bede0074cb6a1f6daed9e8604a37cc06d5827c003e702b13a12dbe8681e14",
+  "full_sha256": "7a29b046872758c75f7919dc3a638c72fed2fc33f5d9af4ffa01f71a0a2456c0",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29989,7 +30059,9 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "prefill_kv_dram_read": false,
    "replication": 1,
+   "score_sram_kb": 0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,

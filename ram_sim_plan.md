@@ -395,6 +395,80 @@ result), and residency then removes what is left of the traffic.
 
 ---
 
+## Stage 5 — attention score staging + prefill K/V read ✅
+
+**Goal.** The largest DRAM term in the model was a hardcoded assumption, applied
+unconditionally and inconsistently.
+
+**Files.** `simulator/simulator.py`, new `analysis/memory/prefill_run.py`,
+`analysis/regression/baseline.json` (re-captured).
+
+**The gap.** `QK_MATMUL` wrote the full score matrix to DRAM and `ATTN_V_MATMUL`
+read it back, in both phases, regardless of capacity — **99.9% of prefill DRAM at
+32K**. Two contradictions rode along: prefill attention read *zero* K/V from DRAM
+(the KV branch is gated on `is_decode`, the weights branch is an `elif`, so a
+prefill QK reached neither), and the softmax between them read the spilled matrix
+for free (`NonGEMMMetrics` has no DRAM fields).
+
+- `score_sram_kb: int = 0` — scores stay on chip iff one query row's vector fits.
+  Row granularity, not whole-matrix: a 32K score matrix is 2 GB per instance, so a
+  whole-matrix test would be false at every plausible size and inert exactly where
+  the traffic is.
+- `prefill_kv_dram_read: bool = False` — charges prefill for the K/V it reads.
+  Lands **with** the staging: staging alone would make prefill DRAM wrong by an
+  unbounded factor *low*, which is more dangerous than the 100×-high it replaces.
+- `_score_staged(N)` is consulted by both the write and the read-back, so the two
+  sides cannot disagree. It tests the **unmultiplied** width — the write site
+  multiplies by `batch_size = batch × num_heads`, and testing the multiplied count
+  would scale the buffer with head count so staging never fires.
+- Mirrored into `_simulate_flash_attention`, which reads K/V once per Q block.
+  Without that, flash would become the artificially cheap path.
+
+**Result — prefill DRAM, batch 1:**
+
+| context | spilling | staged + K/V read | reduction |
+|---|---:|---:|---:|
+| 2K | 19.8 GB | 2.68 GB | 7.4× |
+| 8K | 277.7 GB | 3.09 GB | 90× |
+| 32K | **4,401.7 GB** | **4.70 GB** | **937×** |
+
+**Nothing published moves.** Verified by grep: no tracked markdown contains a TTFT
+or prefill-DRAM figure, and every study emitting TTFT runs on the flash path, which
+never had the spill. TTFT itself is unchanged (1.00× at every context) — prefill is
+compute-bound, so removing even 4.4 TB of DRAM traffic does not move it.
+
+**Decode is a much smaller exposure than first thought, and the first estimate was
+wrong.** The score traffic must be isolated by *differencing* staged against
+unstaged; reading `attn_v.dram_read` directly overstates it ~5× because that field
+also carries the V-cache read. Differenced: **11.1% of decode attention DRAM** at
+every context, 1.2–10.4% of all decode DRAM depending on batch, TPOT shift
+1.005×–1.016×. `study2.md` §7's "KV share" is really *attention* share and is ~11%
+scores — a correction to those sections, not an overturning.
+
+**Verification.**
+- Gate at both defaults: zero pre-existing values changed, zero keys missing, only
+  the two config keys added. Re-captured (22,452 values) and re-checked clean.
+- 7 pre-flight assertions, including: the boundary (one KB below the row still
+  spills, at the row fully stages); staged prefill writes *exactly* the KV
+  writeback and nothing else; staging is inert on AW ops; and the
+  **non-configuration** (`score_sram_kb>0`, `prefill_kv_dram_read=False`) is pinned
+  by asserting prefill attention reads exactly 0 while the same run wrote a full KV
+  cache — the incoherence is demonstrated, not asserted away.
+- **Flash convergence is exact**: fully staged + prefill K/V read equals the flash
+  path at one Q block, to the byte, at every context. At `block=256` flash costs
+  1.2×/3.7×/30× more — its real K/V re-read-per-Q-block cost, and a signal the flash
+  path is not being flattered.
+- All prior stages' hand-checks pass; `think_run.py` still reproduces
+  55.39 / 70.67 / 131.82 ms; `selective_run.py` (5) and `pack_run.py` (9) still pass.
+
+**Design note worth carrying forward.** The buffer must be sized for the *longest*
+row the run produces — `context + output_tokens` — because decode grows `kv_len`.
+Sized for prefill alone, the scores silently spill again the moment decoding starts.
+
+**Checkpoint.** `<stage-5-sha>` — recorded by the following commit.
+
+---
+
 ## Standing checks — run after *every* stage
 
 1. `python analysis/regression/baseline.py check` → *Identical to the baseline ✓*

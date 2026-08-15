@@ -177,6 +177,28 @@ class HardwareConfig:
     # working set a given configuration needs.
     kv_sram_kb: int = 0
 
+    # --- Attention score staging ---
+    # On-chip buffer for the attention score matrix, in KB.  0 = the scores are
+    # written to DRAM by QK and read back by Attn.V unconditionally, which is
+    # what every number predating this field assumes.
+    #
+    # The test is per (batch, head) instance and at ROW granularity: the scores
+    # stay on chip iff one query row's score vector fits, `kv_len * act_bits/8`.
+    # A whole-matrix test would be false at every plausible size (a 32K score
+    # matrix is 2 GB per instance) and so would be inert exactly where the
+    # traffic is.  A row block that fits maps onto a real loop nest -- produce
+    # rows, softmax, consume in Attn.V -- and no score byte reaches DRAM.
+    #
+    # A carve-out of `sram_capacity_kb`, not additional memory.
+    score_sram_kb: int = 0
+
+    # Charge prefill attention for reading K/V from DRAM.  False reproduces the
+    # original model, which gates the KV read on `is_decode` and so charges
+    # prefill nothing -- it assumes K/V are resident while assuming the much
+    # larger score matrix is not.  Only meaningful together with
+    # `score_sram_kb`; see `_score_staged`.
+    prefill_kv_dram_read: bool = False
+
     # --- Bit widths ---
     act_bits: int = 16
     accumulate_bits: int = 32
@@ -1024,6 +1046,17 @@ class Simulator:
             kv_resident_bytes = self._kv_resident_bytes(
                 dram_read_bits // 8, share=1.0)
             dram_read_bits -= kv_resident_bytes * 8
+        elif hw.prefill_kv_dram_read and kv_len > 0:
+            # Mirrors the standard path's prefill K/V read.  Flash re-reads the
+            # whole K/V once per Q block -- that is the real cost of its tiling,
+            # and the reason a larger block is cheaper.  Without this, giving
+            # only the standard path a prefill read would make flash look
+            # artificially cheap and invert the convergence check.
+            dram_read_bits = (eff_kv_batch * kv_len * head_dim * kv_bits * 2
+                              * num_q_blocks)
+            kv_resident_bytes = self._kv_resident_bytes(
+                dram_read_bits // 8, share=1.0)
+            dram_read_bits -= kv_resident_bytes * 8
         dram_write_bits = 0  # Attention scores never written to DRAM
 
         # --- Peak SRAM footprint ---
@@ -1250,6 +1283,24 @@ class Simulator:
             return 0
         return min(kv_bytes, int(buf * share))
 
+    def _score_staged(self, score_width: int) -> bool:
+        """Do the attention scores stay on chip between QK and Attn.V?
+
+        `score_width` is the score-vector width for ONE (batch, head) instance
+        -- `kv_len` -- deliberately *not* multiplied by `batch_size`.  The
+        write site multiplies by `batch_size = batch x num_heads`; if that
+        multiplied count were tested here, the buffer requirement would scale
+        with head count and staging would never fire.  Heads are processed as
+        separate instances, so one instance's row is what has to fit.
+
+        Both the QK write and the Attn.V read-back consult this one function,
+        so the two sides of the score cannot disagree about where it lives.
+        """
+        buf = self.hw.score_sram_kb * 1024
+        if buf <= 0 or score_width <= 0:
+            return False
+        return score_width * self.hw.act_bits // 8 <= buf
+
     def _kv_dram_run_entries(self, kv_prev: int) -> int:
         """Contiguous KV entries per DRAM access.
 
@@ -1293,8 +1344,10 @@ class Simulator:
         if op_type in (OperationType.K_PROJ, OperationType.V_PROJ):
             dram_write_bits = batch_size * M * N * kv_bits
         elif op_type == OperationType.QK_MATMUL:
-            # Attention scores (M × N) spill to DRAM between QK and Attn·V
-            dram_write_bits = batch_size * M * N * act_bits
+            # Attention scores (M × N) spill to DRAM between QK and Attn·V --
+            # unless a row's worth fits on chip, in which case they never leave.
+            dram_write_bits = (0 if self._score_staged(N)
+                               else batch_size * M * N * act_bits)
         else:
             dram_write_bits = 0
 
@@ -1355,12 +1408,31 @@ class Simulator:
             read_parts.append(((kv_bits_total // 8 - resident) * 8,
                                run_entries * head_dim * kv_bits // 8))
 
+        elif (self.hw.prefill_kv_dram_read
+                and not is_decode
+                and op_type in (OperationType.QK_MATMUL,
+                                OperationType.ATTN_V_MATMUL)
+                and kv_len > 0):
+            # Prefill attention reads the K/V it just wrote back from DRAM.
+            # The original model charged nothing here -- the decode branch above
+            # is gated on `is_decode` and the AW branch below is an `elif`, so a
+            # prefill AA op reached neither.  That made prefill assert K/V were
+            # resident while asserting the (much larger) score matrix was not.
+            head_dim = K if op_type == OperationType.QK_MATMUL else N
+            run_entries = min(kv_len, self._kv_dram_run_entries(kv_len))
+            kv_bits_total = eff_kv_batch * kv_len * head_dim * kv_bits
+            resident = self._kv_resident_bytes(kv_bits_total // 8)
+            kv_resident_bytes = resident
+            read_parts.append(((kv_bits_total // 8 - resident) * 8,
+                               run_entries * head_dim * kv_bits // 8))
+
         elif compute_mode == ComputeMode.AW:
             # AW operations: weights loaded from DRAM -- one contiguous block
             read_parts.append((B_bits, B_bits // 8))
 
-        # Attn·V reads attention scores (A operand) back from DRAM, contiguous
-        if op_type == OperationType.ATTN_V_MATMUL:
+        # Attn·V reads attention scores (A operand) back from DRAM, contiguous.
+        # `K` is kv_len here, so it is the same width the QK write tested.
+        if op_type == OperationType.ATTN_V_MATMUL and not self._score_staged(K):
             score_bits = batch_size * M * K * act_bits
             read_parts.append((score_bits, score_bits // 8))
 
