@@ -1,16 +1,17 @@
 # Omni-LUT Memory Model Study
 
 Companion to `study.md`, which measured **cycles**. This one measures **memory** —
-SRAM capacity, DRAM access granularity, and KV reuse — and re-baselines the KV
-reduction results against them.
+SRAM capacity, DRAM access granularity, and KV reuse — re-baselines the KV
+reduction results against them, and then follows the evidence back out of memory:
+§8 shows why three separate KV techniques produced no speedup, and §9 acts on it.
 
 **Setup.** Identical to `study.md` unless a section says otherwise.
 
 - Model: LLaMA-3-8B — 32 layers, GQA 32/8, d_model 4096, d_ffn 14336.
 - Hardware: Omni-LUT-KV4 — 32x4 LUT array, W4A16KV4, `AW=AA=OMNI`,
   500 MHz, 51.2 GB/s.
-- Scripts and reports: `analysis/memory/`. Staged record and revert points:
-  `ram_sim_plan.md`.
+- Scripts and reports: `analysis/memory/`, plus `analysis/array_packing/` for
+  §9. Staged record and revert points: `ram_sim_plan.md`.
 
 **Method.** Every model change is a `HardwareConfig` field whose *disabled*
 default reproduces the previous numbers exactly, checked by
@@ -230,6 +231,81 @@ cache, so KV bytes are usually not the critical path.**
 
 ---
 
+## 9. OS-V array packing — the one axis that is not memory
+
+`attn_v` decode is issued as `(M=1, K=kv_len, N=head_dim=128)`, so
+`n_tiles = ceil(128/128) = 1` and `rounds = ceil(1/32) = 1`: **one of 32 PE rows
+does work, at any context length**, and cycles scale exactly linearly with
+`batch x heads`. `PackedOSVSimulator` (`analysis/array_packing/`) packs `P`
+instances into one pass, each with its own LGU driving `array_m/P` rows.
+
+Verified against `OMNI_LUT.pdf` §IV-C/§IV-D: the LUT is generated from the
+**activation** (query / attention scores), not the KV cache, so packed instances
+need `P` distinct LUTs and `P` ungated LGUs. What they share is the K/V
+bit-plane stream — the "weight" operand — which is what output-stationary
+already shares across rows. OS-V gates 31 of 32 LGUs *precisely because* `M=1`;
+packing generalises that broadcast.
+
+- **`attn_v` recovers exactly 32×** at every context, occupancy 3.12% → 99.9%.
+- **`qk` has two different mechanisms, and only one is what you'd guess.** Below
+  `kv_len = array_m x array_n x NUM_RAC = 4096` rows genuinely sit idle. At or
+  above it the body is full and the only waste is the **tail**:
+  `rounds = ceil(n_tiles/32)` rounds up to whole 32-row passes, leaving up to 31
+  rows idle in the last one. Packing subdivides the array into a finer quantum
+  and recovers exactly `32·ceil(n_tiles/32)/n_tiles` — 1.94× just past a tile
+  boundary, 1.12× at 32K, decaying as `1/n_tiles`. It is neutral **only** when
+  `n_tiles` is an exact multiple of 32, and decode `kv_len = context + token_idx`
+  almost never is.
+
+**32× on the stage is not 32× on the token.** `attn_v` was compute-bound, so
+packing drives its compute time under its memory time and the stage flips to
+memory-bound. Decode TPOT at 32K context:
+
+| P | batch 1 | batch 8 | batch 32 |
+|---|---:|---:|---:|
+| 2 | 1.353x | 1.604x | 1.701x |
+| 4 | 1.643x | 2.297x | 2.617x |
+| **8** | **1.755x** | **2.637x** | **3.118x** |
+| 16 / 32 | 1.755x | 2.637x | 3.118x |
+
+**The ceiling arrives at P=8, and P beyond that buys literally nothing** — the
+remaining cost is DRAM.
+
+**Which is what makes it affordable.** Packing `P` instances means `P` working
+sets resident. A GQA group shares its K/V tile; past the group size (4 here) the
+tiles are distinct. Decode peak SRAM at 32K, batch 1:
+
+| P | independent | GQA-shared | fits 16 MB? |
+|---|---:|---:|:---:|
+| 4 | 8.3 MB | 2.3 MB | yes |
+| **8** | 16.5 MB | **4.5 MB** | **yes** |
+| 32 | 66.0 MB | 18.0 MB | no |
+
+The two tables meet at **P=8, GQA-aware: the full achievable speedup for
+4.5 MB.** The 32× cycle figure is both unreachable in latency and unaffordable
+in SRAM, and neither fact matters, because nothing above P=8 is worth having.
+
+**What this does not charge for**, computed rather than waved at:
+
+- **Weight-FIFO / KV-SRAM read bandwidth.** One live row consumes
+  `MU x array_n x NUM_RAC x kv_bits` = 256 B/cycle ≈ 128 GB/s at 500 MHz. P=8 is
+  ~1.0 TB/s; P=32 is 8,192 B/cycle ≈ **4.1 TB/s**. The simulator enforces SRAM
+  *capacity* and has no bandwidth term at all, so packing converts an idle-array
+  problem into an SRAM-bandwidth problem it cannot bill. This is the first thing
+  to check before believing the result.
+- **LGU ungating power.** §IV-D gates 31 of 32 LGUs specifically to save power;
+  P=32 ungates all of them. Cycles fall 32×, LGU dynamic energy rises up to 32×,
+  and the energy model sees neither.
+- **Energy neutrality here is an artefact, not a finding.**
+  `os_v_energy_model.py:23` charges `n_tiles/array_m` and `omni_energy_model.py`
+  divides M==1 OS energy by `array_m` — energy is *already* amortised over all
+  32 rows while cycles charge a full round for one. **The two halves of the
+  model disagree today, and packing is what would make them agree.**
+- P live LUTs plus a P-way broadcast tree; per-instance output routing
+  (`OUTPUT_CYCLES` unchanged); and the scheduling tail when `batch x heads < P`.
+
+---
+
 ## TODO
 
 - **Tile prefill in `_calculate_peak_sram`.** It holds the whole activation
@@ -237,19 +313,18 @@ cache, so KV bytes are usually not the critical path.**
   (§2). The only outright *bug* the memory work found.
 - **Pin down ThinK's pruned-entry layout.** A 38 B entry is the one shape that is
   not burst-aligned, so §5 of `study.md` may overstate its speedup (§4).
-- **Profile dynamic bit sparsity.** `qbit` is modelled as static;
-  `analysis/bit_width/` sweeps fixed widths. Bit-plane skipping (cycles =
-  non-zero planes per round, not a constant `qbit`) and mixed-precision KV
-  (KIVI / ZipCache / KVQuant, giving a weighted-average effective `qbit`) both
-  land on the one multiplier that touches cycles. Nothing has characterized this
-  on a LUT array.
-- **Test GQA-group packing.** The 4 query heads of a GQA group attend to the same
-  KV and therefore the same LUT, so they could issue as one `M=4` op instead of
-  four `M=1` ops. In the cycle model that is 3.98x on decode `attn_v`, and since
-  `per_round` charges `array_m=32` for any `M>1`, `M=4` and `M=32` cost the same
-  — so a further 8x of work would ride along free (occupancy 3.12% -> 99.5%).
-  **Verify against Omni-LUT §IV-D first**: this assumes `array_m` indexes query
-  rows and the LUT is KV-derived and broadcast across them. If the LUT is
-  query-derived the result collapses.
+- **Mixed-precision KV.** `qbit` is modelled as static and
+  `analysis/bit_width/` sweeps only fixed widths, so per-token / per-channel
+  allocation (KIVI / ZipCache / KVQuant), giving a weighted-average effective
+  `qbit`, is unexplored — and `qbit` is the one axis that multiplies cycles as
+  well as bytes (§8).
+  **Bit-plane *skipping* is dead, and should not be attempted.** BCQ bit-planes
+  are ±1-valued (§VI-B), so an all-zero plane is not representable and skipping
+  is structurally meaningless on this encoding. Reducing `qbit` itself is real;
+  eliding planes within a fixed `qbit` is not.
+- **Bill the SRAM read bandwidth.** §9's packing result rests on the simulator
+  having no bandwidth term — capacity is enforced, throughput is not. P=8 needs
+  ~1.0 TB/s of KV-SRAM reads. Until that is modelled, §9 is a ceiling, not a
+  design.
 - **Measure the energy side of channel pruning.** Carried over from `study.md`;
   unchanged by this work.

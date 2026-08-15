@@ -52,7 +52,8 @@ OVERLAPPED_UNITS = ('bqu_tse', 'bqu_bea')
 
 def cycle_units(hw, M: int, K: int, N: int, qbit: int, mode: str,
                 batch_size: int, mu: int = Simulator.MU,
-                num_rac: int = Simulator.NUM_RAC) -> Dict[str, int]:
+                num_rac: int = Simulator.NUM_RAC,
+                pack: int = 1) -> Dict[str, int]:
     """Split the cost of A(M x K) @ B(K x N) across hardware units.
 
     This mirrors ``Simulator._calculate_cycles`` term by term; summing the
@@ -72,6 +73,12 @@ def cycle_units(hw, M: int, K: int, N: int, qbit: int, mode: str,
       input_load          Operand issue into the array.
       accumulator         Final accumulator + write-back.
       vpu                 Vector unit (non-LUT elementwise path).
+
+    ``pack`` packs that many independent OS-V instances into one pass, each
+    driven by its own LGU broadcasting to ``array_m / pack`` rows instead of
+    one LGU broadcasting to all 32.  It only bites in the ``LUT_OS_V`` M=1
+    branch; ``pack=1`` is the original expression term for term, so every
+    existing caller is unaffected.  See ``analysis/array_packing/``.
     """
     array_m = hw.array_m
     array_n = hw.array_n
@@ -91,11 +98,16 @@ def cycle_units(hw, M: int, K: int, N: int, qbit: int, mode: str,
         }
 
         if mode == "LUT_OS_V" and M == 1:
-            rounds = math.ceil(n_tiles / array_m / replication)
+            # Each of the `pack` instances gets its own LGU broadcasting to
+            # array_m/pack rows; `pack` instances then retire per pass.
+            rows_per_inst = max(1, array_m // pack)
+            rounds = math.ceil(n_tiles / rows_per_inst / replication)
+            eff_batch = math.ceil(batch_size / pack)
         else:
             rounds = math.ceil(m_tiles * n_tiles / replication)
+            eff_batch = batch_size
 
-        scale = batch_size * rounds * qbit
+        scale = eff_batch * rounds * qbit
 
     elif mode == "LUT_WS":
         k_eff = math.ceil(K / mu)
