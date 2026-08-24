@@ -25,9 +25,19 @@ survive both.
 **Method for §6 onward.** Every model change is a `HardwareConfig` field whose
 *disabled* default reproduces the previous numbers exactly, checked by
 `analysis/regression/baseline.py` (36 configs x workloads, 22,488 values,
-compared leaf by leaf). Nothing in §1–§5 moves unless asked. Scripts and
-generated reports live in `analysis/memory/` and `analysis/array_packing/`;
-the staged record with revert points is `ram_sim_plan.md`.
+compared leaf by leaf). Nothing in §1–§5 moves unless asked. The staged record
+with revert points is `ram_sim_plan.md`.
+
+**Where the full tables are.** Sections link to `*_report.md` files under
+`analysis/memory/` and `analysis/array_packing/` — those hold every swept row,
+while a section quotes only the numbers that carry the argument. **They are
+generated, not tracked**: the `*_run.py` sweep is the source and the markdown is
+its output, so a fresh checkout has the scripts but not the reports. Rebuild
+them all with:
+
+```
+for f in analysis/memory/*_run.py analysis/array_packing/pack_run.py; do python "$f"; done
+```
 
 ---
 
