@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "0cb45985ae5eb5c0b4d396ff862ea889fd620511db9d96c79ff36dad1da0cb41",
+  "full_sha256": "f3068555368ab9506145c71b0e537fd80be6353cf5a0c714eaffa528078efb53",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -16,6 +16,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -810,7 +811,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "3020602c9c1d86e2b0a68fd1bd05555fc527a4bf5d120ec617688da59b518874",
+  "full_sha256": "03f86630751ea0fb7e64dc36b3bdc2822c306360217d8206040c56127a4dd0f0",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -826,6 +827,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -1692,7 +1694,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "15a15e89f92b3157df1c6149ff4cff1245adf791758111f8e373d3a5d3165f00",
+  "full_sha256": "35fd119efa00ca8ad4f8aa7f38072d8972912afb7dd960d8f69e1181293ef1b1",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1708,6 +1710,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -2574,7 +2577,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "b58c388ad6937a19a48e5610edb7b44f6f78588da1b93165ebf8d4f6bbebf0b7",
+  "full_sha256": "98ab1b7ac820eae7e3cce7934a611e796d1c7725f60ca47e38af7760eb3274fa",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2590,6 +2593,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -3456,7 +3460,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "e3de2e4587b56e18e0907a0dc5d655b5ecd1ca79d4653cea68a6bf863ad6bda9",
+  "full_sha256": "a4facc5b491c5b914e6fbe7a44338788a330d94653425d55731ab05669e1849f",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3472,6 +3476,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -4338,7 +4343,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "793811b99fa42427bbf2ffb49fd2f094b52a2f1ec205fb65946a728cc3736682",
+  "full_sha256": "1dd7ee9e235639dcaec2dec96637c29f4ce0d2d5b1be3d4bdbfabe202ebe0c03",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -4354,6 +4359,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -5148,7 +5154,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "e3ec4d028c37e671f3aefe7dca73eec721dcd66d801db9e794c4f64eac2fdaa3",
+  "full_sha256": "cea095403da37e3ff80900ead8411abfe2db43a0d04cd56f766a8e5351a03184",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5164,6 +5170,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -5958,7 +5965,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "3534dd78212849d12cdd2e255d62ea544a56ad9ad485ea6b0f471bde6bb17366",
+  "full_sha256": "3a167000749168c5db2892fe71a17bc2e0ab5864fd0a6562295ad25ffd4cf10f",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5974,6 +5981,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -6840,7 +6848,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "671d039fa6a4be57546ecc99968b84ad183b3919f576dc0737de861eb0ae3fab",
+  "full_sha256": "768f100f799929b8ab6835d3f0078ad8da90f2b7e13e2f3b4c88487ea2aa4d01",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6856,6 +6864,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -7722,7 +7731,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "e311782297a6099b8cae10252846ddb44e497130b2151c3fd8f52256437096cf",
+  "full_sha256": "cfdd92e22be9eb1beabf4e6b48f7a8fcd06f134504495071b57b45ea5978b552",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7738,6 +7747,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -8604,7 +8614,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "a717253bdaa9b4b55958e7a4dc62edcc39f4a6c73aabf80013915bc220c5e906",
+  "full_sha256": "552fc96f28d96181f1c6201c4566eff107a292411b3f352a2adfb3eec27df8bd",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8620,6 +8630,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -9486,7 +9497,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "bbed98eb83994a8879a407e45d1b1d57eb58370051b638735a54b32ee245095e",
+  "full_sha256": "35f4962ae64763b19f26651533a869a44ad73249c1ff1244ef5e0b047ee04f09",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -9502,6 +9513,7 @@
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -10296,7 +10308,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "59e3804a75ef042971a361162558db4ba9d18a4e14dc779e517af551ec64d774",
+  "full_sha256": "5556d6b4a17dd466a7a2fec338192658b4db36052060d9118561cbb54e5a699f",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10312,6 +10324,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -11106,7 +11119,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "9f3fafafb84597d7cd966368d35585b866ab08a88599205b4d3f3d5ef52c7721",
+  "full_sha256": "74e12c8bee8bb598a544ee14f4ce47bbca5ae8f2090e1818b20c7ce8470c5f3a",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11122,6 +11135,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -11988,7 +12002,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "93aea52f9e3a1d36308a5bfe50f7e07251896c8d92501fc2f5f9e8ec125f9209",
+  "full_sha256": "6b86a5f9935bff4abbeb0797af16f88875f13feede236715691e06f1416951cd",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12004,6 +12018,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -12870,7 +12885,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "1bb7cc92cc68076db6b9ff45ea4139c66af42f12670cd164f9585ca85008c75e",
+  "full_sha256": "c9088e0567bc53f1fdc242617cfc4277f2dd508e43a4c5f24f06ef73c260df04",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12886,6 +12901,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -13752,7 +13768,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "0359b13b1cb2d3d78ccfe47caaf7622794b8fc816eed6edfdcf2496a1f6c23a6",
+  "full_sha256": "8dac17495fd5f6c1a42682f50cc80add11ac2c48aca6b670f61724064ef502d9",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -13768,6 +13784,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -14634,7 +14651,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "04090f5b6f358fdeee99fd283ba8227e238882dc02e1f439a0174a121e94b7e7",
+  "full_sha256": "2b9044d212eaf421f1c2258d04ff18f644786bb3f2be52c97405e2702c19062c",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14650,6 +14667,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -15444,7 +15462,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "c02f2fb9eb77e683380d61cc1578483f48785e3e8514763a92ac56246546d348",
+  "full_sha256": "b157ab2cd5dae38c459a89592029d542a1a4d869e0ea5869cc7e1eec1fd0edc8",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15460,6 +15478,7 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -16254,7 +16273,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "0655a2361a9f2c7c911fd5a9bc4b8ef18f4ef0a980c18970d5ac1f214ed9b965",
+  "full_sha256": "d732c89396df782deebeee105469e2e47e133937b664aa85224afd5e36165bbb",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16270,6 +16289,7 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -17136,7 +17156,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "2515608f3643f0ed5ca4fd86cb22787f65cc43d47b0211fa9a6c276acb0c8b43",
+  "full_sha256": "042f6039adc6ac6a00ecb9c9606f39ff66da869ddc9125ecc01aa08c645ae0df",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17152,6 +17172,7 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -18018,7 +18039,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "fee4ff47cc69662ce5969eed3427083796484410963a2eacd12dbd027d83c52b",
+  "full_sha256": "8d9284dcbac9d66da608840f400e9c9625e198cdc901d861a8fd75aa800d08c1",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18034,6 +18055,7 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -18900,7 +18922,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "397cf00d82219824a8b1cea20ddee2167345aaa8f0064874ae3972c776bf3c21",
+  "full_sha256": "ec3ed55c973459fa72da873ccedecf8d80590620ef7ac4f8e68c4304cd4e31be",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18916,6 +18938,7 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -19782,7 +19805,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "d85c515266b47cba3c456bbfbb9599cb45e9cb4cc7a0f56f70e88a28636f7c55",
+  "full_sha256": "efdab205b0d4d5082728c2e89995759c70748fdec79aad42a5959d386ffd109c",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19798,6 +19821,7 @@
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -20592,7 +20616,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "7f7f130b5bd69c83fe7471536c58148d54b7f4ef6f17b5160d2798f06fa05691",
+  "full_sha256": "c65083432f5bb8098fdb8d2c819db816c93bf9bdeaa881211d2aaf55ee76466c",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20608,6 +20632,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -21402,7 +21427,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "07a49ed9a6148d3924bc7e9ee575bfbdbac22cb3bc57d0985ee1e4fc5a13a1bb",
+  "full_sha256": "86ed746cd945a9b1e24907c6851b5c880fc66d04e4c4df4ee61a33671f50803f",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21418,6 +21443,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -22284,7 +22310,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "741ad70cbd2d9c24d37f20c65304e520fbb0a048e989ed4f778ef97ba79e87f5",
+  "full_sha256": "ae31e13e28b2e78900a36c4aaee6249d89e306f66686d3b1f47c17216b27a2e4",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -22300,6 +22326,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -23166,7 +23193,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "738f2cb3e78d2e89cb25319a1f9ee012323d5dd5fea6263f93570b26bf1bf884",
+  "full_sha256": "7ade1776f0c286c2a2cc055942fbd135689d219c358892028429106a05173bba",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23182,6 +23209,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -24048,7 +24076,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "b106e67c8df85ff9bb7df68db5ae37ac092c6cc01f71e93cde24a058bb419ea5",
+  "full_sha256": "9df3b5768c499b9d1583d26cb7424e96e597d7d26ab7251094bbd07929ced4fb",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24064,6 +24092,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -24930,7 +24959,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "219b24a283a0a6f1b87a3ce897e50ff6103290c5f308db5e3a13c80fa47f5ccc",
+  "full_sha256": "77cb91b76667991e5b69bd473b1ef16c8f16916ed37319a02d2c26f0d9cca936",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24946,6 +24975,7 @@
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -25740,7 +25770,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "b495a7f6c47173fffb4c5cb7c79e326b7ce0effbfcc42e045d8d5d1fbea68dc9",
+  "full_sha256": "13c656f7cc73547a3502b0d50e5c3776f04015b41c7328b0f5d5cb2f312b007c",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25756,6 +25786,7 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -26550,7 +26581,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "8dc9838dddd5e02799f4e4a9b98f3ae3db1d7e5bc1e3749b476683dbb66cf17b",
+  "full_sha256": "b5248d53f11e69f45e1b805c561994530afcfd42cee5a2722fcf81a41b523851",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -26566,6 +26597,7 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -27432,7 +27464,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "5861e33ae075f41bea09d5c4d7a51f95c56fac371ec326f040de5bd9aa8a151a",
+  "full_sha256": "4271c5c4f9950916b24afd01d375aee07dd8e798732425863140814b0ddebcb2",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27448,6 +27480,7 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -28314,7 +28347,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "8624e9b2ef4ecbc12ca6306b77d731385a558900406fedc365b7f5da9d952c90",
+  "full_sha256": "1cbf8984d4dd9676f9a116894d04e0c04ccaad8735a41a1d5d1b7d78a9eb7765",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -28330,6 +28363,7 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -29196,7 +29230,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "dc0f8ea0ca1bade16acaebd1ef4e82e20b1b10fc09048777463276f65ce888c7",
+  "full_sha256": "1fe30263cc892ffa9a18582f99be43434b0a756c5727baee3feccf478df4100c",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29212,6 +29246,7 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
@@ -30078,7 +30113,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "8da98d92ceae625dafaec496119abb34fc9804fe2d85a23f9356d104f1c76137",
+  "full_sha256": "58cafa4498cfc837cf13fa3e5288b20b6ce98790a208e40ea0c98987cf31481f",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -30094,6 +30129,7 @@
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
    "mu": 4,
+   "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,

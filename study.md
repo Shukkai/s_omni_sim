@@ -21,6 +21,7 @@ survive both.
 | **The memory model** | §6–§9 | what was the byte model missing, and what did fixing it change? |
 | **Re-measured** | §10–§13 | the KV techniques against the corrected model, and why they fail alike |
 | **What actually moves it** | §14–§16 | array packing, mask structure, and the memory part itself |
+| **The framing itself** | §17 | what the no-overlap roofline costs every number above |
 
 **Method for §6 onward.** Every model change is a `HardwareConfig` field whose
 *disabled* default reproduces the previous numbers exactly, checked by
@@ -398,6 +399,8 @@ At 32K, batch 8, dense:
 
 ## 12. Where KV reduction actually pays
 
+![KV reduction vs batch](analysis/memory/kv_batch.png)
+
 Decode weight traffic is **constant** in batch (7.65 GB — read once, reused
 across the batch); KV traffic scales linearly. So the KV share of decode DRAM,
 which is the ceiling on what *any* KV technique can win, moves enormously:
@@ -455,6 +458,8 @@ cache, so KV bytes are usually not the critical path.**
 ---
 
 ## 14. OS-V array packing — the one axis that is not memory
+
+![OS-V packing](analysis/memory/packing.png)
 
 `attn_v` decode is issued as `(M=1, K=kv_len, N=head_dim=128)`, so
 `n_tiles = ceil(128/128) = 1` and `rounds = ceil(1/32) = 1`: **one of 32 PE rows
@@ -531,6 +536,8 @@ in SRAM, and neither fact matters, because nothing above P=8 is worth having.
 
 ## 15. Unstructured pruning — the layout decides which axis is allowed to work
 
+![Unstructured masks](analysis/memory/unstructured.png)
+
 Every KV result above was measured on a **compacted** retained set: eviction
 compacts, ThinK narrows the entry to a solid `d_ret` block, page selection
 gathers whole pages. Real masks are irregular. `analysis/memory/unstructured_kv.py`
@@ -586,6 +593,8 @@ Full tables: `analysis/memory/unstructured_report.md`.
 ---
 
 ## 16. Memory technology, and the throughput terms that were never billed
+
+![Memory technology](analysis/memory/memory_tech.png)
 
 `dram_bandwidth_gbps` and `dram_burst_bytes` were independent knobs, so a sweep
 could describe a part that does not exist. A technology fixes both.
@@ -667,6 +676,75 @@ Full tables: `analysis/memory/bandwidth_report.md`.
 
 ---
 
+## 17. Compute/memory overlap — the assumption under every latency number
+
+![Compute/memory overlap](analysis/memory/overlap.png)
+
+The roofline sums `max(compute, memory)` **per operation** and never lets one
+operation's memory hide behind another's compute. Real hardware double-buffers.
+`hw.overlap_model` supplies both extremes — `"serial"` (today's default, and
+every number above) and `"pipelined"` = `max(sum compute, sum memory)`. **They
+bracket the truth; neither is it.**
+
+Decode time per token, and how much `"serial"` overstates it:
+
+| context | batch | compute | DRAM | serial | pipelined | overstated |
+|---|---:|---:|---:|---:|---:|---:|
+| 8K | 1 | 20.9 ms | 55.7 ms | 69.62 ms | 55.71 ms | 1.25× |
+| **32K** | **1** | **73.3 ms** | **73.4 ms** | **128.80 ms** | **73.40 ms** | **1.75×** |
+| 32K | 8 | 644.4 ms | 238.6 ms | 714.01 ms | 644.41 ms | 1.11× |
+| 32K | 32 | 2331.5 ms | 804.8 ms | 2609.91 ms | 2331.50 ms | 1.12× |
+
+- **1.75× is larger than most techniques in this document were measured to
+  save.** The modelling assumption outweighs the things being modelled.
+- **2× is the hard ceiling and 32K/batch 1 nearly reaches it.** `sum(max)` can
+  exceed `max(sum)` by at most 2×, attained exactly when the two resources are
+  equal — and there they are **73.3 ms against 73.4 ms**. §3 described decode's
+  gap narrowing from 6.8× to 1.7× as attention compute growing to meet the
+  memory wall; it lands almost exactly on it. **That is the single worst
+  operating point for a no-overlap model, and the one this document quotes
+  most.**
+- **Prefill barely moves** (1.00–1.07×): compute-bound almost everywhere, so
+  there is little memory time to hide.
+
+### It corrects §4 and §12 at batch 1
+
+Decode TPOT speedup over dense at 32K, under each model:
+
+| technique | batch 1 serial | batch 1 pipelined | batch 32 serial | batch 32 pipelined |
+|---|---:|---:|---:|---:|
+| evict 4096 | 2.156× | 1.391× | 6.520× | 6.403× |
+| evict 1024 | 2.460× | **1.452×** | 15.957× | 14.323× |
+| evict 256 | 2.538× | 1.468× | 23.209× | 20.733× |
+
+- **About 40% of eviction's batch-1 speedup was the assumption.** Once DRAM
+  hides under compute, cutting DRAM further buys nothing — the compute roof
+  (73 ms) does not move, and eviction at batch 1 is a pure traffic technique.
+- **The three budgets converge** — 1.391× / 1.452× / 1.468× — because all are
+  pressed against that same roof. Under `"serial"` they still look separable
+  (2.156× / 2.460× / 2.538×), **a distinction the assumption manufactures.**
+- **At batch 32 they survive** (15.957× → 14.323×) because there eviction is not
+  only a traffic technique: `kv_len` is `attn_v`'s reduction dimension, so it
+  lowers the compute roof too. **A technique that moves both roofs is robust to
+  how they are combined; one that moves only the slack roof is not.**
+- **This sharpens §12 rather than contradicting it.** §12 said entry-count
+  techniques were measured in the wrong place because batch 1 gives them a tenth
+  of decode traffic to attack. This adds a second, independent reason:
+  even the traffic they *do* remove was charged as if none could overlap.
+  **Rankings by batch are unchanged; batch-1 magnitudes are upper bounds twice
+  over.**
+
+**What neither model captures.** `"pipelined"` assumes buffering it never checks
+for — two operand sets resident, which `sram_capacity_kb` would have to allow.
+Dependencies are ignored, so the reachable overlap is across *layers* and decode
+steps, not within one layer's `qk → softmax → attn_v` chain, and pipeline fill
+and drain are uncharged. Non-GEMM work is outside both models entirely, so the
+VPU softmax — 27.9% of prefill cycles at 32K (§2) — is absent from both columns.
+
+Full tables: `analysis/memory/overlap_report.md`.
+
+---
+
 ## TODO
 
 ### Model gaps
@@ -712,6 +790,12 @@ Full tables: `analysis/memory/bandwidth_report.md`.
 
 ### Closed
 
+- ~~**No compute/memory overlap.**~~ Both bounds now exist (§17). `"serial"`
+  remains the default because `"pipelined"` assumes buffering the model cannot
+  verify — but every latency figure in §1–§16 is a `"serial"` figure and is an
+  upper bound by 1.00–1.75×, and eviction's **batch-1** speedups specifically
+  are inflated ~40%.
+
 - ~~**Build DRAM and SRAM latency models.**~~ Done — §6–§9 and §16.
 - ~~**Pin down ThinK's pruned-entry layout.**~~ Answered by §15, and worse than
   the item feared: the risk is not that a 38 B entry is misaligned, it is that
@@ -742,6 +826,7 @@ tiebreaker if they ever disagree.
 | 5 — attention score staging | `score_sram_kb`, `prefill_kv_dram_read` | `0`, `False` | §16 | `00a79b7` |
 | 5b — unstructured KV masks | *(three default-identical hooks)* | — | §15 | `40f9071` |
 | 7 — memory tech + SRAM bandwidth | `sram_bandwidth_gbps` | `0.0` = unlimited | §16 | `9b0b15c` |
+| 10 — compute/memory overlap | `overlap_model` | `"serial"` = no overlap | §17 | *(this commit)* |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones

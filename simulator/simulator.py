@@ -145,6 +145,27 @@ class HardwareConfig:
     # (`analysis/memory/bandwidth_run.py`).
     sram_bandwidth_gbps: float = 0.0
 
+    # How much an operation's memory time can hide behind another's compute.
+    #
+    #   "serial"     sum(max(compute, memory)) over operations -- no overlap at
+    #                all.  Every published latency number was produced this way,
+    #                so it is the default.
+    #   "pipelined"  max(sum(compute), sum(memory)) over a phase -- the opposite
+    #                extreme, where a deep enough software pipeline hides one
+    #                entirely behind the other.
+    #
+    # Neither is the truth; they **bracket** it.  Real hardware double-buffers,
+    # so op i+1's operands prefetch during op i's compute, and a long chain of
+    # such ops tends toward the pipelined bound -- but only with enough SRAM to
+    # hold two operand sets, which `sram_capacity_kb` would have to allow.
+    #
+    # The gap is not small.  It is widest where a phase alternates between
+    # memory-bound and compute-bound operations, which is exactly what decode
+    # does (AW projections are memory-bound, `attn_v` is compute-bound), so
+    # "serial" overstates decode TPOT by up to 1.75x -- more than most of the KV
+    # techniques in this repo were measured to *save*.
+    overlap_model: str = "serial"
+
     # --- On-chip memory ---
     # 0 = unlimited: peak_sram_bytes is reported but never enforced, which is
     # how every result predating this field was produced.  Set a real capacity
@@ -1364,6 +1385,33 @@ class Simulator:
             return 0.0
         return (m.sram_read + m.sram_write) / bw
 
+    def _roofline_time_over(self, metrics, freq: float, dram_bw: float) -> float:
+        """Roofline time for a group of operations, honouring `overlap_model`.
+
+        `"serial"` sums each operation's own `max(...)`; `"pipelined"` sums each
+        resource across the group and takes one `max` at the end, which is the
+        limit a deep software pipeline approaches.  Every roofline site routes
+        through here so the two models cannot disagree between call sites.
+        """
+        if self.hw.overlap_model != "pipelined":
+            # Accumulated explicitly, NOT with sum(): CPython 3.12+ gives sum()
+            # compensated (Neumaier) summation over floats, which is more
+            # accurate and therefore differs from every previously published
+            # number in the last ULP.  The gate exists to make a real regression
+            # visible, and last-ULP noise across 22k values is exactly what
+            # would hide one.
+            total = 0.0
+            for m in metrics:
+                total += self._op_roofline_time(m, freq, dram_bw)
+            return total
+        compute = dram = sram = 0.0
+        for m in metrics:
+            compute += m.cycles / freq if freq > 0 else 0.0
+            dram += ((m.dram_read_eff + m.dram_write_eff) / dram_bw
+                     if dram_bw > 0 else 0.0)
+            sram += self._sram_time(m)
+        return max(compute, dram, sram)
+
     def _op_roofline_time(self, m, freq: float, dram_bw: float) -> float:
         """Roofline time for one operation: max(compute, DRAM, SRAM).
 
@@ -2368,12 +2416,12 @@ class Simulator:
         freq = self.hw.freq_mhz * 1e6
 
         def _phase_roofline_time(phase: PhaseMetrics) -> float:
-            total = 0.0
-            for ops_dict in (phase.aa_ops, phase.aw_ops):
-                for op_list in ops_dict.values():
-                    for m in op_list:
-                        total += self._op_roofline_time(m, freq, dram_bw)
-            return total
+            # Pipelining is a property of the whole phase, not of one operation,
+            # so the group handed over here is every GEMM in it.
+            return self._roofline_time_over(
+                (m for ops_dict in (phase.aa_ops, phase.aw_ops)
+                 for op_list in ops_dict.values() for m in op_list),
+                freq, dram_bw)
 
         ttft = _phase_roofline_time(results.prefill)
         decode_total = _phase_roofline_time(results.decode)
@@ -2412,6 +2460,23 @@ class Simulator:
             for op_list in phase.aw_ops.values():
                 for m in op_list:
                     aw_time += self._op_roofline_time(m, freq, dram_bw)
+
+            # Under "pipelined" a per-category split is not measurable -- the
+            # whole point is that one category's memory hides behind another's
+            # compute, so the time does not belong to either.  Both categories
+            # are therefore scaled by the phase's pipelined/serial ratio, which
+            # keeps the parts summing to the total `compute_roofline_latency`
+            # reports.  Treat the split as an **attribution, not a measurement**;
+            # the totals are the trustworthy output.
+            if self.hw.overlap_model == "pipelined":
+                serial_gemm = aa_time + aw_time
+                if serial_gemm > 0:
+                    scale = self._roofline_time_over(
+                        (m for d in (phase.aa_ops, phase.aw_ops)
+                         for lst in d.values() for m in lst),
+                        freq, dram_bw) / serial_gemm
+                    aa_time *= scale
+                    aw_time *= scale
 
             # Non-GEMM ops (VPU) — cycle-bound only, no DRAM access
             for m in phase.non_gemm_ops:
