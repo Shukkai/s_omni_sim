@@ -352,11 +352,20 @@ def compute_stage_cycle_breakdown(sim: Simulator, results: SimulationResults,
     freq = sim.hw.freq_mhz * 1e6
 
     def _record(stage, category, execs, cycles, flops, dram_bytes,
-                eff_time=None):
+                eff_time=None, sram_time=0.0):
         compute_time = cycles / freq
         mem_time = dram_bytes / dram_bw if dram_bw > 0 else 0.0
         if eff_time is None:
-            eff_time = max(compute_time, mem_time)
+            eff_time = max(compute_time, mem_time, sram_time)
+        # Three-way, so a stage held up by SRAM throughput is not mislabelled
+        # "compute".  `sram_time` is 0.0 unless hw.sram_bandwidth_gbps is set,
+        # in which case this reduces to the original two-way test exactly.
+        if sram_time > compute_time and sram_time > mem_time:
+            bound = 'sram'
+        elif mem_time > compute_time:
+            bound = 'memory'
+        else:
+            bound = 'compute'
         return {
             'stage': stage,
             'category': category,
@@ -366,8 +375,9 @@ def compute_stage_cycle_breakdown(sim: Simulator, results: SimulationResults,
             'dram_bytes': dram_bytes,
             'compute_time': compute_time,
             'mem_time': mem_time,
+            'sram_time': sram_time,
             'eff_time': eff_time,
-            'bound': 'memory' if mem_time > compute_time else 'compute',
+            'bound': bound,
         }
 
     def _phase_stages(phase: PhaseMetrics) -> dict:
@@ -381,15 +391,13 @@ def compute_stage_cycle_breakdown(sim: Simulator, results: SimulationResults,
                 # Roofline time is summed per execution (not aggregate-then-max)
                 # so these match compute_roofline_latency* exactly.
                 eff_time = sum(
-                    max(m.cycles / freq,
-                        (m.dram_read_eff + m.dram_write_eff) / dram_bw
-                        if dram_bw > 0 else 0.0)
-                    for m in op_list
+                    sim._op_roofline_time(m, freq, dram_bw) for m in op_list
                 )
                 stages[op_type.value] = _record(
                     op_type.value, category, len(op_list), total.cycles,
                     total.flops, total.dram_read_eff + total.dram_write_eff,
                     eff_time=eff_time,
+                    sram_time=sum(sim._sram_time(m) for m in op_list),
                 )
 
         # Non-GEMM (VPU) stages -- no DRAM path, so always compute-bound.

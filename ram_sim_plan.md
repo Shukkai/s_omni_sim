@@ -469,6 +469,65 @@ Sized for prefill alone, the scores silently spill again the moment decoding sta
 
 ---
 
+## Stage 5b — unstructured KV masks ✅
+
+**Not in the original plan.** Every KV result so far was measured on a *compacted*
+retained set; real masks are irregular, and on a burst-addressed DRAM those are
+not the same read. Three hooks, all default-identical, so no field was added and
+the gate stayed green without a re-capture:
+
+| hook | default | why it exists |
+|---|---|---|
+| `_kv_dram_run_bytes(...)` | whole entries | sub-entry runs, so a channel mask is expressible at all |
+| `_kv_covering_bytes(...)` | `0` (no clamp) | a gather never costs more than streaming the region it sits in |
+| `_dram_effective_bytes(cap_bytes=0)` | `0` | the clamp itself |
+
+**The clamp is the load-bearing part.** Without it a fine mask prices *above* a
+dense read — arithmetic, not a cost. With it the failure mode states correctly:
+the saving goes to **zero**, not negative.
+
+**Result.** A 4-bit entry is 64 B = one burst, so token-major keeps 100% of a
+token mask's saving and 0.0% of a channel mask's; channel-major inverts it
+exactly. There is no third layout. Channel pruning is now null on *both* axes
+(`study.md` §5 for cycles, this for bytes) — decode TPOT 1.000× at batch 1 and 32.
+
+**Checkpoint.** `40f9071` — recorded by the following commit.
+
+---
+
+## Stage 7 — memory technology + SRAM bandwidth ✅
+
+Landed **before** Stage 6, deliberately: the point of the SRAM term was to find
+out whether it is trustworthy, and the answer turned out to be *"in decode yes,
+in prefill not until Stage 6 lands"*. Running it first is what established that.
+
+**`simulator/memory_tech.py`** — presets fixing bandwidth *and* burst together,
+because they are not independent in hardware and §10 showed the burst is what
+decides whether a pruning axis can collect anything. `DDR5-6400` is asserted to
+be the simulator's own default, so every prior result is a DDR5 result.
+
+**`sram_bandwidth_gbps: float = 0.0`** — the roofline becomes
+`max(compute, DRAM, SRAM)` at all six sites via one shared `_op_roofline_time`,
+rather than six inlined `max` calls. **A term that reaches five of six sites is
+worse than no term**: the numbers stay plausible and stop being consistent.
+`cycle_units._record` gained `sram_time` and a three-way `bound`.
+
+**Shipped inert, against the plan's `128.0`.** The plan chose 128 GB/s with the
+consequence in the headline table. Measuring it first is what changed the call:
+at 128 GB/s decode moves 1.074× (sound, and a real result) but prefill moves
+**4.35×** off a 113,670 GB SRAM figure that is the untiled-A defect, not
+hardware. Defaulting it on would have written a known modelling bug into every
+TTFT in the repo. **Flipping the default is a one-line change once Stage 6
+lands**, and §11(c) states exactly what it costs.
+
+**Baseline re-captured** — only the 36 new `hw.sram_bandwidth_gbps` keys and the
+36 per-entry `full_sha256` moved; no metric value changed, verified by filtering
+the diff.
+
+**Checkpoint.** Recorded by the following commit.
+
+---
+
 ## Standing checks — run after *every* stage
 
 1. `python analysis/regression/baseline.py check` → *Identical to the baseline ✓*

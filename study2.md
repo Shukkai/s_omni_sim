@@ -362,11 +362,97 @@ Full tables: `analysis/memory/unstructured_report.md`.
 
 ---
 
+## 11. Memory technology, and the throughput terms that were never billed
+
+`dram_bandwidth_gbps` and `dram_burst_bytes` were independent knobs, so a sweep
+could describe a part that does not exist. A technology fixes both.
+`simulator/memory_tech.py` holds presets with their derivations — and the first
+thing it settles is that **`DDR5-6400` *is* the simulator's default** (51.2 GB/s,
+64 B), asserted rather than assumed. Every number in `study.md` and `study2.md`
+predating this is a DDR5-6400 result whether or not it said so.
+
+### (a) The burst matters more than the bandwidth
+
+| technology | bandwidth | burst | channel group needed to collect any saving |
+|---|---:|---:|---:|
+| DDR5-6400 | 51.2 GB/s | 64 B | **128** (the whole entry) |
+| HBM3 | 819.2 GB/s | 32 B | **64** |
+
+- **The cliff sits at one burst, so halving the burst halves the required
+  group.** A channel mask must assemble one whole burst of contiguous retained
+  data before it collects anything. On HBM that is 64 channels; on DDR5 it is
+  all 128. §10's "channel pruning is worthless unstructured" is therefore a
+  DDR5 statement — **HBM makes half-entry channel groups viable.**
+- This is bought in the memory subsystem, not in the pruning algorithm.
+
+### (b) 16× the bandwidth buys 1.10× of decode
+
+| technology | dense TPOT | vs DDR5 | prune 50% tokens | prune 90% tokens |
+|---|---:|---:|---:|---:|
+| DDR5-6400 | 2,568 ms | 1.000× | 1.936× | 7.708× |
+| HBM2E | 2,332 ms | 1.101× | 1.921× | 7.506× |
+| HBM3 | 2,332 ms | 1.101× | 1.921× | 7.506× |
+
+- **No memory technology rescues decode**, which is §8's compute-bound result
+  arriving from a new direction. HBM2E and HBM3 are indistinguishable: once the
+  DRAM roof clears the compute roof, more bandwidth is inert.
+- **The corollary inverts the usual expectation.** A KV technique is supposed to
+  be worth most where bandwidth is scarcest, so HBM should devalue it. It does
+  not — 1.936× on DDR5, 1.921× on HBM3. Token pruning cuts `kv_len`, the `K` of
+  both attention GEMMs, so it removes **cycles** as well as bytes. **Its value is
+  portable across memory technologies precisely because it was never really a
+  bandwidth optimisation.**
+
+### (c) SRAM bandwidth — built, wired everywhere, and shipped inert
+
+`hw.sram_bandwidth_gbps` (0 = unlimited, the default) adds the third roofline
+term `max(compute, DRAM, SRAM)` at all six sites through one shared
+`_op_roofline_time`, so no site can silently miss it.
+
+| SRAM bandwidth | TTFT | vs unlimited | TPOT | vs unlimited |
+|---|---:|---:|---:|---:|
+| unlimited | 219.3 s | 1.00× | 127.49 ms | 1.000× |
+| 128 GB/s | 953.5 s | **4.35×** | 136.94 ms | **1.074×** |
+| 512 GB/s | 255.6 s | 1.17× | 127.49 ms | 1.000× |
+
+- **Decode is not SRAM-throughput-limited** — TPOT moves 1.074× even at the
+  geometry-implied 128 GB/s. This is trustworthy: `M=1` makes decode
+  tiling-inert. **It settles the open question §9 left hanging.**
+- **Prefill's 4.35× is not a hardware result and must not be quoted as one.**
+  Prefill charges 113,670 GB of SRAM traffic against 3 GB of DRAM. That ratio is
+  the untiled-activation defect — the same one that makes `_calculate_peak_sram`
+  claim a 2.1 GB prefill working set (§2) — surfacing through a new term.
+  **Prefill stays parked until prefill tiling lands.**
+- **128 GB/s is itself an over-charge**: it is one *operand port*, while
+  `sram_read` lumps A-reads, B-reads and C accumulator traffic together.
+
+### (d) Can P=8 packing actually be fed?
+
+Computed from array geometry rather than from the lumped `sram_read`, which (c)
+just showed cannot be trusted:
+
+| packing | KV bytes/cycle | required KV-port bandwidth | verdict |
+|---|---:|---:|---|
+| P=8 | 2,048 B/cycle | **1.02 TB/s** | plausible (banked SRAM) |
+| P=32 | 8,192 B/cycle | 4.10 TB/s | needs a redesign |
+
+- **§9's P=8 survives its own bandwidth check.** P=32 does not — which costs
+  nothing, since §9 already showed P=32 buys no TPOT over P=8. **Two independent
+  arguments now agree on the same operating point.**
+
+Full tables: `analysis/memory/bandwidth_report.md`.
+
+---
+
 ## TODO
 
-- **Tile prefill in `_calculate_peak_sram`.** It holds the whole activation
-  matrix, so prefill capacity claims and its spill charge are both unusable
-  (§2). The only outright *bug* the memory work found.
+- **Tile prefill in `_calculate_peak_sram` — now the top item.** It holds the
+  whole activation matrix, so prefill capacity claims and its spill charge are
+  both unusable (§2). The only outright *bug* the memory work found, and §11(c)
+  showed it is **worse than a capacity problem**: the SRAM *traffic* terms are
+  written against the same untiled A, so prefill charges 113,670 GB and a 4.35×
+  TTFT the moment a bandwidth term exists. It now blocks a second study, not
+  just its own.
 - ~~**Pin down ThinK's pruned-entry layout.**~~ **Answered by §10**, and worse
   than the item feared: the risk is not that a 38 B entry is misaligned, it is
   that *any* channel mask below the full 128 is sub-burst in token-major. ThinK's
@@ -382,9 +468,11 @@ Full tables: `analysis/memory/unstructured_report.md`.
   are ±1-valued (§VI-B), so an all-zero plane is not representable and skipping
   is structurally meaningless on this encoding. Reducing `qbit` itself is real;
   eliding planes within a fixed `qbit` is not.
-- **Bill the SRAM read bandwidth.** §9's packing result rests on the simulator
-  having no bandwidth term — capacity is enforced, throughput is not. P=8 needs
-  ~1.0 TB/s of KV-SRAM reads. Until that is modelled, §9 is a ceiling, not a
-  design.
+- ~~**Bill the SRAM read bandwidth.**~~ **Done in §11(c–d).** Decode is not
+  SRAM-limited (TPOT 1.074× at 128 GB/s) and P=8's ~1.02 TB/s KV port is
+  buildable, so §9 is a design rather than a ceiling. Two items remain:
+  **per-port SRAM accounting** (the lumped `sram_read` over-charges against one
+  operand port's bandwidth), and **prefill is unusable until tiling lands** —
+  its 4.35× TTFT at 128 GB/s is the untiled-A defect, not a bandwidth finding.
 - **Measure the energy side of channel pruning.** Carried over from `study.md`;
   unchanged by this work.

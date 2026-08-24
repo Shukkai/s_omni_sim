@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "59491efd6b86c0d727f9b83c82949623d2528457bd020a0b847506de2d44d049",
+  "full_sha256": "0cb45985ae5eb5c0b4d396ff862ea889fd620511db9d96c79ff36dad1da0cb41",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -19,6 +19,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -809,7 +810,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "89c76a79d1c349c0b2bbffae9c9fa160cd3f52d5eb68a9dd53798269b3a5a0ad",
+  "full_sha256": "3020602c9c1d86e2b0a68fd1bd05555fc527a4bf5d120ec617688da59b518874",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -828,6 +829,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -1690,7 +1692,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "ac6e7f5211b4385b42bac7527876963c1239e6026a59c3fb2e36d8ad1611fc28",
+  "full_sha256": "15a15e89f92b3157df1c6149ff4cff1245adf791758111f8e373d3a5d3165f00",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1709,6 +1711,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -2571,7 +2574,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "9c30a6d0e16d6e86ae53dab3016a2949be6413be6df41e152e9937be312f4fc8",
+  "full_sha256": "b58c388ad6937a19a48e5610edb7b44f6f78588da1b93165ebf8d4f6bbebf0b7",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2590,6 +2593,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -3452,7 +3456,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "69f00393591309170b7d75e113613f211c4dde0ec88b147d1f811ba621e02300",
+  "full_sha256": "e3de2e4587b56e18e0907a0dc5d655b5ecd1ca79d4653cea68a6bf863ad6bda9",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3471,6 +3475,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -4333,7 +4338,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "eafd49ab2e7c0a8a74e3b47924020b2929f76815067c89ded0f10b8849ab5e50",
+  "full_sha256": "793811b99fa42427bbf2ffb49fd2f094b52a2f1ec205fb65946a728cc3736682",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -4352,6 +4357,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -5142,7 +5148,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "b7ebc0367323f3bd973139a24dbec90eb64b3b71ae1f28e2803b62b8df1fe7ca",
+  "full_sha256": "e3ec4d028c37e671f3aefe7dca73eec721dcd66d801db9e794c4f64eac2fdaa3",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5161,6 +5167,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -5951,7 +5958,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "1bb280f0a5c4dd9aaaf6b1dadb79151e3c6eebd3dc8fb17cb8ea5474ae04ce87",
+  "full_sha256": "3534dd78212849d12cdd2e255d62ea544a56ad9ad485ea6b0f471bde6bb17366",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5970,6 +5977,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -6832,7 +6840,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "0a6432bcb66958857e77eb4461c6c63cc69c8a8bbaa9af814be44ec7a0788386",
+  "full_sha256": "671d039fa6a4be57546ecc99968b84ad183b3919f576dc0737de861eb0ae3fab",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6851,6 +6859,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -7713,7 +7722,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "34ddf7e9fe58c14782165977d157d198eb0a4160c12a5522638a55cbcf7d42cb",
+  "full_sha256": "e311782297a6099b8cae10252846ddb44e497130b2151c3fd8f52256437096cf",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7732,6 +7741,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -8594,7 +8604,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "910b07c882cbf9839bd1d812c04945354f676afa16d0e8fe7b70f4613fbcef33",
+  "full_sha256": "a717253bdaa9b4b55958e7a4dc62edcc39f4a6c73aabf80013915bc220c5e906",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8613,6 +8623,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -9475,7 +9486,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "5e7b5edc08a7673f7c08a47357861271e252d7dcdeccffcf7dcabe228e7ce81d",
+  "full_sha256": "bbed98eb83994a8879a407e45d1b1d57eb58370051b638735a54b32ee245095e",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -9494,6 +9505,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -10284,7 +10296,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "3c05914e851cad8cad70d5e273957f04dab24cda1f01f3e808de06b7ab5a7d81",
+  "full_sha256": "59e3804a75ef042971a361162558db4ba9d18a4e14dc779e517af551ec64d774",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10303,6 +10315,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -11093,7 +11106,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "4e9785a42dd277f6bd9b98005afedb405fae8f46740373550c2911470750209a",
+  "full_sha256": "9f3fafafb84597d7cd966368d35585b866ab08a88599205b4d3f3d5ef52c7721",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11112,6 +11125,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -11974,7 +11988,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "5ca63af35d47d5b36a04ca590069e90cbccaf572c14c624d88bd88856a12e62d",
+  "full_sha256": "93aea52f9e3a1d36308a5bfe50f7e07251896c8d92501fc2f5f9e8ec125f9209",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11993,6 +12007,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -12855,7 +12870,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "c8d0821a260d3e2bc2316a0f98ba43ac623c7b0424adefc436f1c7e219f20303",
+  "full_sha256": "1bb7cc92cc68076db6b9ff45ea4139c66af42f12670cd164f9585ca85008c75e",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12874,6 +12889,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -13736,7 +13752,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "c958a9d2319bc20dd9d0e519c09906e8267caa7ea222a0e02a374c23056a66d3",
+  "full_sha256": "0359b13b1cb2d3d78ccfe47caaf7622794b8fc816eed6edfdcf2496a1f6c23a6",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -13755,6 +13771,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -14617,7 +14634,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "bc0492c46c469675ad76e5224e21895912f93ffbf2164c80d3276dedef9ca996",
+  "full_sha256": "04090f5b6f358fdeee99fd283ba8227e238882dc02e1f439a0174a121e94b7e7",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14636,6 +14653,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -15426,7 +15444,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "11a5c046c1dfcbd7091af17e27d3fee57afd13d414a3836684ef513bbba0e299",
+  "full_sha256": "c02f2fb9eb77e683380d61cc1578483f48785e3e8514763a92ac56246546d348",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15445,6 +15463,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -16235,7 +16254,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "52be71fd7fd8d75cea87105d830626ed2eb6c27d8767cfd0bb31567889eaf152",
+  "full_sha256": "0655a2361a9f2c7c911fd5a9bc4b8ef18f4ef0a980c18970d5ac1f214ed9b965",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16254,6 +16273,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -17116,7 +17136,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "b3f446bb263c998f092ecb168dca9f6de65a0edf3ee4a5c6d9b71fa911977c96",
+  "full_sha256": "2515608f3643f0ed5ca4fd86cb22787f65cc43d47b0211fa9a6c276acb0c8b43",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17135,6 +17155,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -17997,7 +18018,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "b60b467cd0daf8f2b4f60c1bc7d653d8476fc90854a4bf9a7fb9c7a680da0fe5",
+  "full_sha256": "fee4ff47cc69662ce5969eed3427083796484410963a2eacd12dbd027d83c52b",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18016,6 +18037,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -18878,7 +18900,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "7536374c5c69d96347665bbc7287162254cec7a1fa09e45ed24b44bb770330eb",
+  "full_sha256": "397cf00d82219824a8b1cea20ddee2167345aaa8f0064874ae3972c776bf3c21",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18897,6 +18919,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -19759,7 +19782,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "8a2ba30cf77925fe1721aff9b72fae2abb1e1c348e9e776063cdf89c47c6efc8",
+  "full_sha256": "d85c515266b47cba3c456bbfbb9599cb45e9cb4cc7a0f56f70e88a28636f7c55",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19778,6 +19801,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -20568,7 +20592,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "16add42b7530890188dfae57779ef7f7c25f1e2a7b0dbc853e90f246bffc160b",
+  "full_sha256": "7f7f130b5bd69c83fe7471536c58148d54b7f4ef6f17b5160d2798f06fa05691",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20587,6 +20611,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -21377,7 +21402,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "0a8822a5bc802af6cea9d9cded3e55cc0d2a658f5368c873c59fa6a103db6acd",
+  "full_sha256": "07a49ed9a6148d3924bc7e9ee575bfbdbac22cb3bc57d0985ee1e4fc5a13a1bb",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21396,6 +21421,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -22258,7 +22284,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "96e1506d6dd7d30dc037abbddfc80db23f325aae601361ad2480c321c291c64c",
+  "full_sha256": "741ad70cbd2d9c24d37f20c65304e520fbb0a048e989ed4f778ef97ba79e87f5",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -22277,6 +22303,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -23139,7 +23166,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "1af2d8beeeedb299d7d72bae69e549f03f3db4e3a01f2d38893d64f745d426de",
+  "full_sha256": "738f2cb3e78d2e89cb25319a1f9ee012323d5dd5fea6263f93570b26bf1bf884",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23158,6 +23185,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -24020,7 +24048,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "6f5b575e76beb547e851e348893fa9bb0c62ad13e84e4da7f5ac5037955a27a7",
+  "full_sha256": "b106e67c8df85ff9bb7df68db5ae37ac092c6cc01f71e93cde24a058bb419ea5",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24039,6 +24067,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -24901,7 +24930,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "22d61df72380fe507e981f3ce60dcd9f4d2df5d0142b7b4d26e5efdfe3277a6f",
+  "full_sha256": "219b24a283a0a6f1b87a3ce897e50ff6103290c5f308db5e3a13c80fa47f5ccc",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24920,6 +24949,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": false,
@@ -25710,7 +25740,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "e3845e4f1cff9afb5eb2df4d155abf91fb1ad92b46798d94328949240456a007",
+  "full_sha256": "b495a7f6c47173fffb4c5cb7c79e326b7ce0effbfcc42e045d8d5d1fbea68dc9",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25729,6 +25759,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -26519,7 +26550,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "1d4fd9100b60b873150ffe7c6a1b208fd1c93c975e8abb4baa75d198fac4ceb8",
+  "full_sha256": "8dc9838dddd5e02799f4e4a9b98f3ae3db1d7e5bc1e3749b476683dbb66cf17b",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -26538,6 +26569,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -27400,7 +27432,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "520b78aefd17e8539f43f5d6950dd11c2fdf217daef28344bf277b8808f6c2d0",
+  "full_sha256": "5861e33ae075f41bea09d5c4d7a51f95c56fac371ec326f040de5bd9aa8a151a",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27419,6 +27451,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -28281,7 +28314,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "c43ca427b25cda15e6ccd333857dfed94f459cd2229c48012d39c5fb3f003e51",
+  "full_sha256": "8624e9b2ef4ecbc12ca6306b77d731385a558900406fedc365b7f5da9d952c90",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -28300,6 +28333,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -29162,7 +29196,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "cd32d610e85d43be6a1994f0f730a0f7383f7f472028f57f172484bce59e26a9",
+  "full_sha256": "dc0f8ea0ca1bade16acaebd1ef4e82e20b1b10fc09048777463276f65ce888c7",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29181,6 +29215,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,
@@ -30043,7 +30078,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "7a29b046872758c75f7919dc3a638c72fed2fc33f5d9af4ffa01f71a0a2456c0",
+  "full_sha256": "8da98d92ceae625dafaec496119abb34fc9804fe2d85a23f9356d104f1c76137",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -30062,6 +30097,7 @@
    "prefill_kv_dram_read": false,
    "replication": 1,
    "score_sram_kb": 0,
+   "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
    "sram_capacity_kb": 0,
    "tender_m1_opt": true,

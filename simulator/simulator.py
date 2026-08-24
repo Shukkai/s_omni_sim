@@ -131,6 +131,20 @@ class HardwareConfig:
     freq_mhz: int = 500
     dram_bandwidth_gbps: float = 51.2   # DRAM bandwidth in GB/s
 
+    # On-chip SRAM read+write bandwidth in GB/s.  0 = unlimited, the default,
+    # which is how every result predating this field was produced: capacity was
+    # enforced (`sram_capacity_kb`) but throughput never was, so an operation
+    # could move unbounded bytes per cycle to and from SRAM for free.
+    #
+    # The array geometry implies roughly `MU x array_n x NUM_RAC x kv_bits`
+    # = 4 x 4 x 32 x 4 b = 256 B/cycle, or 128 GB/s at 500 MHz -- but that is
+    # *one operand port*, while `sram_read` here is a lump of A-reads, B-reads
+    # and C accumulator traffic.  Charging the lump against one port's number
+    # over-charges, sometimes by a lot, which is exactly why this ships inert
+    # and the sweep that sets it reports what it does to every headline number
+    # (`analysis/memory/bandwidth_run.py`).
+    sram_bandwidth_gbps: float = 0.0
+
     # --- On-chip memory ---
     # 0 = unlimited: peak_sram_bytes is reported but never enforced, which is
     # how every result predating this field was produced.  Set a real capacity
@@ -1338,6 +1352,30 @@ class Simulator:
         """
         return run_entries * head_dim * kv_bits // 8
 
+    def _sram_time(self, m) -> float:
+        """Seconds one operation spends moving bytes to and from SRAM.
+
+        0.0 when `sram_bandwidth_gbps` is 0 (unlimited), which makes every
+        roofline below reduce exactly to `max(compute, dram)` -- the two-term
+        form every published result was produced with.
+        """
+        bw = self.hw.sram_bandwidth_gbps * 1e9
+        if bw <= 0:
+            return 0.0
+        return (m.sram_read + m.sram_write) / bw
+
+    def _op_roofline_time(self, m, freq: float, dram_bw: float) -> float:
+        """Roofline time for one operation: max(compute, DRAM, SRAM).
+
+        Every roofline site calls this rather than inlining the max, because a
+        term that reaches four of five sites is worse than no term at all --
+        the numbers stay plausible and stop being consistent.
+        """
+        ct = m.cycles / freq if freq > 0 else 0.0
+        mt = ((m.dram_read_eff + m.dram_write_eff) / dram_bw
+              if dram_bw > 0 else 0.0)
+        return max(ct, mt, self._sram_time(m))
+
     def _kv_covering_bytes(self, logical_bytes: int, head_dim: int,
                            kv_bits: int) -> int:
         """Bytes of the contiguous region the scattered KV set sits inside.
@@ -2238,7 +2276,7 @@ class Simulator:
                 ct = m.cycles / freq
                 dram_bytes = m.dram_read_eff + m.dram_write_eff
                 mt = dram_bytes / dram_bw if dram_bw > 0 else 0.0
-                rt = max(ct, mt)
+                rt = self._op_roofline_time(m, freq, dram_bw)
 
                 total_ct += ct
                 total_mt += mt
@@ -2334,9 +2372,7 @@ class Simulator:
             for ops_dict in (phase.aa_ops, phase.aw_ops):
                 for op_list in ops_dict.values():
                     for m in op_list:
-                        ct = m.cycles / freq
-                        mt = (m.dram_read_eff + m.dram_write_eff) / dram_bw
-                        total += max(ct, mt)
+                        total += self._op_roofline_time(m, freq, dram_bw)
             return total
 
         ttft = _phase_roofline_time(results.prefill)
@@ -2370,16 +2406,12 @@ class Simulator:
             # AA ops
             for op_list in phase.aa_ops.values():
                 for m in op_list:
-                    ct = m.cycles / freq
-                    mt = (m.dram_read_eff + m.dram_write_eff) / dram_bw if dram_bw > 0 else 0.0
-                    aa_time += max(ct, mt)
+                    aa_time += self._op_roofline_time(m, freq, dram_bw)
 
             # AW ops
             for op_list in phase.aw_ops.values():
                 for m in op_list:
-                    ct = m.cycles / freq
-                    mt = (m.dram_read_eff + m.dram_write_eff) / dram_bw if dram_bw > 0 else 0.0
-                    aw_time += max(ct, mt)
+                    aw_time += self._op_roofline_time(m, freq, dram_bw)
 
             # Non-GEMM ops (VPU) — cycle-bound only, no DRAM access
             for m in phase.non_gemm_ops:
