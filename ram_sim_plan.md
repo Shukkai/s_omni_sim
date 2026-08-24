@@ -524,7 +524,7 @@ lands**, and §11(c) states exactly what it costs.
 36 per-entry `full_sha256` moved; no metric value changed, verified by filtering
 the diff.
 
-**Checkpoint.** Recorded by the following commit.
+**Checkpoint.** `9b0b15c` — recorded by the following commit.
 
 ---
 
