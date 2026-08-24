@@ -32,7 +32,7 @@ whether the saving is collectable.
 **What these presets are not.**  Nominal peak, so no refresh, no bank conflicts,
 no read/write turnaround and no controller efficiency factor -- real sustained
 bandwidth is typically 70-85% of these.  The simulator's roofline has no latency
-or queueing term either (see `ram_sim_plan.md`), so a preset changes *how many
+or queueing term either (see `study.md` Appendix A), so a preset changes *how many
 bytes are charged and how fast they stream*, nothing more.  Energy per bit also
 differs sharply across these technologies (HBM is roughly 3-5 pJ/bit against
 DDR5's 8-15) and is deliberately **not** wired in here, because the energy model

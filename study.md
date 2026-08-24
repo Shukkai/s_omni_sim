@@ -25,8 +25,9 @@ survive both.
 **Method for §6 onward.** Every model change is a `HardwareConfig` field whose
 *disabled* default reproduces the previous numbers exactly, checked by
 `analysis/regression/baseline.py` (36 configs x workloads, 22,488 values,
-compared leaf by leaf). Nothing in §1–§5 moves unless asked. The staged record
-with revert points is `ram_sim_plan.md`.
+compared leaf by leaf). Nothing in §1–§5 moves unless asked. Every stage and its
+revert point is in **Appendix A**; the checks run after each one are in
+**Appendix B**.
 
 **Where the full tables are.** Sections link to `*_report.md` files under
 `analysis/memory/` and `analysis/array_packing/` — those hold every swept row,
@@ -720,3 +721,64 @@ Full tables: `analysis/memory/bandwidth_report.md`.
 - ~~**Bill the SRAM read bandwidth.**~~ Done in §16(c–d). Decode is not
   SRAM-limited (TPOT 1.074x at 128 GB/s) and P=8's ~1.02 TB/s KV port is
   buildable, so §14 is a design rather than a ceiling.
+
+---
+
+## Appendix A — staged record and revert points
+
+Each memory-model change landed as **one commit** whose *disabled* default
+reproduced the previous numbers exactly. A checkpoint line cannot name its own
+commit, so each SHA was recorded by the next commit; `git log --oneline` is the
+tiebreaker if they ever disagree.
+
+| stage | `HardwareConfig` field | disabled default | § | revert point |
+|---|---|---|---|---|
+| 0 — regression gate | — | — | §6 | `2342e90` |
+| 1 — SRAM capacity | `sram_capacity_kb` | `0` = unlimited | §7 | `9eaa1db` |
+| 1b — batch as a capacity axis | `sram_batch_model` | `"sequential"` | §8 | `301f9d5` |
+| 2 — DRAM access granularity | `dram_burst_bytes` | `0` = exact bytes | §9 | `569b8ce` |
+| 3 — selective attention | *(analysis only)* | — | §10 | `d63e355` |
+| 4 — KV residency | `kv_sram_kb` | `0` = no buffer | §11 | `5e3771f` |
+| 5 — attention score staging | `score_sram_kb`, `prefill_kv_dram_read` | `0`, `False` | §16 | `00a79b7` |
+| 5b — unstructured KV masks | *(three default-identical hooks)* | — | §15 | `40f9071` |
+| 7 — memory tech + SRAM bandwidth | `sram_bandwidth_gbps` | `0.0` = unlimited | §16 | `9b0b15c` |
+
+```
+git revert <sha>            # undo one stage, keep the later ones
+git reset --hard <sha>      # rewind to the end of that stage
+```
+
+**Stage 6 (prefill tiling) is not done** — it is the top TODO item, and §16(c)
+is blocked on it.
+
+**Two premises died in the building**, recorded here rather than quietly dropped:
+
+- **Stage 2's motivating example was wrong, and Stage 3 disproved it.** The
+  premise was that a flat bandwidth model makes 1% selection look ~100x cheaper
+  than it is. A 4-bit KV entry is 64 B — exactly one burst — so a page-gathering
+  reader is burst-aligned at *every* page size. Building Stage 2 is still what
+  made the question answerable, and it did find a genuinely misaligned shape
+  (§15), but the example that motivated it was not real.
+- **Stage 7 shipped inert against its own plan.** The plan chose
+  `sram_bandwidth_gbps = 128.0`; measuring it first is what changed the call, and
+  §16(c) states exactly what turning it on costs.
+
+---
+
+## Appendix B — standing checks
+
+Run after *every* model change, not just the one being worked on.
+
+1. `python analysis/regression/baseline.py check` → *Identical to the baseline ✓*
+   with all features at their disabled defaults. Re-capture only when a field is
+   added, and only after confirming the diff contains nothing but the new `hw.*`
+   keys and the per-entry `full_sha256`.
+2. `sum(cycle_units(...)) == _calculate_cycles(...)` across the 50-combination
+   check — the cycle model is untouched by the memory work, so any movement
+   means the wiring leaked.
+3. `python analysis/channel_prune_breakdown/think_run.py` — its pre-flight
+   assertions pass and the dense baseline still reproduces §3's roofline column
+   (55.39 / 70.67 / 131.82 ms).
+4. Every sweep's own pre-flight suite still passes: `prefill_run.py` (7),
+   `pack_run.py` (9), `unstructured_run.py` (9), `selective_run.py` (5),
+   `bandwidth_run.py` (5).
