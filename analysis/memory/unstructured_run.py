@@ -1,7 +1,7 @@
 """
 What does an *unstructured* KV mask cost that a compacted one does not?
 
-Every KV result in `study.md` and `study2.md` was measured on a **compacted**
+Every KV result in `study.md` was measured on a **compacted**
 retained set: eviction compacts, ThinK narrows the entry to a solid `d_ret`
 block, page selection gathers whole pages.  Real pruning masks are irregular --
 per-head channel sets differ, per-head token sets differ -- and on a

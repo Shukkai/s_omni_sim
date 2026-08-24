@@ -23,7 +23,7 @@ traffic must be isolated by differencing staged against unstaged: reading
 `attn_v`'s `dram_read` directly overstates it ~5x, because that field also
 carries the V-cache read.  Differenced properly, the decode score spill is
 11.1% of attention DRAM at every context, and 1.2-10.4% of all decode DRAM
-depending on batch.  Section D measures it, because `study2.md` sections 7-9
+depending on batch.  Section D measures it, because `study.md` §12–§14
 were produced with the spill on -- but the resulting TPOT shift is 1.005x-1.016x,
 so those sections are corrected, not overturned.
 
@@ -304,7 +304,7 @@ def sweep(report_path):
         "total then follows batch, since weights are fixed and attention scales. "
         "Reading `attn_v.dram_read` directly would overstate this ~5x, because that "
         "field also carries the V-cache read.\n"
-        "`study2.md` sections 7–9 were produced with the spill on, so section 7's "
+        "`study.md` §12–§14 were produced with the spill on, so §12's "
         "\"KV share of decode DRAM\" is really *attention* share and is ~11% scores. "
         "At a 1.005x–1.016x TPOT shift those sections need **correcting, not "
         "overturning**.")

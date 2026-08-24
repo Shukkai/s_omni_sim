@@ -67,7 +67,7 @@ Decode TPOT speedup over dense, at batch 32 where KV traffic dominates. Each tec
 | HBM2E | 1.921x | 7.506x | 2,332 ms | 1.101x |
 | HBM3 | 1.921x | 7.506x | 2,332 ms | 1.101x |
 
-> **16x the bandwidth buys 1.10x of decode.** This is the negative result stated in a new place: `study2.md` §8 showed KV *bytes* are usually not the critical path because `attn_v` is compute-bound, and the direct consequence is that the memory technology cannot rescue decode. HBM2E and HBM3 are indistinguishable here — once the DRAM roof clears the compute roof, further bandwidth is inert.
+> **16x the bandwidth buys 1.10x of decode.** This is the negative result stated in a new place: `study.md` §13 showed KV *bytes* are usually not the critical path because `attn_v` is compute-bound, and the direct consequence is that the memory technology cannot rescue decode. HBM2E and HBM3 are indistinguishable here — once the DRAM roof clears the compute roof, further bandwidth is inert.
 
 > **The corollary is the useful one, and it is the opposite of what one would expect.** A KV technique is usually said to be worth most where bandwidth is scarcest, so moving to HBM should devalue it. It does not: 1.936x on DDR5 and 1.921x on HBM3. Token pruning cuts `kv_len`, which is the `K` of both attention GEMMs, so it removes **cycles** as well as bytes — and cycles are what decode is actually limited by. **Its value is portable across memory technologies precisely because it was never really a bandwidth optimisation.**
 
@@ -91,7 +91,7 @@ DDR5-6400, batch 1. `unlimited` is the shipped default and reproduces every exis
 | prefill | 113,670 GB | 3 GB | 33,680 : 1 |
 | decode | 21.9 GB | 10.1 GB | 2.16 : 1 |
 
-> **Read the two tables together.** The 128 GB/s row is not a finding about bandwidth; it is the untiled-activation defect becoming visible through a new term. Prefill's SRAM traffic is written against an untiled A, so it counts re-reads a real loop nest never performs — the same defect that makes `_calculate_peak_sram` claim a 2.1 GB prefill working set (`study2.md` §2). **Tens of thousands to one against DRAM is not physical.** Note the DRAM side is small here precisely because the scores are correctly staged (Stage 5), which makes the SRAM side's implausibility all the more visible.
+> **Read the two tables together.** The 128 GB/s row is not a finding about bandwidth; it is the untiled-activation defect becoming visible through a new term. Prefill's SRAM traffic is written against an untiled A, so it counts re-reads a real loop nest never performs — the same defect that makes `_calculate_peak_sram` claim a 2.1 GB prefill working set (`study.md` §7). **Tens of thousands to one against DRAM is not physical.** Note the DRAM side is small here precisely because the scores are correctly staged (Stage 5), which makes the SRAM side's implausibility all the more visible.
 
 > **Decode is sound and can be believed now.** `M=1` makes decode tiling-inert, its SRAM:DRAM ratio is a plausible ~2:1, and TPOT moves only 1.07x even at 128 GB/s. **Decode is not SRAM-throughput-limited** — a real result, not an artefact, and one that settles the open question §9 left hanging.
 

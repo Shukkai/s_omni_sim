@@ -6,7 +6,7 @@ hierarchy.
 
 **1. DRAM.**  The simulator carried `dram_bandwidth_gbps` and `dram_burst_bytes`
 as independent knobs, which lets a sweep describe a part that does not exist.
-A real technology fixes both, and `study2.md` section 10 showed the *burst* is
+A real technology fixes both, and `study.md` §15 showed the *burst* is
 what decides whether a pruning axis can collect its saving at all.  So the
 interesting column here is not HBM's bandwidth, it is HBM's **32 B access
 granularity**: it halves the channel-group size at which channel pruning starts
@@ -18,15 +18,15 @@ SRAM for free.  `hw.sram_bandwidth_gbps` closes that, and the array geometry
 implies about `MU x array_n x NUM_RAC x kv_bits` = 256 B/cycle = 128 GB/s.
 
 **The headline result is a warning, and it is why the field ships inert.**  At
-128 GB/s decode is essentially unaffected (TPOT 1.06x) but prefill TTFT goes
-4.3x, because prefill charges **113,670 GB** of SRAM traffic against 4,099 GB of
-DRAM -- a 27:1 ratio that is not physical.  It is the same untiled-activation
-defect that makes `_calculate_peak_sram` claim a 2.1 GB prefill working set
-(`study2.md` section 2): the SRAM traffic terms are written against an untiled
-A, so they count re-reads a tiled loop nest would not perform.  **Decode is
-sound -- M=1 makes it tiling-inert -- and prefill is not usable until that is
-fixed.**  Reporting a 4.3x TTFT as a bandwidth finding would be reporting a
-known modelling bug as a hardware result.
+128 GB/s decode is essentially unaffected (TPOT 1.074x) but prefill TTFT goes
+**4.35x**, because prefill charges **113,670 GB** of SRAM traffic against 3 GB
+of DRAM -- a ratio in the tens of thousands to one, which is not physical.  It
+is the same untiled-activation defect that makes `_calculate_peak_sram` claim a
+2.1 GB prefill working set (`study.md` §7): the SRAM traffic terms are written
+against an untiled A, so they count re-reads a tiled loop nest would not
+perform.  **Decode is sound -- M=1 makes it tiling-inert -- and prefill is not
+usable until that is fixed.**  Reporting a 4.35x TTFT as a bandwidth finding
+would be reporting a known modelling bug as a hardware result.
 
 Usage:
     python bandwidth_run.py
@@ -260,7 +260,7 @@ def sweep(report_path):
                "dense TPOT", "dense vs DDR5"], trows, aligns="lrrrr")
     rep.note(
         "**16x the bandwidth buys 1.10x of decode.** This is the negative "
-        "result stated in a new place: `study2.md` §8 showed KV *bytes* are "
+        "result stated in a new place: `study.md` §13 showed KV *bytes* are "
         "usually not the critical path because `attn_v` is compute-bound, and "
         "the direct consequence is that the memory technology cannot rescue "
         "decode. HBM2E and HBM3 are indistinguishable here — once the DRAM roof "
@@ -311,7 +311,7 @@ def sweep(report_path):
         "through a new term. Prefill's SRAM traffic is written against an "
         "untiled A, so it counts re-reads a real loop nest never performs — the "
         "same defect that makes `_calculate_peak_sram` claim a 2.1 GB prefill "
-        "working set (`study2.md` §2). **Tens of thousands to one against DRAM "
+        "working set (`study.md` §7). **Tens of thousands to one against DRAM "
         "is not physical.** Note the DRAM side is small here precisely because "
         "the scores are correctly staged (Stage 5), which makes the SRAM side's "
         "implausibility all the more visible.")

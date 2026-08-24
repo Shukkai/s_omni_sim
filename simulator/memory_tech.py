@@ -4,7 +4,7 @@ DRAM technology presets -- bandwidth *and* access granularity together.
 The simulator carries `dram_bandwidth_gbps` and `dram_burst_bytes` as two
 independent knobs, which lets a study set a combination no real part has.  They
 are not independent in hardware: a memory technology fixes both at once, and
-`study2.md` section 10 showed the burst is the term that decides which KV
+`study.md` §15 showed the burst is the term that decides which KV
 pruning axis is allowed to work at all.  Sweeping bandwidth while holding the
 burst at a DDR5 value therefore answers a question about no real system.
 

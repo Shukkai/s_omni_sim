@@ -63,4 +63,4 @@ Scores are FP16 across 32 **query** heads while the KV cache is 4-bit across onl
 | 32,768 | 32 | 82,413,223,936 | 73,822,896,128 | 10.4% | 1.016x |
 
 > Isolated by **differencing** staged against unstaged, the score spill is 11.1% of decode attention DRAM at every context; its share of the decode total then follows batch, since weights are fixed and attention scales. Reading `attn_v.dram_read` directly would overstate this ~5x, because that field also carries the V-cache read.
-> `study2.md` sections 7–9 were produced with the spill on, so section 7's "KV share of decode DRAM" is really *attention* share and is ~11% scores. At a 1.005x–1.016x TPOT shift those sections need **correcting, not overturning**.
+> `study.md` §12–§14 were produced with the spill on, so §12's "KV share of decode DRAM" is really *attention* share and is ~11% scores. At a 1.005x–1.016x TPOT shift those sections need **correcting, not overturning**.

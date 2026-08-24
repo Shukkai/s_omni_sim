@@ -442,7 +442,7 @@ wrong.** The score traffic must be isolated by *differencing* staged against
 unstaged; reading `attn_v.dram_read` directly overstates it ~5× because that field
 also carries the V-cache read. Differenced: **11.1% of decode attention DRAM** at
 every context, 1.2–10.4% of all decode DRAM depending on batch, TPOT shift
-1.005×–1.016×. `study2.md` §7's "KV share" is really *attention* share and is ~11%
+1.005×–1.016×. `study.md` §12's "KV share" is really *attention* share and is ~11%
 scores — a correction to those sections, not an overturning.
 
 **Verification.**
