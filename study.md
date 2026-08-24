@@ -826,7 +826,7 @@ tiebreaker if they ever disagree.
 | 5 — attention score staging | `score_sram_kb`, `prefill_kv_dram_read` | `0`, `False` | §16 | `00a79b7` |
 | 5b — unstructured KV masks | *(three default-identical hooks)* | — | §15 | `40f9071` |
 | 7 — memory tech + SRAM bandwidth | `sram_bandwidth_gbps` | `0.0` = unlimited | §16 | `9b0b15c` |
-| 10 — compute/memory overlap | `overlap_model` | `"serial"` = no overlap | §17 | *(this commit)* |
+| 10 — compute/memory overlap | `overlap_model` | `"serial"` = no overlap | §17 | `4d593bc` |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones
