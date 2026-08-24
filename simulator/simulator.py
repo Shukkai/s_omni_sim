@@ -1241,7 +1241,8 @@ class Simulator:
 
     # ---- Memory access calculation ------------------------------------------
 
-    def _dram_effective_bytes(self, logical: int, run_bytes: int) -> int:
+    def _dram_effective_bytes(self, logical: int, run_bytes: int,
+                              cap_bytes: int = 0) -> int:
         """Round a DRAM access up to whole bursts.
 
         `logical` is the total bytes wanted; `run_bytes` is how many of them
@@ -1258,7 +1259,16 @@ class Simulator:
         if burst <= 0 or run_bytes <= 0:
             return logical
         moved_per_run = math.ceil(run_bytes / burst) * burst
-        return logical * moved_per_run // run_bytes
+        charged = logical * moved_per_run // run_bytes
+        # A scattered read can never cost more than giving up and reading the
+        # whole contiguous region the scattered set sits inside.  Without this
+        # a fine-grained mask prices above a dense read, which no controller
+        # would ever actually do.  `cap_bytes = 0` means "no covering region
+        # known", and every base-model access is already whole-entry runs, so
+        # this clamp is inert unless a sub-entry mask is in play.
+        if cap_bytes > 0:
+            return min(charged, cap_bytes)
+        return charged
 
     def _kv_resident_bytes(self, kv_bytes: int, share: float = 0.5) -> int:
         """How much of this op's KV working set stays on chip between steps.
@@ -1310,6 +1320,41 @@ class Simulator:
         its page size, which is what makes the burst term bite.
         """
         return kv_prev
+
+    def _kv_dram_run_bytes(self, run_entries: int, head_dim: int,
+                           kv_bits: int) -> int:
+        """Contiguous bytes moved per KV DRAM access.
+
+        Default: whole entries, so one run is `run_entries` complete
+        `head_dim x kv_bits` rows and the run is always an exact multiple of
+        an entry.  That is what makes token-granular selection free on this
+        hardware -- a 4-bit entry is 64 B, exactly one burst.
+
+        An *unstructured channel* mask breaks that assumption, because it
+        fragments the entry itself: the run drops below one entry and burst
+        granularity starts to bite.  Overriding this is the only way to
+        express that, which is why it is a separate hook from
+        `_kv_dram_run_entries`.
+        """
+        return run_entries * head_dim * kv_bits // 8
+
+    def _kv_covering_bytes(self, logical_bytes: int, head_dim: int,
+                           kv_bits: int) -> int:
+        """Bytes of the contiguous region the scattered KV set sits inside.
+
+        This is the clamp on `_dram_effective_bytes`: a gathering reader can
+        always fall back to reading the whole covering region in one stream,
+        so it never pays more than that.
+
+        0 = "no covering region known", which disables the clamp, and is the
+        default *deliberately*.  For a dense or compacted read the covering
+        region is the read itself, so a clamp would be a no-op; for a
+        page-selective read it is the entire cache, far above anything the
+        burst term can charge.  Only a sub-entry mask -- where the charge can
+        exceed a dense read of the same region -- needs it, so only that
+        subclass supplies one, and no existing result can move.
+        """
+        return 0
 
     def _calculate_memory_access(
         self, M: int, K: int, N: int,
@@ -1387,7 +1432,9 @@ class Simulator:
         # Tracked as (bits, contiguous-run-bytes) so each component can be
         # rounded up to a burst independently: they have very different access
         # shapes, and lumping them together would average that away.
-        read_parts: List[Tuple[int, int]] = []
+        # (bits, contiguous-run-bytes, covering-region-bytes); the third is 0
+        # when no covering region applies, which disables the clamp.
+        read_parts: List[Tuple[int, int, int]] = []
         kv_resident_bytes = 0
         # Effective KV batch for GQA (defaults to batch_size for MHA)
         eff_kv_batch = kv_batch_size if kv_batch_size > 0 else batch_size
@@ -1405,8 +1452,12 @@ class Simulator:
             # Whatever is held on chip between steps is not re-read.
             resident = self._kv_resident_bytes(kv_bits_total // 8)
             kv_resident_bytes = resident
-            read_parts.append(((kv_bits_total // 8 - resident) * 8,
-                               run_entries * head_dim * kv_bits // 8))
+            kv_logical = kv_bits_total // 8 - resident
+            read_parts.append((kv_logical * 8,
+                               self._kv_dram_run_bytes(run_entries, head_dim,
+                                                       kv_bits),
+                               self._kv_covering_bytes(kv_logical, head_dim,
+                                                       kv_bits)))
 
         elif (self.hw.prefill_kv_dram_read
                 and not is_decode
@@ -1423,22 +1474,27 @@ class Simulator:
             kv_bits_total = eff_kv_batch * kv_len * head_dim * kv_bits
             resident = self._kv_resident_bytes(kv_bits_total // 8)
             kv_resident_bytes = resident
-            read_parts.append(((kv_bits_total // 8 - resident) * 8,
-                               run_entries * head_dim * kv_bits // 8))
+            kv_logical = kv_bits_total // 8 - resident
+            read_parts.append((kv_logical * 8,
+                               self._kv_dram_run_bytes(run_entries, head_dim,
+                                                       kv_bits),
+                               self._kv_covering_bytes(kv_logical, head_dim,
+                                                       kv_bits)))
 
         elif compute_mode == ComputeMode.AW:
             # AW operations: weights loaded from DRAM -- one contiguous block
-            read_parts.append((B_bits, B_bits // 8))
+            read_parts.append((B_bits, B_bits // 8, 0))
 
         # Attn·V reads attention scores (A operand) back from DRAM, contiguous.
         # `K` is kv_len here, so it is the same width the QK write tested.
         if op_type == OperationType.ATTN_V_MATMUL and not self._score_staged(K):
             score_bits = batch_size * M * K * act_bits
-            read_parts.append((score_bits, score_bits // 8))
+            read_parts.append((score_bits, score_bits // 8, 0))
 
-        dram_read_bits = sum(bits for bits, _ in read_parts)
+        dram_read_bits = sum(bits for bits, _, _ in read_parts)
         dram_read_eff = sum(
-            self._dram_effective_bytes(bits // 8, run) for bits, run in read_parts
+            self._dram_effective_bytes(bits // 8, run, cap)
+            for bits, run, cap in read_parts
         )
         # Writes are contiguous in every path modelled so far.
         dram_write_eff = self._dram_effective_bytes(

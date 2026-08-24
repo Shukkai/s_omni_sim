@@ -306,13 +306,73 @@ in SRAM, and neither fact matters, because nothing above P=8 is worth having.
 
 ---
 
+## 10. Unstructured pruning — the layout decides which axis is allowed to work
+
+Every KV result above was measured on a **compacted** retained set: eviction
+compacts, ThinK narrows the entry to a solid `d_ret` block, page selection
+gathers whole pages. Real masks are irregular. `analysis/memory/unstructured_kv.py`
+prices that, and the answer turns on one coincidence: **a 4-bit KV entry is
+`128 × 4/8` = 64 B, exactly one DRAM burst.**
+
+An axis is free if and only if its mask cuts on a boundary already burst-aligned
+in the chosen layout — and the two axes disagree about which layout that is:
+
+| layout | token-wise mask | channel-wise mask |
+|---|---|---|
+| **token-major** (today's model) | cuts *between* entries → **100% of the saving kept** | cuts *inside* one → **0.0% kept** |
+| **channel-major** (transposed) | **0.0% kept** | **99.9% kept** |
+
+- **Perfectly antisymmetric, and there is no third option.** A KV element has
+  two indices; one is the minor axis and the other is strided. **Choosing a KV
+  layout is choosing which pruning axis is permitted to work at all** — a
+  decision taken in the memory subsystem that silently determines which pruning
+  papers are deployable.
+- **It is a cliff, not a slope.** In token-major, channel groups of 1, 2, 4, 8,
+  16, 32 and 64 all keep **exactly 0%** of the saving. 64 contiguous channels of
+  128 is worth precisely as much as one: nothing. Only the full 128-channel
+  entry pays. There is no partial credit for a partly-structured mask.
+- **The saving goes to zero, not negative.** A gathering reader never pays more
+  than streaming the whole covering region, so the model clamps there
+  (`_dram_effective_bytes(cap_bytes=...)`). Unstructured channel pruning
+  degrades to *precisely* dense: 50% of channels removed, 1.000× the traffic.
+- **This makes channel pruning null on both axes at once.** §5 of `study.md`
+  showed it does not move `attn_v` cycles (no N term in the `LUT_OS_V` round);
+  this shows an unstructured mask does not move bytes either. Measured decode
+  TPOT speedup is **1.000× at batch 1 and at batch 32**.
+- **Head-wise is the only axis free in both layouts** — a head is its own
+  address region — and it is exactly linear (2.00× at half the KV heads). It is
+  also the axis the pruning literature uses least.
+- **Composition breaks at the third axis.** head+token at 50% each reaches
+  0.250× traffic and 1.504× TPOT; adding an unstructured channel mask removes a
+  further 50% *logically* and moves effective traffic **not at all**. The same
+  mask with contiguous 128-channel groups reaches 0.125× and 1.528×.
+- **The mask itself is not free.** A per-(token, channel) bitmap is 1 bit
+  against a 4-bit datum — **25% of the dense cache**, charged over the full
+  context whether or not the element survived (0.250× → 0.375×). A per-head
+  static mask is negligible and is what a deployable design would use.
+
+Two costs are modelled optimistically — gather scheduling is free (no
+request-queue or MSHR pressure, though a scattered gather has far more
+outstanding requests than a stream), and the mask is assumed resident when the
+gather issues. **Both push the same way: unstructured masks are worse than this
+says, not better.** Accuracy is out of scope throughout; this prices the choice,
+it does not dispute it.
+
+Full tables: `analysis/memory/unstructured_report.md`.
+
+---
+
 ## TODO
 
 - **Tile prefill in `_calculate_peak_sram`.** It holds the whole activation
   matrix, so prefill capacity claims and its spill charge are both unusable
   (§2). The only outright *bug* the memory work found.
-- **Pin down ThinK's pruned-entry layout.** A 38 B entry is the one shape that is
-  not burst-aligned, so §5 of `study.md` may overstate its speedup (§4).
+- ~~**Pin down ThinK's pruned-entry layout.**~~ **Answered by §10**, and worse
+  than the item feared: the risk is not that a 38 B entry is misaligned, it is
+  that *any* channel mask below the full 128 is sub-burst in token-major. ThinK's
+  DRAM saving requires the retained channels to be **contiguous and compacted**,
+  which is a layout obligation `study.md` §5 never stated. Unstructured, the
+  saving is exactly zero.
 - **Mixed-precision KV.** `qbit` is modelled as static and
   `analysis/bit_width/` sweeps only fixed widths, so per-token / per-channel
   allocation (KIVI / ZipCache / KVQuant), giving a weighted-average effective
