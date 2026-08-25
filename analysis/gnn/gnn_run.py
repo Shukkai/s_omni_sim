@@ -1,5 +1,5 @@
 """
-GNN on Omni-LUT, stage 1: Combine simulated, Aggregate priced.
+GNN on Omni-LUT, stage 2: Combine simulated, Aggregate simulated.
 
 A GNN layer is `H' = sigma( A_hat @ (H @ W) )` and it splits into two halves
 with opposite characters:
@@ -37,6 +37,22 @@ gather is destination-stationary and needs one row, whatever the graph size.
 Section C2 measures where that crosses over, and the answer is one inequality:
 `stream_passes < avg_degree * burst_waste`.
 
+**Stage 2 (sections F-H).**  Aggregation now has a *cycle* model as well as a
+DRAM model, and it needed no new arithmetic at all, because pull aggregation --
+`h[v] = sum a_vu x[u]` over `v`'s neighbours -- is issued as `(M=1, K=deg(v),
+N=F)`, which is **the shape of decode `attn_v`** with `deg` in `kv_len`'s slot.
+Pre-flight 9 proves that by running a real decode `attn_v` operation and
+asserting the aggregation cycle count matches it bit for bit.  `gnn_sim.py`
+holds the model and the caveats; the load-bearing one is that push aggregation
+(`M = deg(u)`) lands on a `rounds` branch of `_calculate_cycles` that does not
+pack `M < array_m`, so section G reports push twice -- as charged and as
+corrected -- and never compares it to pull on the charged number alone.
+
+Degrees come from `GraphConfig.degree_distribution()`, a **synthesised**
+power-law fit whose only tie to the dataset is that its mean reproduces the
+published `avg_degree`.  Section G reports mean-degree and distribution-aware
+totals side by side so the size of that modelling choice is visible.
+
 Usage:
     python gnn_run.py
     python gnn_run.py --csv gnn.csv --report gnn_report.md
@@ -62,6 +78,7 @@ from graph_configs import (                                          # noqa: E40
 )
 from memory_tech import memory_technology                            # noqa: E402
 from report import Report                                            # noqa: E402
+from gnn_sim import GNNSimulator, PULL, PUSH, VPU                    # noqa: E402
 
 ACT_BITS = 16
 WEIGHT_BITS = 4
@@ -71,6 +88,8 @@ EDGE_WEIGHT_BITS = 16  # GCN's 1/sqrt(d_u d_v), one per non-zero
 TECHS = ['DDR5-6400', 'HBM3']
 SMALL = ['Cora', 'CiteSeer', 'PubMed']          # dense A_hat is simulable
 CAPACITY_KB = [0, 1024, 8192]                   # 0 = unlimited
+QBITS = [16, 8, 4, 2]                           # adjacency-coefficient bits
+KNEE_DEGREES = [1, 2, 3, 4, 8, 16, 32, 64, 128, 492, 4096]
 
 
 def base_hw(burst_bytes=0, dram_bw=51.2, sram_capacity_kb=0):
@@ -342,6 +361,111 @@ def preflight():
     assert gc_c.stream > gc_u.stream
     print(f"  7. capacity: Reddit streaming needs {gc_c.stream_passes:,} passes "
           f"at 1 MB; gather needs {gc_u.gather_resident} B either way ok")
+
+    # ---- stage 2 ----------------------------------------------------------
+    gs = GNNSimulator(base_hw())
+
+    # 8. The VPU null is exactly `E * F / vpu_width` -- no LUT term, no qbit
+    #    term.  If this drifts, every ratio in section G is meaningless,
+    #    because the VPU is the denominator of all of them.
+    for feat in (16, 128, 256, 602):
+        for e in (1, 10556, 114615892):
+            assert gs.vpu_cycles(e, feat) == e * feat / gs.hw.vpu_width
+    assert gs.vpu_width == 128 and gs.vpu_cycles(2, 64) == 1.0
+    print(f"  8. VPU null == E*F/{gs.vpu_width} exactly ok")
+
+    # 9. THE shape identity, proved rather than asserted: a real decode
+    #    `attn_v` operation with (kv_len, head_dim) = (deg, F) must produce the
+    #    identical cycle count to a pull aggregation of a degree-`deg` node at
+    #    feature width `F`.  Same function, same three integers.  Everything in
+    #    sections F-H rests on this one check.
+    for deg in (1, 4, 17, 128, 492, 4096):
+        for feat in (16, 64, 128, 256, 512):
+            av = gs._simulate_matmul(
+                OperationType.ATTN_V_MATMUL, ComputeMode.AA,
+                (1, deg, feat), batch_size=1, is_decode=True,
+                seq_len=1, kv_len=deg)
+            pull = gs.pull_cycles(deg, feat, gs.hw.kv_cache_bits)
+            assert av.cycles == pull, (deg, feat, av.cycles, pull)
+    print("  9. pull aggregation == decode attn_v cycles, bit for bit, "
+          "over 30 (deg, F) pairs ok")
+
+    # 10. The fixed/useful split really is a split: it must reconstruct the
+    #     cycle count, not merely resemble it.  This is what lets section F
+    #     quote a fixed-overhead share.
+    for deg in KNEE_DEGREES:
+        for feat in (16, 256, 4096):
+            for q in QBITS:
+                f, u = gs.pull_fixed_useful(deg, feat, q)
+                assert f + u == gs.pull_cycles(deg, feat, q), (deg, feat, q)
+    print("  10. pull cycles == fixed + useful, exactly, over 132 cases ok")
+
+    # 11. The distribution-aware sum reduces to the mean-degree one on a
+    #     REGULAR graph.  Without this the two columns in section G could
+    #     differ for a reason other than the distribution.
+    reg = GraphConfig('regular-8', num_nodes=10_000, num_edges=80_000,
+                      feat_dim=64, num_classes=4, hidden_dim=64,
+                      min_degree=8, max_degree=8)
+    assert reg.degree_distribution() == [(8, 10_000.0)]
+    for flow in (PULL, PUSH, VPU):
+        a = gs.aggregate_cost(reg, 64, 16, flow, distribution_aware=True)
+        b = gs.aggregate_cost(reg, 64, 16, flow, distribution_aware=False)
+        assert a.cycles == b.cycles, (flow, a.cycles, b.cycles)
+    print("  11. regular graph: distribution-aware == mean-degree, all three "
+          "dataflows ok")
+
+    # 12. The synthesised distribution conserves both marginals it claims to.
+    #     Node count is exact by construction; the edge count is what says the
+    #     gamma fit converged, and it is the number a distribution-aware total
+    #     is only comparable to a mean-degree one because of.
+    for name in list_graphs():
+        gg = get_graph_config(name)
+        dist = gg.degree_distribution()
+        assert abs(sum(c for _, c in dist) - gg.num_nodes) < 1e-6, name
+        assert abs(gg.degree_edge_error()) < 1e-6, (name,
+                                                    gg.degree_edge_error())
+        assert 1.0 < gg.degree_exponent < 3.5, (name, gg.degree_exponent)
+    print("  12. degree distributions conserve nodes and edges to 1e-6; "
+          "fitted gamma in (1.0, 3.5) on all six ok")
+
+    # 13. Push's two numbers are both simulator outputs -- `os_rounds_model`
+    #     "tiled" and "packed" (stage 11) -- so the defect is quoted, not
+    #     paraphrased, and they must differ by exactly the rounds ratio.
+    #     `deg = 1` is excluded because a degree-1 source node takes the M==1
+    #     branch, which both models agree on.
+    worst = (0, 0, 1.0)
+    for deg in range(2, 65):
+        for feat in (256, 4096):
+            model, corr = gs.push_cycles(deg, feat, 16)
+            ref = gs._calculate_cycles(deg, 1, feat, 16, ComputeMode.AA,
+                                       "LUT_OS_V", 1)
+            assert model == ref, (deg, feat, model, ref)
+            n_tiles = math.ceil(feat / (gs.hw.array_n * gs.NUM_RAC))
+            ratio = (math.ceil(deg / gs.hw.array_m) * n_tiles
+                     / math.ceil(deg * n_tiles / gs.hw.array_m))
+            assert abs(model / corr - ratio) < 1e-9, (deg, feat)
+            if ratio > worst[2]:
+                worst = (deg, feat, ratio)
+    print(f"  13. push model == _calculate_cycles; overcharge is exactly "
+          f"ceil(M/32)*n_tiles/ceil(M*n_tiles/32), worst {worst[2]:.0f}x at "
+          f"M={worst[0]}, F={worst[1]} ok")
+
+    # 14. The searched crossover degree agrees with the closed form
+    #     `d* = (10 + array_n) * qbit / (F/vpu_width - qbit/MU)` up to the
+    #     staircase `ceil(deg/MU)` introduces -- and both agree on WHEN there
+    #     is no crossover, which is the finding section G leads with.
+    for feat in (16, 128, 256, 512, 1024, 2048, 4096):
+        for q in QBITS:
+            slope = feat / gs.vpu_width - q / gs.MU
+            found = gs.crossover_degree(feat, q, 200_000)
+            if slope <= 0:
+                assert found is None, (feat, q, found)
+                continue
+            closed = math.ceil((3 + 1 + 2 + gs.hw.array_n) * q / slope)
+            assert found is not None and closed <= found <= closed + gs.MU, (
+                feat, q, found, closed)
+    print("  14. crossover: none exactly when F <= vpu_width*qbit/MU = 32*qbit; "
+          "otherwise within MU of the closed form ok")
     print()
 
 
@@ -353,16 +477,24 @@ def sweep(report_path):
     rows = []
     rpt = Report(
         report_path,
-        "GNN on Omni-LUT, stage 1",
-        "Combine measured through the existing simulator; Aggregate priced by "
-        "a closed-form gather model",
+        "GNN on Omni-LUT, stage 2",
+        "Both halves of the layer simulated: Combine as an AW GEMM, Aggregate "
+        "as decode `attn_v` with a graph in it",
         source='analysis/gnn/gnn_run.py',
         setup=[
-            f"Array 32x4, MU=4, RAC=32, 500 MHz. act={ACT_BITS} b, "
-            f"weights={WEIGHT_BITS} b, accum={ACCUM_BITS} b, AW/AA = OMNI.",
+            f"Array 32x4, MU=4, RAC=32, VPU {HardwareConfig.vpu_width} lanes, "
+            f"500 MHz. act={ACT_BITS} b, weights={WEIGHT_BITS} b, "
+            f"accum={ACCUM_BITS} b, AW/AA = OMNI.",
             f"CSR indices {INDEX_BYTES} B, GCN edge coefficients "
-            f"{EDGE_WEIGHT_BITS} b.",
-            "Graph statistics from `simulator/graph_configs.py`.",
+            f"{EDGE_WEIGHT_BITS} b (= the AA `qbit`, swept in G2).",
+            "Graph statistics from `simulator/graph_configs.py`. Sections A-E "
+            "(stage 1) use `avg_degree`; F-H (stage 2) sum over that module's "
+            "**synthesised** power-law degree distribution, and G1 reports both "
+            "so the difference is visible.",
+            "Sections F-H add no code to `simulator/simulator.py`: the "
+            "aggregation cycle model in `analysis/gnn/gnn_sim.py` is calls into "
+            "the existing `_calculate_cycles`, and `baseline.py check` is "
+            "unchanged by construction.",
         ],
     )
 
@@ -399,6 +531,57 @@ def sweep(report_path):
         "Reddit's degree-492 graph does it reach 47%. That is exactly why it "
         "is the interesting half: it does little work and, as section E "
         "shows, moves nearly all the bytes.")
+
+    rpt.section(
+        "A2. The degree distributions, which are a model and not a dataset",
+        "Sections F-H sum per-node costs over a degree distribution, and "
+        "`avg_degree` alone cannot supply one. `GraphConfig.degree_distribution()` "
+        "**synthesises** a discrete power law `p(d) ~ d^-gamma` on `[1, "
+        "max_degree]` and solves the single free parameter `gamma` so the mean "
+        "reproduces the published `avg_degree` exactly. `max_degree` is the "
+        "commonly reported maximum for each dataset; **gamma is derived here, "
+        "not taken from any paper**, and no bucket below is a dataset fact.")
+    a2_rows = []
+    for name in list_graphs():
+        g = get_graph_config(name)
+        dist = dict(g.degree_distribution())
+        a2_rows.append([
+            g.name, f"{g.avg_degree:.1f}", f"{g.max_degree:,}",
+            f"{g.degree_exponent:.3f}",
+            f"{dist[1]/g.num_nodes*100:.1f}%",
+            f"{sum(c for d, c in dist.items() if d <= 4)/g.num_nodes*100:.1f}%",
+            f"{g.degree_head_share(0.1)*100:.1f}%",
+            f"{g.degree_edge_error():+.1e}",
+        ])
+        rows.append(dict(section='A2', graph=g.name, avg_degree=g.avg_degree,
+                         max_degree=g.max_degree,
+                         degree_exponent=g.degree_exponent,
+                         deg1_share=dist[1]/g.num_nodes,
+                         head10_edge_share=g.degree_head_share(0.1),
+                         degree_edge_error=g.degree_edge_error()))
+    rpt.table(
+        ['graph', 'mean deg', 'max deg', 'fitted gamma', 'deg 1',
+         'deg <= 4', 'edges in top 10% of nodes', 'edge error'],
+        a2_rows, aligns='lrrrrrrr')
+    rpt.note(
+        "The fitted exponents land in 1.27-2.10. The citation graphs' 1.87-2.10 "
+        "sits at the low edge of the 2.0-3.0 usually reported for such "
+        "networks, and **Reddit's 1.27 should not be believed as a power law "
+        "at all** -- Reddit is dense and its real minimum degree is far above "
+        "1, so forcing `min_degree = 1` puts 24.7% of its nodes at degree 1 "
+        "where the real graph has none. That error is in the VPU's favour and "
+        "against the LUT, i.e. it makes the LUT look worse on the one graph "
+        "where the LUT comes closest to winning. Worth knowing before quoting "
+        "Reddit's 2.17x in G1 to three digits.")
+    rpt.note(
+        "`edge error` is the relative error in `num_edges` implied by the "
+        "distribution, and it is ~1e-9 because the counts are kept "
+        "**fractional**. Rounding them to integers is the obvious move and it "
+        "is wrong: the tail degrees each have an expected count well below 1 "
+        "while carrying most of the edges, so integer rounding silently loses "
+        "up to **34%** of `num_edges` (measured on ogbn-arxiv while building "
+        "this). Fractional counts are the only way the distribution-aware total "
+        "in G1 is comparable to the mean-degree one at all.")
 
     # ---- B. Combine, simulated --------------------------------------------
     rpt.section(
@@ -674,17 +857,336 @@ def sweep(report_path):
         "no compute term, which is the right bound given the intensity above "
         "but is not a simulated latency, and it is not overlapped with "
         "combine (`study.md` section 17's `overlap_model` would bracket that). "
-        "Stage 2 is what turns it into a simulated number.")
+        "**Section H replaces it with a simulated one, and reverses it**: with "
+        "a cycle model, aggregation is compute-bound on every graph.")
+
+    # ---- F. the shape identity --------------------------------------------
+    gs = GNNSimulator(base_hw(burst_bytes=64, sram_capacity_kb=8192))
+    rpt.section(
+        "F. Aggregation is decode `attn_v` with a graph in it",
+        "Pull aggregation -- `h[v] = sum a_vu x[u]` over v's neighbours -- is "
+        "issued as `(M=1, K=deg(v), N=F)`. That is the shape decode `attn_v` "
+        "is issued as, with `deg` in `kv_len`'s slot and `F` in `head_dim`'s. "
+        "Pre-flight 9 proves it: a real decode `attn_v` operation at "
+        "`(kv_len, head_dim) = (deg, F)` returns the identical cycle count over "
+        "30 pairs. So `study.md` section 4(b)'s fixed-overhead knee is not "
+        "analogous to aggregation's, it *is* aggregation's. Per destination "
+        "node, F=256, 16-bit adjacency coefficients.")
+    f_rows = []
+    for deg in KNEE_DEGREES:
+        cyc = gs.pull_cycles(deg, 256, ACT_BITS)
+        fx, us = gs.pull_fixed_useful(deg, 256, ACT_BITS)
+        vpu = gs.vpu_cycles(deg, 256)
+        # The N-null, checked rather than claimed: identical at every width the
+        # array can hold in one round.
+        for feat in (16, 128, 256, 4096):
+            assert gs.pull_cycles(deg, feat, ACT_BITS) == cyc, (deg, feat)
+        f_rows.append([
+            f"{deg}", f"{cyc:,}", f"{fx:,}", f"{us:,}", f"{fx/cyc*100:.1f}%",
+            f"{vpu:,.1f}", f"{cyc/vpu:.1f}x",
+        ])
+        rows.append(dict(section='F', degree=deg, feat_dim=256, qbit=ACT_BITS,
+                         pull_cycles=cyc, fixed=fx, useful=us,
+                         vpu_cycles=vpu, lut_over_vpu=cyc/vpu))
+    rpt.table(
+        ['deg(v)', 'pull cycles', 'fixed', 'useful', 'fixed %', 'VPU cycles',
+         'LUT / VPU'],
+        f_rows, aligns='rrrrrrr')
+    rpt.note(
+        "**The knee that section 4(b) needed a 0.4% KV budget to reach is "
+        "where a citation graph starts.** `per_round = 3 (LGU) + ceil(deg/4) + "
+        "1 + array_n + 2`, so 10 cycles are fixed and `ceil(deg/4)` is useful. "
+        "At Cora's mean degree of 3.9 that is 1 useful cycle against 10 -- "
+        "90.9% overhead, against the 23.5% that was the most extreme point in "
+        "the KV study. Reddit's degree 492 is the only graph here that gets the "
+        "fixed share down to single figures (7.5%).")
+    rpt.note(
+        "**The N-null is wider than section 5 states, and it does not help.** "
+        "Section 5 found `attn_v` flat in `head_dim` because `n_tiles = "
+        "ceil(N/128) = 1` for `N <= 128`. The `rounds = ceil(n_tiles/array_m)` "
+        "term extends that by another 32x: pull cycles are *identical* for "
+        "every `F <= array_m x array_n x NUM_RAC = 4096` (asserted in this "
+        "section for F = 16, 128, 256 and 4096). Every feature width any GNN "
+        "uses is inside the null. The VPU's cost is linear in F throughout, so "
+        "a wider feature is exactly where the LUT gains -- see G3.")
+    rpt.note(
+        "`M = 1` also means 1 of 32 PE rows does work at every degree, the "
+        "3.12% occupancy of section 14. `array_pack.py`'s P-way packing applies "
+        "unchanged and would recover up to 32x here too, since consecutive "
+        "destination nodes are exactly the independent instances it packs. "
+        "That is stage 3's first move and it is not modelled below.")
+
+    # ---- G1. the three dataflows ------------------------------------------
+    rpt.section(
+        "G1. Pull, push and the VPU null, at the configured 16-bit coefficient",
+        "Cycles for one whole-graph aggregation at each graph's hidden width. "
+        "`pull (mean)` uses `round(avg_degree)` for every node; `pull (dist)` "
+        "sums over the synthesised power-law degree distribution. **`push "
+        "charged` is what the default `os_rounds_model = 'tiled'` bills and "
+        "it is too high**: push is issued as `M = deg(u)`, and that model's "
+        "OS-V `rounds` multiplies `ceil(M/32)` by `n_tiles` instead of packing, "
+        "overcharging by up to 16x for `M` in 2..31 -- most nodes in most "
+        "graphs. `push corrected` is the same simulator with stage 11's "
+        "`os_rounds_model = 'packed'`. Both are shown; the charged column is "
+        "not a number to quote alone.")
+    g_rows = []
+    for name in list_graphs():
+        g = get_graph_config(name)
+        F = g.hidden_dim
+        pm = gs.aggregate_cost(g, F, ACT_BITS, PULL, distribution_aware=False)
+        pd = gs.aggregate_cost(g, F, ACT_BITS, PULL, distribution_aware=True)
+        pu = gs.aggregate_cost(g, F, ACT_BITS, PUSH, distribution_aware=True)
+        vp = gs.aggregate_cost(g, F, ACT_BITS, VPU, distribution_aware=True)
+        g_rows.append([
+            g.name, f"{F}", f"{g.avg_degree:.1f}",
+            f"{pm.cycles:.3e}", f"{pd.cycles:.3e}",
+            f"{pd.cycles/pm.cycles:.3f}x", f"{pd.fixed_share*100:.1f}%",
+            f"{pu.cycles:.3e}", f"{pu.cycles_corrected:.3e}",
+            f"{vp.cycles:.3e}", f"{pd.cycles/vp.cycles:.1f}x",
+        ])
+        rows.append(dict(section='G1', graph=g.name, feat_dim=F,
+                         qbit=ACT_BITS, pull_mean=pm.cycles,
+                         pull_dist=pd.cycles, pull_fixed_share=pd.fixed_share,
+                         push_charged=pu.cycles,
+                         push_corrected=pu.cycles_corrected,
+                         vpu_cycles=vp.cycles,
+                         lut_over_vpu=pd.cycles/vp.cycles))
+    rpt.table(
+        ['graph', 'F', 'deg', 'pull (mean)', 'pull (dist)', 'dist/mean',
+         'pull fixed %', 'push charged', 'push corrected', 'VPU',
+         'pull / VPU'],
+        g_rows, aligns='lrrrrrrrrrr')
+    rpt.note(
+        "**The LUT loses to the VPU on every graph at the configured 16-bit "
+        "coefficient -- by 2.2x on Reddit and 529x on CiteSeer.** Not a knee, "
+        "a slope: pull costs `(10 + array_n + ceil(deg/4)) x qbit` and the VPU "
+        "costs `deg x F / 128`, so the per-degree slopes are `qbit/4` and "
+        "`F/128`. At `qbit = 16` and `F = 256` that is 4 against 2, and no "
+        "degree can rescue a losing slope. G3 solves that condition.")
+    rpt.note(
+        "**The degree distribution changes the total by 0.2-6.5%, and the "
+        "premise that it would change it a lot is wrong.** Both cost models are "
+        "*affine* in degree, so summing over the distribution and evaluating at "
+        "the mean agree up to the `ceil(deg/4)` staircase -- Jensen has almost "
+        "nothing to bite on here. What the distribution does change is the "
+        "*spread*: on Cora 58.8% of nodes have degree 1 and spend 10 of 11 "
+        "cycles on overhead, while the top 10% of nodes own 60.7% of the edges. "
+        "The distribution is still the right thing to model -- but the mean "
+        "turned out to be an adequate summary, and that is a measurement, not "
+        "an assumption. It would not survive a cost model with a `deg^2` term.")
+    rpt.note(
+        "**Push loses to pull on every graph, on both the charged and the "
+        "corrected number** -- 2.0-10.0x charged, 2.0-9.8x corrected. The "
+        "correction matters most on ogbn-arxiv (5.11x -> 3.86x) and not at all "
+        "on the Planetoid graphs, where `F = 16` gives `n_tiles = 1` and the "
+        "two formulas coincide identically. The reason push loses is not the "
+        "defect: with `K = 1` its `per_round` is `3 + 1 + array_m + array_n + "
+        "2 = 42` cycles for a rank-1 update, i.e. it pays the full 32-row "
+        "systolic fill to broadcast one source row. Push is the wrong shape for "
+        "an output-stationary array and the defect only makes it look worse "
+        "than it is.")
+
+    # ---- G2. the bit-width sweep ------------------------------------------
+    rpt.section(
+        "G2. Adjacency-coefficient precision is the design lever",
+        "`qbit` for an AA operation is `hw.kv_cache_bits`; here it is the "
+        "precision of the GCN coefficient `a_vu`, the operand the LUT's "
+        "bit-plane loop iterates over. Section 13 makes it the only axis that "
+        "multiplies cycles *and* bytes. Ratio of pull-LUT cycles to VPU "
+        "cycles; below 1.00x the LUT wins.")
+    g2_rows = []
+    for name in list_graphs():
+        g = get_graph_config(name)
+        F = g.hidden_dim
+        cells = []
+        for q in QBITS:
+            pd = gs.aggregate_cost(g, F, q, PULL, distribution_aware=True)
+            vp = gs.aggregate_cost(g, F, q, VPU, distribution_aware=True)
+            cells.append(f"{pd.cycles/vp.cycles:.2f}x")
+            rows.append(dict(section='G2', graph=g.name, feat_dim=F, qbit=q,
+                             pull_dist=pd.cycles, vpu_cycles=vp.cycles,
+                             lut_over_vpu=pd.cycles/vp.cycles))
+        g2_rows.append([g.name, f"{F}", f"{g.avg_degree:.1f}"] + cells)
+    rpt.table(['graph', 'F', 'deg'] + [f"{q} b" for q in QBITS],
+              g2_rows, aligns='lrrrrrr')
+    rpt.note(
+        "**The stage-2 hypothesis was a 4-bit statement, and at 4 bits it "
+        "holds almost exactly.** It predicted the VPU winning ~90x on Cora, "
+        "~2x on ogbn-arxiv, roughly parity on ogbn-products and the LUT winning "
+        "~1.9x on Reddit. Measured at `qbit = 4`: **95.0x, 2.04x, 0.92x and "
+        "0.54x (LUT wins 1.84x)** -- every one inside 10%. **At the configured "
+        "`qbit = 16` it is false on all four**, because cycles are exactly "
+        "linear in `qbit` while the VPU has no `qbit` term at all: the LUT "
+        "prices per bit-plane, the VPU per element. Quadrupling coefficient "
+        "precision quadruples aggregation and leaves the null untouched.")
+    rpt.note(
+        "16-bit is what `base_hw()` configures and what every other number in "
+        "this report uses, so the 16-bit column is the one describing this "
+        "machine. Whether 4-bit GCN coefficients are accurate enough is an "
+        "accuracy question this repo does not answer -- but `a_vu = "
+        "1/sqrt(d_u d_v)` is a *deterministic function of the two degrees*, "
+        "not a learned value, so it is quantisable without retraining anything, "
+        "and at 4 bits it is the difference between the LUT losing 2.2x and "
+        "winning 1.8x on Reddit.")
+
+    # ---- G3. where the LUT can win at all ----------------------------------
+    rpt.section(
+        "G3. The window, solved rather than swept",
+        "Smallest degree at which pull-LUT beats the VPU, searched over degree "
+        "(`gnn_sim.crossover_degree`). `none` means no degree wins, at any "
+        "size. Pre-flight 14 checks every entry against the closed form "
+        "`d* = (10 + array_n) x qbit / (F/vpu_width - qbit/MU)`.")
+    g3_rows = []
+    for feat in (16, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+        cells = []
+        for q in QBITS:
+            d = gs.crossover_degree(feat, q, 200_000)
+            cells.append('none' if d is None else f"{d}")
+            rows.append(dict(section='G3', feat_dim=feat, qbit=q,
+                             crossover_degree=(d if d else 0)))
+        g3_rows.append([f"{feat}"] + cells)
+    rpt.table(['F'] + [f"{q} b" for q in QBITS], g3_rows, aligns='rrrrr')
+    rpt.note(
+        "**The condition is on the feature width, not the degree.** LUT cycles "
+        "grow with degree at `qbit/MU` per unit; VPU cycles at `F/vpu_width`. "
+        "So a crossover exists at all iff `F > vpu_width x qbit / MU = "
+        "32 x qbit`, and degree only decides where inside that regime you land. "
+        "At 16-bit coefficients the LUT needs `F > 512` -- twice the widest "
+        "hidden layer any of these six benchmarks uses. **Degree was the wrong "
+        "variable to hypothesise about.**")
+    rpt.note(
+        "**And the window has a ceiling, for the same reason section 5's null "
+        "has an edge.** Above `F = 4096` the N-null ends, `rounds` grows with "
+        "`F`, and LUT and VPU cycles scale together -- the F terms cancel "
+        "exactly. The 8192 row is identical to the 4096 row, which is that "
+        "arithmetic showing up as a measurement. So the LUT beats a VPU at "
+        "aggregation in exactly one band: **`32 x qbit < F <= 4096`** -- empty "
+        "for `qbit >= 128`, and `512 < F <= 4096` at the configured 16 bits.")
+
+    # ---- H. the first end-to-end layer -------------------------------------
+    rpt.section(
+        "H. End-to-end GNN layer: both halves simulated",
+        "Combine from `_simulate_matmul` (section B) and Aggregate from "
+        "`_calculate_cycles` via the pull shape, both priced through the same "
+        "`Simulator._op_roofline_time` -- `max(compute, DRAM)` per operation, "
+        "summed over layers, DDR5-6400 with an 8 MB SRAM. Aggregation's DRAM is "
+        "stage 1's `gather_cost` with the cheaper dataflow from C2. `aggr "
+        "bound` says which of the two terms won.")
+    h_rows = []
+    for name in list_graphs():
+        g = get_graph_config(name)
+        c_ms = a_ms = a_vpu_ms = a_cyc_ms = a_dram_ms = 0.0
+        for fi, fo in g.layer_shapes():
+            cm = combine_metrics(sim, g.num_nodes, fi, fo)
+            c_ms += roofline_ms(sim, cm)
+            gc = gather_cost(g, fo, burst_bytes=64, sram_capacity_kb=8192)
+            ac = gs.aggregate_cost(g, fo, ACT_BITS, PULL, True, gather=gc)
+            av = gs.aggregate_cost(g, fo, ACT_BITS, VPU, True, gather=gc)
+            a_ms += gs.aggregate_roofline_ms(ac)
+            a_vpu_ms += gs.aggregate_roofline_ms(av)
+            a_cyc_ms += ac.cycles / freq * 1e3
+            a_dram_ms += (ac.dram_read_eff + ac.dram_write_eff) / bw * 1e3
+        total = c_ms + a_ms
+        h_rows.append([
+            g.name, f"{c_ms:.3f}", f"{a_cyc_ms:.3f}", f"{a_dram_ms:.3f}",
+            f"{a_ms:.3f}", 'compute' if a_cyc_ms >= a_dram_ms else 'memory',
+            f"{total:.3f}", f"{a_ms/total*100:.1f}%",
+            f"{a_vpu_ms:.3f}", f"{(c_ms+a_vpu_ms):.3f}",
+            f"{total/(c_ms+a_vpu_ms):.2f}x",
+        ])
+        rows.append(dict(section='H', graph=g.name, combine_ms=c_ms,
+                         aggregate_cycles_ms=a_cyc_ms,
+                         aggregate_dram_ms=a_dram_ms,
+                         aggregate_ms=a_ms, layer_ms=total,
+                         aggregate_vpu_ms=a_vpu_ms,
+                         layer_ms_vpu=c_ms+a_vpu_ms))
+    rpt.table(
+        ['graph', 'combine ms', 'aggr compute ms', 'aggr DRAM ms',
+         'aggr ms', 'aggr bound', 'layer ms', 'aggr share',
+         'aggr ms (VPU)', 'layer ms (VPU)', 'VPU speedup'],
+        h_rows, aligns='lrrrrlrrrrr')
+    rpt.note(
+        "**Stage 1 predicted aggregation would be memory-bound, and with a "
+        "cycle model it is not: it is compute-bound on all six graphs.** "
+        "Section E charged it at pure DRAM bandwidth because there was nothing "
+        "else to charge it at, and section E's own arithmetic intensity of "
+        "0.9-1.2 FLOP/byte against an 80 FLOP/byte balance point said that was "
+        "right. It was right about the FLOPs and wrong about the cycles: the "
+        "LUT does not spend its cycles on FLOPs. `aggr compute ms` is 2.4x the "
+        "DRAM term on ogbn-products, its narrowest margin, and 251x on Cora; "
+        "on the small graphs essentially all of it is the fixed 10 cycles per "
+        "node.")
+    rpt.note(
+        "**Moving aggregation off the LUT and onto the VPU makes the whole "
+        "layer 2.3-18.5x faster** at 16-bit coefficients. Aggregation is 75-99% "
+        "of the layer with the LUT doing it, and 2-95% with the VPU doing it. "
+        "This is stage 1's closing prediction confirmed with a different "
+        "mechanism than it named: Omni-LUT is an excellent Combine engine and "
+        "the wrong shape for Aggregate -- because of `M = 1` and the fixed 10, "
+        "not because of bandwidth. **ogbn-products is the one graph where the "
+        "VPU drives compute under DRAM** -- its 1.54 s is section E's gather "
+        "traffic and nothing else, the memory-bound regime stage 1 described, "
+        "and it is exactly the graph C2 found must gather. Reddit's 0.53 s is "
+        "still compute (531 ms against 99 ms of DRAM): at degree 492 even a "
+        "128-lane VPU has real arithmetic to do.")
+    rpt.note(
+        "Uncharged on the aggregation side, all of it in the LUT's favour: "
+        "index decode, the CSR row-pointer walk, the scatter-add into the "
+        "destination accumulator, and any bubble between two nodes of different "
+        "degree. Those are per-node costs, so they add to the fixed 10 rather "
+        "than to the useful `ceil(deg/4)`. Uncharged on the combine side, in "
+        "the other direction: section E's `combine B (act)` activation traffic, "
+        "which the AW path assumes is SRAM-resident. Both halves are therefore "
+        "lower bounds, and section E's bracket says the aggregation share is "
+        "the more reliable of the two on the three large graphs.")
 
     rpt.summary([
         "**Combine needs nothing new.** Every number in section B came out of "
         "the unmodified simulator: `_simulate_matmul` is shape-driven, and a "
         "GNN's `H @ W` is an FFN with nodes in the token slot. The mapping "
         "holds.",
-        "**Aggregate cannot use the simulator at all today.** A dense `A_hat` "
-        "overcharges by `1/density` -- 695x on Cora, 48,479x on ogbn-products "
-        "(section D). The closed-form `gather_cost()` in this file is the "
-        "specification stage 2 implements.",
+        "**Aggregate needed nothing new either, once written as a pull.** "
+        "`h[v] = sum a_vu x[u]` is `(M=1, K=deg(v), N=F)` -- the shape decode "
+        "`attn_v` is issued as. Pre-flight 9 runs a real `attn_v` operation at "
+        "`(kv_len, head_dim) = (deg, F)` and gets the identical cycle count, so "
+        "the identity is proved rather than asserted, and `study.md` sections "
+        "4(b), 5 and 14 transfer intact. A *dense* `A_hat` is still hopeless -- "
+        "`1/density`, 695x on Cora, 48,479x on ogbn-products (section D) -- "
+        "which is why the sparse shape had to be issued per node.",
+        "**The LUT loses to a plain VPU at aggregation on every graph, at the "
+        "16-bit coefficient precision this machine is configured with** -- 2.2x "
+        "on Reddit, 529x on CiteSeer (G1), making the whole layer 2.3-18.5x "
+        "slower than putting aggregation on the VPU (H). The hypothesis that "
+        "the crossover is a degree around 50 was **a 4-bit statement**: at "
+        "`qbit = 4` it reproduces to within 10% on all four graphs it named, "
+        "and at 16 bits it is false on all four. The real condition is on the "
+        "*feature width*: a crossover exists at all iff `F > vpu_width x qbit / "
+        "MU = 32 x qbit`, and the N-null ends at `F = 4096`, so the LUT beats a "
+        "VPU in exactly one band, **`32 x qbit < F <= 4096`** (G3). Degree only "
+        "decides where inside that band you land.",
+        "**Aggregation turns out to be compute-bound, not memory-bound** -- the "
+        "opposite of stage 1's prediction, and by the LUT's own fixed overhead "
+        "rather than by arithmetic. Section E's 0.9-1.2 FLOP/byte was right "
+        "about the FLOPs; the LUT simply does not spend its cycles on FLOPs. "
+        "Only ogbn-products flips back to memory-bound once the VPU does the "
+        "aggregating (H).",
+        "**The degree distribution mattered less than expected, and that is a "
+        "measured result.** `graph_configs.py` now carries a synthesised "
+        "power-law fit per graph (gamma solved so the mean reproduces the "
+        "published `avg_degree`). Distribution-aware totals differ from "
+        "mean-degree ones by **0.2-6.5%**, because both cost models are affine "
+        "in degree and Jensen has nothing to bite on. The distribution still "
+        "changes the picture per node -- 58.8% of Cora's nodes are degree 1 and "
+        "burn 10 of 11 cycles on overhead -- just not the total.",
+        "**Push aggregation is the one dataflow here that the OS-V round-count "
+        "defect touches, so it is reported twice.** Push is issued at "
+        "`M = deg(u)`, and the default `os_rounds_model = 'tiled'` overcharges "
+        "by up to 16x for `M` in 2..31 -- most nodes in most graphs. G1 shows "
+        "`tiled` and stage 11's `packed` side by side, both simulator outputs. "
+        "Push loses to pull either way (2.0-9.8x corrected), for a reason "
+        "neither model touches: with `K = 1` it pays the full 32-row systolic "
+        "fill to broadcast one source row. **Pull is on the branch both models "
+        "agree on**, so every headline number above is round-model independent.",
         "**The feature row is the new KV entry.** At Kipf & Welling's "
         "`hidden_dim = 16`, an FP16 feature row is 32 B against DDR5's 64 B "
         "burst: 2.00x waste on the most cited GNN configuration there is. "
@@ -701,9 +1203,10 @@ def sweep(report_path):
         f"**Aggregation is memory-bound by about two orders of magnitude** "
         f"(0.9-1.2 FLOP/byte against this array's {balance:.0f} FLOP/byte "
         "balance point) and has no reusable operand, so the LUT mechanism has "
-        "nothing to amortise over. The expected stage-2 result is that "
-        "Omni-LUT is an excellent Combine engine and structurally the wrong "
-        "shape for Aggregate.",
+        "nothing to amortise over -- true of the *bytes*, and section H shows "
+        "the cycles reach the same verdict first. **Omni-LUT is an excellent "
+        "Combine engine and structurally the wrong shape for Aggregate**, "
+        "confirmed on both axes.",
     ])
     return rpt, rows
 
