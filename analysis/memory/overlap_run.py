@@ -52,7 +52,11 @@ CONTEXTS = [2048, 8192, 32768]
 BATCHES = [1, 8, 32]
 
 
+ROUNDS_MODEL = 'tiled'      # --rounds-model; 'tiled' is what section 17 published
+
+
 def hw(overlap='serial', **kw):
+    kw.setdefault('os_rounds_model', ROUNDS_MODEL)
     return HardwareConfig(
         array_m=32, array_n=4, FPE_array_size=64,
         act_bits=16, accumulate_bits=32, weight_bits=4, kv_cache_bits=4,
@@ -298,10 +302,17 @@ def preflight():
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--rounds-model', default='tiled',
+                   choices=('tiled', 'packed'),
+                   help="'tiled' reproduces what study.md section 17 published; "
+                        "'packed' applies stage 11's OS-V round-count fix, "
+                        "which changes decode compute from batch 2 upward.")
     p.add_argument('--csv', default=os.path.join(_here, 'overlap.csv'))
     p.add_argument('--report',
                    default=os.path.join(_here, 'overlap_report.md'))
     args = p.parse_args()
+    global ROUNDS_MODEL
+    ROUNDS_MODEL = args.rounds_model
 
     rows = sweep(args.report)
 

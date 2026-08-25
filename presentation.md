@@ -24,24 +24,47 @@
 
 ---
 
-## 1. Decode is memory-bound only at batch 1
+## 1. Decode is memory-bound in a triangle, not everywhere
 
-Compute vs DRAM time per token (C/D > 1 = compute-bound):
+Compute vs DRAM time per token (below 1.00 = the array waits on memory):
 
-| batch | 2K | 8K | 32K |
-|---:|---:|---:|---:|
-| **1** | **0.15** | **0.38** | **1.00** |
-| 8 | 1.93 | 2.32 | 2.70 |
-| 32 | 2.37 | 2.74 | 2.90 |
+| batch | 2K | 4K | 8K | 16K | 32K |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 0.15 | 0.23 | 0.38 | 0.62 | 1.00 |
+| 2 | 0.28 | 0.43 | 0.67 | **1.04** | 1.51 |
+| 4 | 0.52 | 0.76 | **1.12** | 1.56 | 2.02 |
+| 8 | 0.93 | **1.28** | 1.69 | 2.10 | 2.44 |
+| 16 | **1.57** | 1.93 | 2.27 | 2.54 | 2.73 |
+| 32 | 2.37 | 2.60 | 2.74 | 2.84 | 2.90 |
 
-- **At batch ≥ 8 the array is compute-bound everywhere.** "Decode is DRAM-bound"
-  is a **batch-1 statement**.
-- **At batch 1 / 2K the bottleneck is weights, not KV** — 2.6 GB of weights per
-  token against 80 MB of KV. The array idles **86%** of decode.
-- **It self-corrects with context**: attention compute grows quadratically,
-  weight traffic is constant, so C/D goes 0.15 → 1.00 by 32K.
-- **This sets who each technique is for.** Anything aimed at KV bytes is aimed
-  at 2.9% of traffic at batch 1 / 2K.
+- **The memory-bound region is a triangle in the low-batch, short-context
+  corner.** First compute-bound batch: **16 at 2K, 8 at 4K, 4 at 8K, 2 at
+  16K/32K.** Batch amortises constant weight traffic; context grows attention
+  compute quadratically. Both axes push the same way.
+- **"Decode is DRAM-bound" is the batch-1 row and only that row** — and at
+  batch 1 / 2K the bottleneck is **weights, not KV**: 2.6 GB of weights per
+  token against 80 MB of KV, array idle 86%.
+- **This required fixing a cycle-model defect first** (§9). The uncorrected
+  model had the whole grid except one row in the wrong regime.
+
+### What any lever could possibly buy
+
+Speedup if a whole resource became free. `KV bytes` bounds **every KV technique
+here at once** — eviction, selection, residency, channel pruning:
+
+| batch | ctx | packing | overlap | KV bytes | weight bytes |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 2K | 1.07× | 1.07× | **1.01×** | **6.80×** |
+| 1 | 32K | 1.75× | 1.75× | **1.07×** | 1.57× |
+| 32 | 2K | 1.88× | 1.05× | 1.05× | 1.00× |
+| 32 | 32K | **3.12×** | 1.12× | 1.12× | 1.00× |
+
+- **Removing *all* KV traffic at batch 1 buys 1.01× at 2K and 1.07× at 32K.**
+  An upper bound on the entire KV literature at batch 1, algorithm-independent —
+  and batch 1 is exactly where sections 2–4 did their measuring. **This is the
+  one-line explanation for every negative result below.**
+- **Inside the triangle the lever is weight bytes (6.80×). Outside it, array
+  occupancy (3.12×).** Two accelerators, not one.
 
 ## 2. Attention is the only target — and cycles lie about it
 
@@ -200,15 +223,43 @@ Real hardware double-buffers. `"serial"` and `"pipelined"` **bracket the truth.*
 
 ---
 
+## 9. The defect the regime map found
+
+`_calculate_cycles` counted OS-V rounds as `ceil(M/array_m) × n_tiles` — and
+`ceil(M/32)` is **1 for every M in 1..32**, so `M` vanished from the round count.
+
+| M | 1 | 2 | 4 | 8 | 16 | 32 |
+|---|---:|---:|---:|---:|---:|---:|
+| charged | 1 | 32 | 32 | 32 | 32 | 32 |
+| allowed | 1 | 2 | 4 | 8 | 16 | 32 |
+| **overcharge** | 1× | **16×** | 8× | 4× | 2× | 1× |
+
+- Decode issues projections with `M = batch`, so `q_proj` jumped **32.96×** from
+  batch 1 to batch 2 for a 2× workload, then sat **flat to batch 32** — the same
+  compute charged for 2 sequences as for 32.
+- **The `M == 1` branch was never a special case.** `ceil(n_tiles/array_m)` *is*
+  `ceil(1 × n_tiles / array_m)` — the one place the general formula was written
+  down, which is why batch 1 was right and nothing else was.
+- **Blast radius, asserted not assumed:** decode `qk` and `attn_v` are `M = 1`
+  and bit-identical under both models, so **every KV result above is untouched**.
+  Only the middle of the batch axis moves.
+- Shipped inert as `hw.os_rounds_model`; the baseline moved zero value keys.
+
+
 ## What to do
 
-- **Build P=8 packing.** Largest lever that is not a memory technique, 3.118× at
-  batch 32, and it fits in 4.5 MB.
+- **Know which regime you are in first.** Inside the memory-bound triangle
+  (low batch, short context) the lever is weight bytes — worth **6.80×**.
+  Outside it, array occupancy — worth **3.12×**. Nothing else comes close in
+  either.
+- **Stop aiming KV techniques at batch 1.** Removing *all* KV traffic there buys
+  **1.01–1.07×**. That is the whole literature's ceiling, and it is where most
+  of our own measuring happened.
+- **Build P=8 packing.** Largest lever outside the triangle, 3.118× at batch 32,
+  fits in 4.5 MB, and survives its own 1.02 TB/s bandwidth check.
 - **Prune bit-width, not channels.** The only axis that multiplies cycles and
-  bytes, composes with eviction, and is unmeasured.
-- **Pick the KV layout first.** It silently decides which pruning literature is
-  deployable on this chip.
-- **Quote batch-32 numbers.** Batch-1 magnitudes are upper bounds twice over —
-  wrong share of traffic, and no overlap credited.
+  bytes, composes with eviction, and is still unmeasured.
+- **Pick the KV layout before the pruning algorithm.** It silently decides which
+  pruning literature is deployable at all.
 
 *Full derivations, model-change record and open gaps: `study.md`.*

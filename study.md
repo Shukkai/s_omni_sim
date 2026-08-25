@@ -741,7 +741,112 @@ steps, not within one layer's `qk → softmax → attn_v` chain, and pipeline fi
 and drain are uncharged. Non-GEMM work is outside both models entirely, so the
 VPU softmax — 27.9% of prefill cycles at 32K (§2) — is absent from both columns.
 
+**Corrected by §18.** The `32K / 8` row above was measured under the OS-V
+round-count defect §18 found: decode compute there is **582.9 ms**, not 644.4,
+and `"serial"` overstates by **1.17×**, not 1.11×. The batch 1 and batch 32 rows
+are unaffected — batch 1 always used the correct `M == 1` branch and at `M = 32`
+the two round models agree, so only the middle of the batch axis moves. The
+sharpest result here, 1.75× at 32K / batch 1, is untouched. Re-run with
+`overlap_run.py --rounds-model packed`.
+
 Full tables: `analysis/memory/overlap_report.md`.
+
+---
+
+## 18. The OS-V round count, and the regime map it was blocking
+
+Asking "what is decode bound by, as a function of (batch, context)?" — the prior
+question every section above skipped — turned up a defect in the cycle model
+first. `_calculate_cycles` counted `LUT_OS_V` output-stationary rounds as
+`ceil(M/array_m) x n_tiles`, and **`ceil(M/32)` is 1 for every `M` in 1..32, so
+`M` vanished from the round count entirely.**
+
+The array holds `array_m x (array_n x NUM_RAC)` accumulators, so a round retires
+`array_m` accumulator tiles wherever they come from. The budget allows
+`ceil(M x n_tiles / array_m)`. The two disagree by `array_m / M`:
+
+| M | 1 | 2 | 4 | 8 | 16 | 32 |
+|---|---:|---:|---:|---:|---:|---:|
+| charged | 1 | 32 | 32 | 32 | 32 | 32 |
+| allowed | 1 | 2 | 4 | 8 | 16 | 32 |
+| **overcharge** | 1× | **16×** | 8× | 4× | 2× | 1× |
+
+- **The `M == 1` branch was never a special case.** `ceil(n_tiles/array_m)` *is*
+  `ceil(1 x n_tiles / array_m)` — it is the one place the general formula was
+  written down, which is why batch 1 was right and nothing else was.
+- Decode issues AW projections with `M = batch`, so `q_proj` cycles jumped
+  **32.96×** from batch 1 to batch 2 for a 2× workload and were then **flat to
+  batch 32** — the same compute charged for 2 sequences as for 32.
+- `hw.os_rounds_model` (default `"tiled"`, inert) supplies the fix as
+  `"packed"`. Scope is `LUT_OS_V` only: `LUT_OS` carries the same accumulator
+  argument but not the same evidence, and widening it would move prefill on
+  first principles alone.
+- **Blast radius, asserted not assumed.** Decode `qk` and `attn_v` are issued
+  with `M = 1` and are bit-identical under both models, so **every KV result in
+  §4–§15 is untouched**. So are `LUT_OS`, `LUT_WS`, `FPE_OS` and `TENDER`. Only
+  §17's C/D split moves, and only in the middle of its batch axis.
+
+### The regime map
+
+Decode compute / DRAM, corrected. Below 1.0 the array waits on memory:
+
+| batch | 2K | 4K | 8K | 16K | 32K |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 0.15 | 0.23 | 0.38 | 0.62 | 1.00 |
+| 2 | 0.28 | 0.43 | 0.67 | **1.04** | 1.51 |
+| 4 | 0.52 | 0.76 | **1.12** | 1.56 | 2.02 |
+| 8 | 0.93 | **1.28** | 1.69 | 2.10 | 2.44 |
+| 16 | **1.57** | 1.93 | 2.27 | 2.54 | 2.73 |
+| 32 | 2.37 | 2.60 | 2.74 | 2.84 | 2.90 |
+
+- **The memory-bound region is a triangle, not a row.** First compute-bound
+  batch: **16 at 2K, 8 at 4K, 4 at 8K, 2 at 16K and 32K.** Batch amortises
+  constant weight traffic (7.65 GB, read once); context grows attention compute
+  quadratically. Both axes push the same way.
+- **§3's "decode is DRAM-bound" is the batch-1 row and only that row** — a
+  batch-1 statement this document never restated and every later section
+  inherited.
+- **The uncorrected map had the whole grid except one row in the wrong regime**,
+  claiming C/D 1.93 at 2K/batch 8 against a true 0.93.
+
+### What any lever could possibly buy
+
+Speedup if a whole resource became free, computed by re-running the roofline
+with one term suppressed. `KV bytes` bounds **every KV technique in this
+document at once** — eviction, selection, residency, channel pruning:
+
+| batch | ctx | packing | overlap | KV bytes | weight bytes |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 2K | 1.07× | 1.07× | **1.01×** | **6.80×** |
+| 1 | 32K | 1.75× | 1.75× | **1.07×** | 1.57× |
+| 32 | 2K | 1.88× | 1.05× | 1.05× | 1.00× |
+| 32 | 32K | **3.12×** | 1.12× | 1.12× | 1.00× |
+
+- **Removing *all* KV traffic at batch 1 buys 1.01× at 2K and 1.07× at 32K.**
+  That is an upper bound on the entire KV literature at batch 1, independent of
+  algorithm — and batch 1 is exactly where §1–§3 and §5 did their measuring.
+  **It explains §5, §10, §11 and §13's negative results in one line: they were
+  aimed at a resource that was not the bottleneck.**
+- **The lever in that corner is weight traffic, and it is worth 6.80×** — the
+  86%-idle figure of §3 restated as a ceiling. Every byte worth removing at
+  batch 1 / 2K is a weight byte, which is what batching already attacks and what
+  quantisation below W4 would attack directly.
+- **Outside the triangle, packing is the largest ceiling everywhere**, up to
+  3.12×, because the compute-bound regime has one dominant operation running at
+  3.12% occupancy (§14). Weight bytes go to exactly 1.00× there — fully
+  amortised, nothing left to win.
+- **Packing and overlap coincide at batch 1** (1.07× and 1.75×) because both
+  press against the same DRAM floor: cutting `attn_v` compute 32× and hiding
+  memory under compute reach the identical bound from opposite directions.
+- **Two accelerators, not one.** Inside the triangle the lever is weight bytes;
+  outside it, array occupancy. This document quotes numbers from both sides
+  without ever saying the boundary exists.
+
+These are ceilings, not achievable speedups, and they do not compose — each
+suppresses one resource while holding the others. They rank families at a point,
+which is what "what is worth researching here" needs, and nothing more.
+
+Full tables: `analysis/memory/rounds_report.md`, `analysis/memory/regime_report.md`.
 
 ---
 
