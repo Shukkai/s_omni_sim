@@ -14,34 +14,22 @@ statement**: compute/DRAM is 0.15 at batch 1 / 2K and above 1.0 from batch 2
 upward. At batch the array is reported compute-bound at every context, which is
 the opposite regime, and the techniques that work there are the opposite ones.
 
-**BLOCKED, and this file is what found the blocker.** The batch >= 2 half of
-the map is currently sitting on a cycle-model defect, so its numbers must not be
-quoted as a hardware result. `_calculate_cycles` charges `LUT_OS_V` rounds as::
+**This file found a cycle-model defect, and stage 11 fixed it.** The batch >= 2
+half of the map was originally sitting on `_calculate_cycles` counting
+`LUT_OS_V` rounds as `ceil(M/array_m) * n_tiles`, which rounds `M` up to a whole
+32-row tile before multiplying by `n_tiles` -- and since `ceil(M/32)` is 1 for
+every `M` in 1..32, `M` vanished from the round count. Decode `q_proj` jumped
+32.96x from batch 1 to batch 2 for a 2x workload and was then flat to batch 32.
 
-    M == 1 :  rounds = ceil(n_tiles / array_m)          # packs n_tiles 32-wide
-    else   :  rounds = ceil(ceil(M / array_m) * n_tiles) # no packing at all
+`hw.os_rounds_model = "packed"` restores the accumulator-budget form
+`ceil(M * n_tiles / array_m)`, and **this sweep now runs under it by default**
+(`--rounds-model tiled` reproduces the artefact). The correction changes the
+map's shape, not just its numbers: 'tiled' gives a cliff between batch 1 and 2
+with nothing moving after, 'packed' gives a smooth diagonal. See
+`analysis/memory/rounds_run.py` for the derivation and the before/after.
 
-The `else` branch rounds `M` up to a whole 32-row tile *before* multiplying by
-`n_tiles`, so it never packs accumulator tiles across rows unless `M >= 32`. The
-accumulator budget actually allows `ceil(M * n_tiles / array_m)`, which
-reproduces the `M == 1` special case exactly and is the general form of it. The
-gap is `array_m / M`:
-
-    M          1     2     4     8    16    32
-    model      1    32    32    32    32    32
-    allowed    1     2     4     8    16    32
-    overcharge 1x  16x    8x    4x    2x    1x   (N = 4096, n_tiles = 32)
-
-Measured consequence: decode `q_proj` cycles go **32.96x** from batch 1 to batch
-2 for a 2x workload, then **1.00x flat** from batch 2 all the way to batch 32 --
-the model charges the same cycles for 2 sequences as for 32. That discontinuity,
-not the hardware, is what puts C/D above 1.0 at batch 2.
-
-What it does and does not corrupt: comparisons *at fixed batch* cancel it, so
-sections 4, 12 and 14's technique ratios stand. Cross-batch absolute times do
-not, which includes section 17's C/D split and therefore the regime boundary
-below. Fixing it is a cycle-path change that moves published numbers, so it is a
-gated stage, not an edit.
+**`study.md` section 17's C/D split is still the uncorrected one** and needs
+re-running.
 
 **The four ceilings.** For each point this computes the speedup available if a
 whole resource became free, by re-running the roofline over the same per-op
@@ -91,7 +79,11 @@ BATCHES = [1, 2, 4, 8, 16, 32]
 PACK_RECOVERY = 32          # section 14: attn_v recovers exactly 32x on cycles
 
 
+ROUNDS_MODEL = 'packed'     # set by --rounds-model; see stage 11
+
+
 def base_hw(**kw):
+    kw.setdefault('os_rounds_model', ROUNDS_MODEL)
     return HardwareConfig(
         array_m=32, array_n=4, FPE_array_size=64,
         act_bits=16, accumulate_bits=32, weight_bits=4, kv_cache_bits=4,
@@ -299,22 +291,25 @@ def sweep(report_path):
         b_rows.append([str(b)] + [grid[(b, c)]['regime'][:4] for c in CONTEXTS])
     rpt.table(hdr, b_rows, aligns='l', caption="Regime (mem / comp)")
     rpt.note(
-        "**The batch-1 row is a result. The rest of this table is not, yet.** "
-        "At batch 1 the array is memory-bound at every context up to 32K, where "
-        "it lands almost exactly on the balance point -- and `study.md` section "
-        "3's headline \"decode is DRAM-bound\" is exactly that row, a batch-1 "
-        "statement that never says so.")
+        "**The boundary is a diagonal, and both axes push the same way.** "
+        "Batch amortises the constant weight traffic over more work; context "
+        "grows attention compute quadratically while weight traffic stays flat. "
+        "So the memory-bound region is a **triangle in the low-batch, "
+        "short-context corner** -- the first compute-bound batch is 16 at 2K, "
+        "8 at 4K, 4 at 8K and 2 at 16K/32K.")
     rpt.note(
-        "**Everything from batch 2 rightward is blocked on a cycle-model "
-        "defect this sweep found.** `_calculate_cycles` packs `n_tiles` across "
-        "the 32 array rows only when `M == 1`; at `M >= 2` it rounds `M` up to "
-        "a whole 32-row tile before multiplying by `n_tiles`, so it charges "
-        "`array_m / M` times what the accumulator budget allows -- **16x at "
-        "batch 2**, 4x at batch 8, exact at batch 32. Decode `q_proj` cycles "
-        "jump **32.96x** from batch 1 to batch 2 for a 2x workload, then sit "
-        "**1.00x flat** from batch 2 to batch 32. That discontinuity is what "
-        "puts C/D above 1.0 at batch 2, not the hardware. See the module "
-        "docstring for the derivation.")
+        "**`study.md` section 3's \"decode is DRAM-bound\" is the batch-1 row "
+        "and only that row** -- a batch-1 statement the document never restates "
+        "and every later section inherits.")
+    rpt.note(
+        "**This table is the stage-11 corrected one.** Run with "
+        "`--rounds-model tiled` to see what it looked like before: a cliff "
+        "between batch 1 and 2 with nothing moving after, because the round "
+        "count dropped `M` entirely for `M` in 1..32. The uncorrected map "
+        "claimed C/D 1.93 at 2K/batch 8 where the truth is 0.93 -- it put the "
+        "whole grid except one row in the wrong regime. "
+        "`analysis/memory/rounds_run.py` has the derivation. **Section 17's C/D "
+        "split in `study.md` is still the uncorrected one.**")
     rpt.note(
         "**Two different mechanisms push the same way.** Batch amortises the "
         "constant weight traffic over more work, and context grows attention "
@@ -420,41 +415,45 @@ def sweep(report_path):
          'KV ceiling at b1', 'packing ceiling at b32'],
         e_rows, aligns='lr')
     rpt.note(
-        "**The memory-bound regime is batch 1 and nothing else.** Every context "
-        "measured flips by batch 2. A design targeting throughput never enters "
-        "it; a design targeting single-stream latency never leaves it. Those "
-        "are two different accelerators and this document has been quoting "
-        "numbers from both.")
+        "**The boundary moves by 8x across the context range** -- batch 16 at "
+        "2K down to batch 2 at 32K -- so 'is decode memory-bound?' has no "
+        "context-free answer. Short-context serving stays memory-bound well "
+        "into batch; long-context serving leaves it almost immediately.")
+    rpt.note(
+        "**The KV ceiling at batch 1 is the strongest single result here.** "
+        "Removing *all* KV traffic -- every eviction, selection, residency and "
+        "pruning scheme at once, working perfectly -- buys **1.01x at 2K and "
+        "1.07x at 32K**. That bounds the entire KV literature at batch 1 "
+        "regardless of algorithm, and it is exactly where `study.md` sections "
+        "1-3 and 5 did their measuring.")
 
     rpt.summary([
-        "**Found a cycle-model defect that blocks the map's own headline.** "
-        "`_calculate_cycles` packs `n_tiles` across the array's 32 rows only at "
-        "`M == 1`; from `M >= 2` it charges `array_m / M` times what the "
-        "accumulator budget allows -- 16x at batch 2, exact at batch 32. Decode "
-        "`q_proj` goes 32.96x from batch 1 to 2 for a 2x workload, then 1.00x "
-        "flat to batch 32. **Every batch >= 2 number here, and `study.md` "
-        "section 17's C/D split, is waiting on the fix.**",
-        "**Decode is memory-bound at batch 1** -- C/D 0.15 at 2K rising to 1.00 "
-        "at 32K. `study.md` section 3's \"decode is DRAM-bound\" is that row "
-        "and only that row, a batch-1 statement the document inherited without "
-        "restating. This half is unaffected by the defect: batch 1 *is* the "
-        "correct `M == 1` path.",
+        "**Decode is memory-bound in a triangle, not a row.** The first "
+        "compute-bound batch is 16 at 2K, 8 at 4K, 4 at 8K and 2 at 16K/32K -- "
+        "batch amortises constant weight traffic while context grows attention "
+        "compute, so both axes push the same way. `study.md` section 3's "
+        "\"decode is DRAM-bound\" is the batch-1 row and only that row.",
+        "**This map required fixing a cycle-model defect it found itself** "
+        "(stage 11, `rounds_run.py`). The round count dropped `M` entirely for "
+        "`M` in 1..32, which put the whole grid except one row in the wrong "
+        "regime -- C/D 1.93 claimed at 2K/batch 8 where the truth is 0.93. "
+        "`study.md` section 17's C/D split is still the uncorrected one.",
         "**In that corner the memory is weights, not KV** -- attention is a few "
         "per cent of decode DRAM at batch 1 / 2K. Every KV technique measured "
         "there was attacking a few per cent of the bottleneck, which is the "
         "single explanation for sections 5, 10, 11 and 13's negative results.",
         "**The hardware limitation worth attacking is array occupancy.** "
         "`attn_v` runs at 3.12% of 4096 lanes because `M = 1`, and packing is "
-        "the largest ceiling at every compute-bound point measured. That "
-        "diagnosis is independent of the defect; the magnitudes are not.",
+        "the largest ceiling at every compute-bound point measured -- up to "
+        "3.12x at batch 32 / 32K.",
         "**The KV-bytes ceiling bounds every KV paper at once.** Where it is "
         "small, no eviction, selection, residency or pruning scheme can help, "
         "however good the algorithm -- the resource is not the bottleneck.",
-        "**Two accelerators, not one.** Single-stream latency lives at batch 1 "
-        "and wants fewer weight bytes; throughput lives at batch >= 2 and wants "
-        "array occupancy. Quoting a technique without its regime is quoting "
-        "half a result -- and `study.md` currently quotes both regimes without "
-        "ever naming the boundary.",
+        "**Two accelerators, not one.** Inside the triangle the lever is "
+        "weight bytes; outside it the lever is array occupancy. Quoting a "
+        "technique without naming its regime is quoting half a result -- and "
+        "`study.md` quotes numbers from both sides of the boundary without "
+        "ever saying the boundary exists.",
     ])
     return rpt, rows
 
@@ -463,7 +462,14 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--csv', default=os.path.join(_here, 'regime.csv'))
     p.add_argument('--report', default=os.path.join(_here, 'regime_report.md'))
+    p.add_argument('--rounds-model', default='packed',
+                   choices=('packed', 'tiled'),
+                   help="'packed' = the stage-11 fix (default); 'tiled' = the "
+                        "original model, kept so the artefact can be shown.")
     args = p.parse_args()
+    global ROUNDS_MODEL
+    ROUNDS_MODEL = args.rounds_model
+    print(f"os_rounds_model = {ROUNDS_MODEL!r}\n")
 
     preflight()
     rpt, rows = sweep(args.report)
