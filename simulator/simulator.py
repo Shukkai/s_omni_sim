@@ -166,6 +166,42 @@ class HardwareConfig:
     # techniques in this repo were measured to *save*.
     overlap_model: str = "serial"
 
+    # How `LUT_OS_V` counts output-stationary rounds.
+    #
+    #   "tiled"   rounds = ceil(M/array_m) * n_tiles, except at M == 1 which
+    #             has its own branch.  This is the original model and every
+    #             published number was produced with it, so it is the default.
+    #   "packed"  rounds = ceil(M * n_tiles / array_m), the accumulator-budget
+    #             form.
+    #
+    # **The two disagree by `array_m / M` for 2 <= M < array_m, and the
+    # original is the one that is wrong there.**  The array holds
+    # `array_m x (array_n x NUM_RAC)` accumulators, so a round can retire
+    # `array_m` accumulator tiles wherever they come from -- different output
+    # rows, different column tiles, or a mix.  "tiled" rounds `M` up to a whole
+    # 32-row tile *before* multiplying by `n_tiles`, so it never packs column
+    # tiles across rows unless `M >= array_m`, and charges a full 32-row pass
+    # for M=2.
+    #
+    # The `M == 1` branch already does the right thing, and that is the tell:
+    # `ceil(1 x n_tiles / array_m)` *is* `ceil(n_tiles / array_m)`, so the
+    # special case is not special -- it is the only place the general formula
+    # was written down.  "packed" restores it for every M.
+    #
+    # Measured effect: decode `q_proj` cycles go 32.96x from batch 1 to batch 2
+    # for a 2x workload under "tiled", then sit flat from batch 2 to batch 32 --
+    # the model charges the same cycles for 2 sequences as for 32.  That
+    # discontinuity is what makes decode look compute-bound from batch 2
+    # (`analysis/memory/regime_run.py`), so it gates the regime map.
+    #
+    # **Scope: `LUT_OS_V` only.**  `LUT_OS` carries the same accumulator
+    # argument but not the same evidence -- OMNI_LUT.pdf SS IV-C/IV-D documents
+    # the row-broadcast for the OS-V M=1 case specifically, and decode AW ops
+    # resolve to `LUT_OS_V`, which is where the defect was measured.  Widening
+    # it to `LUT_OS` would move prefill numbers on an argument from first
+    # principles alone.
+    os_rounds_model: str = "tiled"
+
     # --- On-chip memory ---
     # 0 = unlimited: peak_sram_bytes is reported but never enforced, which is
     # how every result predating this field was produced.  Set a real capacity
@@ -1225,6 +1261,11 @@ class Simulator:
 
             if mode == "LUT_OS_V" and M == 1:
                 rounds = math.ceil(n_tiles / array_m / replication)
+            elif mode == "LUT_OS_V" and hw.os_rounds_model == "packed":
+                # Accumulator-budget form: a round retires `array_m` tiles
+                # wherever they come from.  Reduces to the M == 1 branch above
+                # at M = 1, which is the whole argument for it.
+                rounds = math.ceil(M * n_tiles / array_m / replication)
             else:
                 rounds = math.ceil(m_tiles * n_tiles / replication)
 

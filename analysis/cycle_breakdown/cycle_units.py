@@ -103,6 +103,14 @@ def cycle_units(hw, M: int, K: int, N: int, qbit: int, mode: str,
             rows_per_inst = max(1, array_m // pack)
             rounds = math.ceil(n_tiles / rows_per_inst / replication)
             eff_batch = math.ceil(batch_size / pack)
+        elif mode == "LUT_OS_V" and hw.os_rounds_model == "packed":
+            # Mirrors `Simulator._calculate_cycles` exactly -- the two must
+            # agree or standing check 2 (sum of units == the single number)
+            # fails.  `pack` is deliberately not applied here: it is an OS-V
+            # M=1 mechanism (see `analysis/array_packing/`), and entangling it
+            # with the rounds fix would make neither measurable on its own.
+            rounds = math.ceil(M * n_tiles / array_m / replication)
+            eff_batch = batch_size
         else:
             rounds = math.ceil(m_tiles * n_tiles / replication)
             eff_batch = batch_size
