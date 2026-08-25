@@ -337,8 +337,7 @@ class GNNSimulator(UnitAwareSimulator):
                          max_degree: int = 100_000) -> Optional[int]:
         """Smallest degree at which pull/LUT beats the VPU on cycles, or None.
 
-        Searched rather than solved, because the closed form (`(10 + array_n +
-        ceil(d/MU)) * qbit < d * F / lanes`) has a `ceil` in it and the answer
+        Searched rather than solved, because the closed form (`(10 + ceil(d/MU)) * qbit < d * F / lanes`) has a `ceil` in it and the answer
         near the knee is off by one either way.  `None` means the LUT never
         wins at that width and precision, which -- see `gnn_run.py` section G
         -- is the common case, not the exception.

@@ -451,7 +451,7 @@ def preflight():
           f"M={worst[0]}, F={worst[1]} ok")
 
     # 14. The searched crossover degree agrees with the closed form
-    #     `d* = (10 + array_n) * qbit / (F/vpu_width - qbit/MU)` up to the
+    #     `d* = 10 * qbit / (F/vpu_width - qbit/MU)` up to the
     #     staircase `ceil(deg/MU)` introduces -- and both agree on WHEN there
     #     is no crossover, which is the finding section G leads with.
     for feat in (16, 128, 256, 512, 1024, 2048, 4096):
@@ -959,7 +959,7 @@ def sweep(report_path):
     rpt.note(
         "**The LUT loses to the VPU on every graph at the configured 16-bit "
         "coefficient -- by 2.2x on Reddit and 529x on CiteSeer.** Not a knee, "
-        "a slope: pull costs `(10 + array_n + ceil(deg/4)) x qbit` and the VPU "
+        "a slope: pull costs `(10 + ceil(deg/4)) x qbit` and the VPU "
         "costs `deg x F / 128`, so the per-degree slopes are `qbit/4` and "
         "`F/128`. At `qbit = 16` and `F = 256` that is 4 against 2, and no "
         "degree can rescue a losing slope. G3 solves that condition.")
@@ -1035,7 +1035,7 @@ def sweep(report_path):
         "Smallest degree at which pull-LUT beats the VPU, searched over degree "
         "(`gnn_sim.crossover_degree`). `none` means no degree wins, at any "
         "size. Pre-flight 14 checks every entry against the closed form "
-        "`d* = (10 + array_n) x qbit / (F/vpu_width - qbit/MU)`.")
+        "`d* = 10 x qbit / (F/vpu_width - qbit/MU)`.")
     g3_rows = []
     for feat in (16, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
         cells = []
