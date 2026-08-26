@@ -246,6 +246,75 @@ Real hardware double-buffers. `"serial"` and `"pipelined"` **bracket the truth.*
 - Shipped inert as `hw.os_rounds_model`; the baseline moved zero value keys.
 
 
+## 10. GNNs — the knee as a workload, and the one place packing wins
+
+Same array, different workload. A GCN layer is `H' = σ(Â(HW))`: **Combine** is a
+dense GEMM, **Aggregate** is the sparse `Â @ ·`. Six standard benchmarks.
+
+**Both halves mapped onto the existing model with no new operation type.**
+Aggregate written as a pull is `(M=1, K=deg(v), N=F)` — **the shape decode
+`attn_v` is issued as.** Proved, not asserted: a real `attn_v` at
+`(kv_len, head_dim) = (deg, F)` returns the identical cycle count over 30 pairs.
+So §3's knee is not *analogous* to aggregation's, it **is** aggregation's.
+
+### The knee we engineered toward in §3 is where a citation graph starts
+
+10 cycles per round are fixed; `ceil(deg/4)` is useful:
+
+| deg(v) | cycles | fixed % | vs VPU |
+|---:|---:|---:|---:|
+| 1 | 176 | **90.9%** | 88.0× worse |
+| 4 | 176 | 90.9% | 22.0× |
+| 32 | 288 | 55.6% | 4.5× |
+| 492 | 2,128 | 7.5% | 2.2× |
+
+- **Cora's mean degree is 3.9 → 90.9% overhead**, against the 23.5% that was the
+  most extreme point in the entire KV study. §3 needed a 0.4% KV budget to reach
+  that regime; a GNN is born there.
+- **Our stage-1 hypothesis was wrong twice, and both are results.** "Crossover
+  near degree 50" was a **4-bit statement** — true within 10% at `qbit=4`, false
+  on every graph at 16. The real condition is on *width*: a crossover exists iff
+  `F > 32 × qbit`. And aggregation is **compute-bound, not memory-bound** —
+  0.9–1.2 FLOP/byte was right about the FLOPs, but the LUT does not spend its
+  cycles on FLOPs.
+
+### Packing reverses the verdict — on the large graphs only
+
+`M = 1` means 1 of 32 rows works (§7's 3.12% occupancy). Packing `P` destinations
+into one pass recovers **exactly `array_m / n_tiles`** — measured `P*` equals the
+bound at every width, with no slack, and is **1.00× at F=4096** where it buys
+nothing. Packing and the N-null end at the same width, for the same reason.
+
+| graph | avg deg | F_out | P\* | LUT vs VPU |
+|:---|---:|---:|---:|---:|
+| Reddit | 492.0 | 256 | 16 | **7.35×** |
+| ogbn-products | 50.5 | 256 | 16 | **4.35×** |
+| ogbn-arxiv | 13.8 | 256 | 16 | **1.94×** |
+| Cora / CiteSeer / PubMed | 2.7–4.5 | 3–16 | 32 | 0.02–0.10× |
+
+- **The band's edge moves to `32 × qbit / P`; the crossover degree never moves —
+  43 at every P.** Packing divides LUT cycles per node by `P` *and* the
+  qualifying width by `P`, so the VPU term falls equally. **Packing widens the
+  band without ever making a sparse graph cheap to gather.**
+- **Both variables are load-bearing** — ogbn-arxiv wins at `F=256` and loses at
+  `F=40` on the same degree. Stage 2 blamed width alone because it measured at
+  `P=1`, where the threshold is 512 and nothing reaches it.
+- **Sort the packs; do not group them.** A pass costs its maximum degree, which
+  sounds like the hard part and is not: degree-sorted greedy filling lands
+  within **4%** of the unreachable bound (15.40–15.95× vs 16.00×). Grouping by
+  *exactly equal* degree instead hits **0.05× on ogbn-arxiv — 20× slower than
+  not packing** — a power-law tail has thousands of sub-`P` buckets, each still
+  costing a whole pass.
+- **The bill: 8.19 TB/s** of KV-SRAM port at `P*=16`. That is **4×** §7's figure
+  for the same `P`, because attention packs at 4-bit and aggregation runs at 16.
+  The speedups are a compute-side ceiling; the port decides reachability.
+
+> **Verdict.** Omni-LUT is an excellent Combine engine, and the wrong shape for
+> Aggregate *at P=1*. The shape problem is `M=1`, it is fixable by packing, and
+> what it costs is bandwidth — which is the same sentence §7 ended on, reached
+> from a different workload.
+
+
 ## What to do
 
 - **Know which regime you are in first.** Inside the memory-bound triangle
@@ -261,5 +330,9 @@ Real hardware double-buffers. `"serial"` and `"pipelined"` **bracket the truth.*
   bytes, composes with eviction, and is still unmeasured.
 - **Pick the KV layout before the pruning algorithm.** It silently decides which
   pruning literature is deployable at all.
+- **Packing is the lever in both workloads, and both times the open question
+  is the SRAM port.** It is worth 3.12× on decode at batch 32 and 7.35× on
+  Reddit aggregation — and needs 1.02 TB/s for the first, 8.19 TB/s for the
+  second. **Cost that port next**; every compute-side win above depends on it.
 
 *Full derivations, model-change record and open gaps: `study.md`.*

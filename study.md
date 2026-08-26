@@ -850,6 +850,190 @@ Full tables: `analysis/memory/rounds_report.md`, `analysis/memory/regime_report.
 
 ---
 
+## 19. GNNs — the same array, a workload that is all knee
+
+The KV study above asks what happens when an operand gets small. A GNN asks the
+same question with the smallness built into the workload rather than applied to
+it, so it is the natural place to test whether §4(b)'s fixed-overhead knee is a
+statement about KV compaction or a statement about the array. It is the latter.
+
+Six standard benchmarks (`simulator/graph_configs.py`), spanning four orders of
+magnitude in nodes and two in degree. A GCN layer is `H' = sigma(A_hat (H W))`:
+**Combine** is the dense `H W`, **Aggregate** is the sparse `A_hat @ ...`.
+
+| graph | nodes | edges | deg | F_in | H | aggr/comb FLOPs |
+|:---|---:|---:|---:|---:|---:|---:|
+| Cora | 2,708 | 10,556 | 3.9 | 1433 | 16 | 0.4% |
+| CiteSeer | 3,327 | 9,104 | 2.7 | 3703 | 16 | 0.1% |
+| PubMed | 19,717 | 88,648 | 4.5 | 500 | 16 | 1.1% |
+| ogbn-arxiv | 169,343 | 2,332,486 | 13.8 | 128 | 256 | 9.5% |
+| Reddit | 232,965 | 114,615,892 | 492.0 | 602 | 256 | 88.8% |
+| ogbn-products | 2,449,029 | 123,718,280 | 50.5 | 100 | 256 | 40.7% |
+
+### (a) Both halves map onto the existing model — no new operation type
+
+**Combine needed nothing.** `_simulate_matmul` is shape-driven, and a GNN's
+`H W` is an FFN with nodes in the token slot. Every Combine number came out of
+the unmodified simulator.
+
+**Aggregate needed nothing either, once written as a pull.**
+`h[v] = sum_u a_vu x[u]` is issued as `(M=1, K=deg(v), N=F)` — **the shape decode
+`attn_v` is issued as**, with `deg` in `kv_len`'s slot and `F` in `head_dim`'s.
+Pre-flight 9 proves it rather than asserting it: a real decode `attn_v` at
+`(kv_len, head_dim) = (deg, F)` returns the identical cycle count over 30 pairs.
+So §4(b), §5 and §14 transfer intact — they are not analogous to the GNN case,
+they *are* it.
+
+A **dense** `A_hat` is hopeless by exactly `1/density`: 695× on Cora, 48,479× on
+ogbn-products. The sparse shape has to be issued per node, which is what makes
+`M = 1` unavoidable and everything below follows from that.
+
+### (b) The knee that §4(b) needed a 0.4% KV budget to reach is where a citation graph *starts*
+
+`per_round = 3 (LGU) + ceil(deg/MU) + 1 + array_n + 2`, so **10 cycles are fixed**
+and `ceil(deg/4)` is useful. At `F = 256`, 16-bit coefficients:
+
+| deg(v) | pull cycles | fixed | useful | fixed % | VPU | LUT / VPU |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 176 | 160 | 16 | 90.9% | 2.0 | 88.0× |
+| 4 | 176 | 160 | 16 | 90.9% | 8.0 | 22.0× |
+| 32 | 288 | 160 | 128 | 55.6% | 64.0 | 4.5× |
+| 128 | 672 | 160 | 512 | 23.8% | 256.0 | 2.6× |
+| 492 | 2,128 | 160 | 1,968 | 7.5% | 984.0 | 2.2× |
+| 4096 | 16,544 | 160 | 16,384 | 1.0% | 8,192.0 | 2.0× |
+
+At Cora's mean degree of 3.9 that is **1 useful cycle against 10 — 90.9%
+overhead, against the 23.5% that was the most extreme point in the whole KV
+study.** Reddit's degree 492 is the only graph that gets the fixed share into
+single figures. §4(b) had to engineer its way to the knee; a GNN lives past it.
+
+**The N-null is also wider than §5 states.** §5 found `attn_v` flat in `head_dim`
+because `n_tiles = ceil(N/128) = 1`. The `rounds = ceil(n_tiles/array_m)` term
+extends that by another 32×: pull cycles are identical for every
+`F <= array_m x array_n x NUM_RAC = 4096`. **Every feature width any GNN uses is
+inside the null**, and the VPU's cost is linear in `F` throughout — so a wider
+feature is exactly where the LUT gains.
+
+### (c) The hypothesis was right about the existence of a crossover and wrong about the variable
+
+The stage-1 prediction was "the LUT starts winning around degree 50." That is
+**a 4-bit statement**: at `qbit = 4` it reproduces to within 10% on all four
+graphs it named, and at 16 bits it is false on all four.
+
+LUT cycles grow with degree at `qbit/MU` per unit; VPU cycles at `F/vpu_width`.
+So a crossover exists **iff `F > vpu_width x qbit / MU = 32 x qbit`**, and the
+N-null caps it at 4096. The LUT beats a VPU in exactly one band:
+
+> **`32 x qbit < F <= 4096`** — `512 < F <= 4096` at the configured 16 bits.
+
+Degree only decides where *inside* the band you land. At `P = 1` no benchmark
+here is in it, and the LUT loses everywhere: 2.2× on Reddit, 529× on CiteSeer,
+making the whole layer **2.3–18.5× slower** than putting aggregation on the VPU.
+
+**And stage 1's memory-bound prediction was also wrong.** Section E's 0.9–1.2
+FLOP/byte against an 80 FLOP/byte balance point said aggregation must be
+memory-bound. With a cycle model it is **compute-bound on all six graphs** — by
+the LUT's fixed 10 cycles per node, not by arithmetic. The FLOP count was right;
+the LUT simply does not spend its cycles on FLOPs.
+
+### (d) Packing reverses the verdict on the three large graphs
+
+`M = 1` is the whole problem — 1 of 32 PE rows works, §14's 3.12% occupancy — and
+it is also §14's opportunity, because consecutive destinations are exactly the
+independent instances `array_pack.py` packs. Cycles come from
+`array_pack.packed_osv_cycles` unmodified; pre-flight 15 asserts a real decode
+`attn_v` through `PackedOSVSimulator` returns the identical count over **216
+shapes**, and pre-flight 16 asserts `P = 1` reproduces (c)'s numbers exactly.
+
+**Recovery is `P / ceil(P x n_tiles / array_m)`, saturating at `array_m/n_tiles`:**
+
+| F | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| n_tiles | 1 | 1 | 2 | 4 | 8 | 16 | 32 |
+| **P\*** | 32 | 32 | 16 | 8 | 4 | 2 | **1** |
+| recovery | 32× | 32× | 16× | 8× | 4× | 2× | **1.00×** |
+
+Measured `P*` equals the bound at every width with no rounding slack. A
+destination needs `n_tiles` rows, so once `array_m / P` falls to `n_tiles` the
+groups are exactly sized and further packing would split a row it cannot split.
+**Packing and the N-null end at the same width** — both are the same statement
+about `n_tiles` reaching `array_m`.
+
+**The band's edge moves to `32 x qbit / P`. The crossover degree does not move at
+all** — it is 43 at `P` = 1, 2, 4, 8, 16 and 32 alike. Packing divides LUT cycles
+per node by `P` and the qualifying width by `P`, which divides the VPU's
+`F/vpu_width` by the same factor; the two sides scale together and the meeting
+point is preserved. **So packing widens the band without ever making a sparse
+graph cheap to gather — degree 43 is the entry fee at every `P`.**
+
+At `P*` with a degree-sorted schedule:
+
+| graph | avg deg | F_out | P\* | pull P=1 | pull P=P\* | VPU | LUT vs VPU |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| Cora | 3.9 | 16 | 32 | 5.03e5 | 1.63e4 | 1.32e3 | 0.08× |
+| CiteSeer | 2.7 | 16 | 32 | 6.02e5 | 1.91e4 | 1.14e3 | 0.06× |
+| PubMed | 4.5 | 16 | 32 | 3.70e6 | 1.17e5 | 1.11e4 | 0.10× |
+| ogbn-arxiv | 13.8 | 256 | 16 | 3.81e7 | 2.41e6 | 4.67e6 | **1.94×** |
+| ogbn-arxiv | 13.8 | 40 | 32 | 3.81e7 | 1.22e6 | 7.29e5 | 0.60× |
+| Reddit | 492.0 | 256 | 16 | 4.98e8 | 3.12e7 | 2.29e8 | **7.35×** |
+| Reddit | 492.0 | 41 | 32 | 4.98e8 | 1.57e7 | 3.67e7 | **2.34×** |
+| ogbn-products | 50.5 | 256 | 16 | 9.08e8 | 5.68e7 | 2.47e8 | **4.35×** |
+| ogbn-products | 50.5 | 47 | 32 | 9.08e8 | 2.85e7 | 4.54e7 | **1.60×** |
+
+**Both variables are load-bearing, which is why neither (b) nor (c) found this.**
+ogbn-arxiv wins at degree 13.8 and `F = 256` and loses at degree 13.8 and
+`F = 40`; Reddit wins at `F = 41` on degree 492. (c) concluded the condition was
+width alone because it measured at `P = 1`, where the threshold is 512 and
+nothing reaches it. **Packing is what makes degree matter again.**
+
+### (e) The schedule is not the hard part — but the obvious schedule is fatal
+
+A packed pass issues one `ceil(K/MU)` operand stream for all `P` nodes, so it
+costs the **maximum** degree it contains. That sounds like it should make
+grouping the difficulty. At `P = 32`, `F = 256`:
+
+| graph | ideal | sorted | exact | deg inflation (sorted) |
+|:---|---:|---:|---:|---:|
+| Cora | 16.00× | 15.40× | 2.57× | 1.43× |
+| CiteSeer | 16.00× | 15.78× | 5.69× | 1.23× |
+| PubMed | 16.00× | 15.85× | 9.61× | 1.08× |
+| ogbn-arxiv | 16.00× | 15.59× | **0.05×** | 1.11× |
+| Reddit | 16.00× | 15.88× | 0.26× | 1.01× |
+| ogbn-products | 16.00× | 15.95× | 0.72× | 1.01× |
+
+Degree-**sorted** greedy filling lands within **4%** of the unreachable
+equal-degree bound, inflating charged degree by only 1.01–1.43×, because sorting
+bounds a pass's overcharge by the *bucket width* rather than by the spread of the
+distribution. Grouping by **exactly equal** degree instead reaches **0.05× on
+ogbn-arxiv — twenty times slower than not packing at all** — because a power-law
+tail holds thousands of buckets with fewer than `P` nodes and each still costs a
+whole pass. **Sort, do not group.**
+
+### (f) What it costs, and what is left open
+
+`P` live OS-V rows read 1,024 B/cycle each from KV SRAM, so `P* = 16` needs
+**8.19 TB/s** and `P* = 32` needs **16.38 TB/s**. That is **4×** §16(d)'s figure
+for the same `P`, for a reason specific to this workload: attention packs at
+`kv_cache_bits = 4`, aggregation runs at 16. §14's other caveats carry unchanged
+— LGU ungating power, and the scheduling tail. **The speedups in (d) are a
+compute-side ceiling; the port decides whether any of them is reachable.**
+
+Two secondary results worth keeping:
+
+- **The feature row is the new KV entry.** At Kipf & Welling's `hidden_dim = 16`
+  an FP16 feature row is 32 B against DDR5's 64 B burst — **2.00× waste on the
+  most cited GNN configuration there is**, and HBM3's 32 B burst erases it
+  exactly. §15's finding, reproduced on a different workload.
+- **Gather-vs-stream is decided by capacity, not sparsity.** `E > N` on every
+  graph, so pulling `E` neighbour rows never moves fewer bytes than streaming `X`
+  once — when the accumulators fit. The crossover is exactly
+  `stream_passes < avg_degree x burst_waste`.
+
+**Open:** the degree-sorted schedule assumes free reordering, which costs a
+permutation of `X` that this model does not charge; and (d)'s wins are all at
+`F = 256`, the width the large-graph benchmarks happen to use — the `F` sweep at
+`P*` has not been run.
+
 ## TODO
 
 ### Model gaps
