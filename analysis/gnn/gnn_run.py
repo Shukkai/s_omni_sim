@@ -78,7 +78,12 @@ from graph_configs import (                                          # noqa: E40
 )
 from memory_tech import memory_technology                            # noqa: E402
 from report import Report                                            # noqa: E402
-from gnn_sim import GNNSimulator, PULL, PUSH, VPU                    # noqa: E402
+sys.path.insert(0, os.path.join(_root, 'analysis', 'array_packing'))
+from array_pack import PackedOSVSimulator                            # noqa: E402
+from gnn_sim import (                                               # noqa: E402
+    GNNSimulator, PULL, PUSH, VPU,
+    IDEAL, SORTED, EXACT, SCHEDULES, live_row_bytes_per_cycle,
+)
 
 ACT_BITS = 16
 WEIGHT_BITS = 4
@@ -466,6 +471,54 @@ def preflight():
                 feat, q, found, closed)
     print("  14. crossover: none exactly when F <= vpu_width*qbit/MU = 32*qbit; "
           "otherwise within MU of the closed form ok")
+
+    # 15. The packed cycle count IS `PackedOSVSimulator`'s, on a real decode
+    #     `attn_v`.  Stage 3 must not acquire a second packing model; this is
+    #     the assertion that it did not.  216 shapes.
+    n15 = 0
+    for pk in (1, 2, 4, 8, 16, 32):
+        ps = PackedOSVSimulator(base_hw(), pack=pk)
+        for kv_len in (128, 1000, 2048, 4096):
+            for head_dim in (64, 128, 256):
+                for b in (8, 32, 256):
+                    ps._op = (OperationType.ATTN_V_MATMUL, True)
+                    got = ps._calculate_cycles(
+                        1, kv_len, head_dim, ps.hw.kv_cache_bits,
+                        ComputeMode.AA, "LUT_OS_V", b)
+                    ps._op = None
+                    mine = math.ceil(b / pk) * gs.packed_pass_cycles(
+                        kv_len, head_dim, ps.hw.kv_cache_bits, pk)
+                    assert got == mine, (pk, kv_len, head_dim, b, got, mine)
+                    n15 += 1
+    print(f"  15. packed_pass_cycles == PackedOSVSimulator attn_v, "
+          f"{n15} shapes ok")
+
+    # 16. `pack = 1` under the IDEAL schedule reproduces stage 2's pull
+    #     numbers exactly.  Relative, not absolute: the two sum the same
+    #     terms in the same order but through `sum()` vs `+=`, which differ
+    #     in the last bit at ogbn-products' 9e8 cycles.
+    for name in list_graphs():
+        g = get_graph_config(name)
+        for feat in (128, 256):
+            st2 = gs.aggregate_cost(g, feat, ACT_BITS, PULL)
+            st3 = gs.packed_aggregate_cost(g, feat, ACT_BITS, 1, IDEAL)
+            assert math.isclose(st2.cycles, st3.cycles, rel_tol=1e-12), (
+                name, feat, st2.cycles, st3.cycles)
+            assert math.isclose(st3.baseline_cycles, st2.cycles,
+                                rel_tol=1e-12), (name, feat)
+    print("  16. pack=1 + ideal schedule == stage 2's pull, all graphs ok")
+
+    # 17. Packing recovery saturates exactly at `array_m / n_tiles` -- the
+    #     claim section I leads with, asserted rather than eyeballed.
+    for feat in (64, 128, 256, 512, 1024, 2048, 4096):
+        nt = math.ceil(feat / (gs.hw.array_n * gs.NUM_RAC))
+        best, bestc = 1, None
+        for pk in (1, 2, 4, 8, 16, 32):
+            c = gs.packed_pass_cycles(32, feat, ACT_BITS, pk) / pk
+            if bestc is None or c < bestc - 1e-9:
+                bestc, best = c, pk
+        assert best == max(1, gs.hw.array_m // nt), (feat, nt, best)
+    print("  17. measured P* == array_m/n_tiles at every width ok")
     print()
 
 
@@ -1140,6 +1193,175 @@ def sweep(report_path):
         "lower bounds, and section E's bracket says the aggregation share is "
         "the more reliable of the two on the three large graphs.")
 
+    hw = gs.hw
+    # ---- I. how far packing can go -----------------------------------------
+    rpt.section(
+        "I. P-way destination packing: the ceiling is the tile count",
+        "Aggregation's `M = 1` was section G's problem -- one destination node "
+        "cannot fill 32 array rows. It is also the opportunity "
+        "`analysis/array_packing/` already exploits for decode `attn_v`: `P` "
+        "destinations are independent instances, so they can share one OS-V "
+        "pass, each owning `array_m / P` rows. Cycles come from "
+        "`array_pack.packed_osv_cycles` -- the attention packing model, "
+        "unmodified -- and pre-flight 15 asserts a real decode `attn_v` through "
+        "`PackedOSVSimulator` returns the identical count over 216 shapes.")
+    i_rows = []
+    for F in [64, 128, 256, 512, 1024, 2048, 4096]:
+        nt = math.ceil(F / (hw.array_n * gs.NUM_RAC))
+        base = gs.packed_pass_cycles(32, F, ACT_BITS, 1)
+        recs, best, bestc = [], 1, None
+        for P in [1, 2, 4, 8, 16, 32]:
+            c = gs.packed_pass_cycles(32, F, ACT_BITS, P) / P
+            recs.append(f"{base / c:.2f}x")
+            if bestc is None or c < bestc - 1e-9:
+                bestc, best = c, P
+        i_rows.append([str(F), str(nt), f"{hw.array_m / nt:.2f}x"] + recs
+                      + [str(best)])
+        rows.append(dict(section='I', feat_dim=F, n_tiles=nt,
+                         pack_bound=hw.array_m / nt, pack_star=best))
+    rpt.table(
+        ['F', 'n_tiles', 'bound', 'P=1', 'P=2', 'P=4', 'P=8', 'P=16', 'P=32',
+         'P*'],
+        i_rows, aligns='rrrrrrrrrr')
+    rpt.note(
+        "**Recovery is `P / ceil(P x n_tiles / array_m)` and saturates at "
+        "`array_m / n_tiles`, exactly.** A destination needs `n_tiles` rows, so "
+        "once `array_m / P` has fallen to `n_tiles` the row groups are exactly "
+        "sized and further packing would have to split a row it cannot split. "
+        "The measured `P*` equals the bound at every width in the table, with "
+        "no rounding slack -- 32x at `F <= 128`, halving per doubling of `F`, "
+        "and **1.00x at `F = 4096`**, where packing buys nothing at all. "
+        "Packing and the N-null end at the same width for the same reason: "
+        "both are statements about `n_tiles` reaching `array_m`.")
+
+    # ---- J. does packing move the band? ------------------------------------
+    rpt.section(
+        "J. The band, re-measured under packing",
+        "G3 found the LUT beats a VPU only for `32 x qbit < F <= 4096`, which "
+        "excluded every benchmark here. Packing divides the per-node LUT cost "
+        "by up to `P` and should therefore divide the band's lower edge by `P`. "
+        "Searched, not solved -- the `ceil` still makes the closed form off by "
+        "one near the knee.")
+    j_rows = []
+    for P in [1, 2, 4, 8, 16, 32]:
+        first = None
+        for F in [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]:
+            d = gs.packed_crossover_degree(F, ACT_BITS, P, max_degree=5000)
+            if d is not None:
+                first = (F, d)
+                break
+        j_rows.append([str(P), f"{32 * ACT_BITS / P:.0f}",
+                       str(first[0]) if first else 'never',
+                       str(first[1]) if first else '--'])
+        rows.append(dict(section='J', pack=P,
+                         band_edge=32 * ACT_BITS / P,
+                         first_F=first[0] if first else 0,
+                         crossover_deg=first[1] if first else 0))
+    rpt.table(['P', 'band edge 32xq/P', 'first winning F', 'at degree'],
+              j_rows, aligns='rrrr')
+    rpt.note(
+        "**The band's lower edge moves exactly as `32 x qbit / P`, and the "
+        "crossover degree does not move at all.** Every row crosses at degree "
+        "43. That invariance is not a coincidence: packing divides LUT cycles "
+        "per node by `P`, and the width that first qualifies also falls by `P`, "
+        "which divides the VPU's `F / vpu_width` by the same factor. The two "
+        "sides scale together and the degree at which they meet is preserved. "
+        "**So packing widens the band without ever making a sparse graph "
+        "cheaper to gather -- degree 43 is the entry fee at every `P`.**")
+
+    # ---- K. the schedule ---------------------------------------------------
+    rpt.section(
+        "K. Scheduling the packs, and the verdict on real graphs",
+        "A packed pass issues one `ceil(K/MU)` operand stream for all `P` "
+        "nodes in it, so a pass costs the *maximum* degree it contains. Three "
+        "schedules: `ideal` groups exactly-equal degrees and does not charge "
+        "partial passes (a lower bound, bit-identical to stage 2 at `P = 1`); "
+        "`exact` is the same grouping with whole passes; `sorted` sorts by "
+        "degree and fills greedily. `P = 32`, `F = 256`, 16-bit.")
+    k_rows = []
+    for name in list_graphs():
+        g = get_graph_config(name)
+        cs = {sch: gs.packed_aggregate_cost(g, 256, ACT_BITS, 32, sch)
+              for sch in SCHEDULES}
+        b = cs[IDEAL].baseline_cycles
+        k_rows.append([
+            g.name, f"{b:.3e}",
+            f"{b / cs[IDEAL].cycles:.2f}x", f"{b / cs[SORTED].cycles:.2f}x",
+            f"{b / cs[EXACT].cycles:.2f}x",
+            f"{cs[SORTED].degree_inflation:.2f}x"])
+        rows.append(dict(section='K', graph=g.name, baseline_cycles=b,
+                         ideal_recovery=b / cs[IDEAL].cycles,
+                         sorted_recovery=b / cs[SORTED].cycles,
+                         exact_recovery=b / cs[EXACT].cycles,
+                         sorted_deg_inflation=cs[SORTED].degree_inflation))
+    rpt.table(['graph', 'baseline cyc', 'ideal', 'sorted', 'exact',
+               'deg inflation'], k_rows, aligns='lrrrrr')
+    rpt.note(
+        "**Sorting is within 4% of the unreachable bound; grouping by equal "
+        "degree is catastrophic.** `sorted` lands at 15.40x-15.95x against "
+        "`ideal`'s 16.00x, inflating the charged degree by only 1.01x-1.43x, "
+        "because sorting bounds a pass's overcharge by the *bucket width* "
+        "rather than by the spread of the distribution. `exact` reaches "
+        "**0.05x on ogbn-arxiv -- twenty times slower than not packing at "
+        "all** -- because a power-law tail holds thousands of buckets with "
+        "fewer than `P` nodes and each still costs a whole pass. The intuition "
+        "that the schedule is the hard part is wrong; only the naive schedule "
+        "is.")
+
+    k2_rows = []
+    for name in list_graphs():
+        g = get_graph_config(name)
+        for fi, fo in g.layer_shapes():
+            nt = math.ceil(fo / (hw.array_n * gs.NUM_RAC))
+            P = max(1, hw.array_m // nt)
+            while hw.array_m % P:
+                P -= 1
+            c1 = gs.packed_aggregate_cost(g, fo, ACT_BITS, 1, SORTED)
+            cp = gs.packed_aggregate_cost(g, fo, ACT_BITS, P, SORTED)
+            vpu = gs.vpu_cycles(g.num_edges, fo)
+            k2_rows.append([
+                g.name, f"{g.avg_degree:.1f}", str(fo), str(P),
+                f"{c1.cycles:.3e}", f"{cp.cycles:.3e}", f"{vpu:.3e}",
+                ('**%.2fx**' % (vpu / cp.cycles)) if cp.cycles < vpu
+                else f"{vpu / cp.cycles:.2f}x"])
+            rows.append(dict(section='K2', graph=g.name, feat_dim=fo, pack=P,
+                             pull_p1_cycles=c1.cycles,
+                             pull_packed_cycles=cp.cycles, vpu_cycles=vpu,
+                             lut_speedup=vpu / cp.cycles))
+    rpt.table(
+        ['graph', 'avg deg', 'F_out', 'P*', 'pull P=1', 'pull P=P*', 'VPU',
+         'LUT vs VPU'], k2_rows, aligns='lrrrrrrr')
+    rpt.note(
+        "**Packing reverses stage 2's verdict on the three large benchmarks "
+        "and leaves the three small ones exactly where they were.** G3 found "
+        "no benchmark inside the band. With `P*`-way packing and a sorted "
+        "schedule, ogbn-arxiv's hidden layer reaches **1.94x** the VPU, "
+        "ogbn-products **4.35x**, and Reddit **7.35x** -- and Reddit and "
+        "ogbn-products stay ahead on their output layers too, at 2.34x and "
+        "1.60x. Cora, CiteSeer and PubMed stay at 0.02x-0.10x: their widths "
+        "are 3-16, so the VPU's `E x F / 128` is tiny while the LUT still pays "
+        "its 10 fixed cycles per node no matter how few features it moves.")
+    rpt.note(
+        "**Both variables are load-bearing, which is why neither section alone "
+        "found this.** ogbn-arxiv wins at degree 13.8 and `F = 256` but loses "
+        "at degree 13.8 and `F = 40`; Reddit wins at `F = 41` on degree 492. "
+        "Stage 2 concluded the condition was on width alone because it "
+        "measured at `P = 1`, where the width threshold is 512 and nothing "
+        "reaches it. **Packing is what makes degree matter again.**")
+    rpt.note(
+        f"**The cost is bandwidth, and it is the same bill section 16(d) "
+        f"presented for attention.** `P` live OS-V rows read "
+        f"`{live_row_bytes_per_cycle(hw, 1)} B/cycle` each from KV SRAM, so "
+        f"`P* = 16` on a 256-wide layer needs "
+        f"{live_row_bytes_per_cycle(hw, 16) * hw.freq_mhz * 1e6 / 1e12:.2f} "
+        f"TB/s and `P* = 32` needs "
+        f"{live_row_bytes_per_cycle(hw, 32) * hw.freq_mhz * 1e6 / 1e12:.2f} "
+        "TB/s. That is **4x** `study.md` section 16(d)'s figure for the same "
+        "`P`, for a reason specific to this workload: attention packs at "
+        "`kv_cache_bits = 4` and aggregation runs at 16. The speedups above "
+        "are a compute-side ceiling and the port is the thing that decides "
+        "whether any of it is reachable.")
+
     rpt.summary([
         "**Combine needs nothing new.** Every number in section B came out of "
         "the unmodified simulator: `_simulate_matmul` is shape-driven, and a "
@@ -1163,7 +1385,32 @@ def sweep(report_path):
         "*feature width*: a crossover exists at all iff `F > vpu_width x qbit / "
         "MU = 32 x qbit`, and the N-null ends at `F = 4096`, so the LUT beats a "
         "VPU in exactly one band, **`32 x qbit < F <= 4096`** (G3). Degree only "
-        "decides where inside that band you land.",
+        "decides where inside that band you land. **All of which is a "
+        "`P = 1` statement, and stage 3 overturns half of it -- see the "
+        "next bullet.**",
+        "**Packing the array `P` ways moves the band's lower edge to "
+        "`32 x qbit / P` and reverses the verdict on the three large "
+        "benchmarks.** `M = 1` was the whole problem: one destination node "
+        "cannot fill 32 array rows, so `array_m / n_tiles` of the array "
+        "idles. Packing `P` independent destinations into one OS-V pass "
+        "recovers exactly that factor and no more -- measured `P*` equals "
+        "`array_m / n_tiles` at every width, and is **1.00x at `F = 4096`** "
+        "(I). At `P*` with a degree-sorted schedule the LUT beats the VPU "
+        "on **Reddit (7.35x), ogbn-products (4.35x) and ogbn-arxiv "
+        "(1.94x)**, while Cora, CiteSeer and PubMed stay at 0.02x-0.10x "
+        "because their 3-16-wide layers give the VPU almost nothing to do "
+        "(K). **Packing is what makes degree matter again**: the crossover "
+        "degree is 43 at every `P`, so a graph still has to be dense "
+        "enough to clear it (J).",
+        "**Sorting the packs is nearly free; grouping them by equal degree "
+        "is a disaster.** A packed pass charges one `ceil(K/MU)` for all "
+        "`P` nodes, so it costs its maximum degree -- which sounds like the "
+        "hard part and is not. Degree-sorted greedy filling lands within "
+        "4% of the unreachable equal-degree bound (15.40x-15.95x against "
+        "16.00x). Insisting on exactly-equal-degree packs instead reaches "
+        "**0.05x on ogbn-arxiv -- 20x slower than not packing** -- because "
+        "a power-law tail has thousands of buckets holding fewer than `P` "
+        "nodes and each still costs a whole pass (K).",
         "**Aggregation turns out to be compute-bound, not memory-bound** -- the "
         "opposite of stage 1's prediction, and by the LUT's own fixed overhead "
         "rather than by arithmetic. Section E's 0.9-1.2 FLOP/byte was right "
@@ -1205,8 +1452,12 @@ def sweep(report_path):
         "balance point) and has no reusable operand, so the LUT mechanism has "
         "nothing to amortise over -- true of the *bytes*, and section H shows "
         "the cycles reach the same verdict first. **Omni-LUT is an excellent "
-        "Combine engine and structurally the wrong shape for Aggregate**, "
-        "confirmed on both axes.",
+        "Combine engine, and the wrong shape for Aggregate at `P = 1`** -- "
+        "confirmed on both axes, and the qualifier is stage 3's: the shape "
+        "problem is `M = 1`, it is fixable by packing, and what it costs "
+        "is 8.2 TB/s of KV-SRAM port at `P* = 16` (K). Whether that port "
+        "is buildable is the open question the compute-side result now "
+        "rests on.",
     ])
     return rpt, rows
 

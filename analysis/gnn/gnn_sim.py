@@ -97,16 +97,23 @@ Two things the packing model here has to say that the attention one did not:
   * **The recovery is `P / ceil(P * n_tiles / array_m)`** per node, so it
     saturates at `array_m / n_tiles` and packing past `P* = array_m / n_tiles`
     buys nothing.  Measured, not assumed: section I.
-  * **The schedule matters more than P does.**  A packed pass charges
-    `ceil(K/MU)` once, so `P` nodes of different degree in one pass all pay the
-    *maximum* degree in the pass.  `schedule` selects between three: `"ideal"`
-    groups nodes of exactly equal degree and charges no partial pass (a lower
-    bound, and the one that is bit-identical to stage 2 at `P = 1`);
-    `"exact"` is the same grouping with whole passes, which fragments badly
-    because a power-law degree distribution has thousands of nearly-empty
-    buckets; `"sorted"` sorts by degree and fills passes greedily, paying the
-    group maximum.  Section K measures all three and `"sorted"` is the
-    realistic one.
+  * **The schedule barely matters, as long as it is not the obvious one.**
+    A packed pass charges `ceil(K/MU)` once, so `P` nodes of different degree
+    in one pass all pay the *maximum* degree in the pass -- which sounds like
+    it should make grouping the hard part.  It does not.  `schedule` selects
+    between three: `"ideal"` groups nodes of exactly equal degree and charges
+    no partial pass (a lower bound, and bit-identical to stage 2 at `P = 1`);
+    `"exact"` is the same grouping with whole passes; `"sorted"` sorts by
+    degree and fills passes greedily, paying the group maximum.  Section K
+    measures all three at `P = 32`, `F = 256`, and the result contradicts the
+    guess this paragraph originally recorded: `"sorted"` lands within **4% of
+    the `"ideal"` bound** on every graph (15.40x-15.95x against 16.00x), with
+    degree inflation of only 1.01x-1.43x, because sorting bounds a pass's
+    overcharge by the bucket width rather than by the spread of the
+    distribution.  `"exact"` is the one that fails, and it fails hard --
+    **0.05x on ogbn-arxiv**, twenty times *slower* than not packing at all,
+    because a power-law tail has thousands of buckets holding fewer than `P`
+    nodes and each one still costs a whole pass.  So: sort, do not group.
 """
 
 import math
@@ -189,6 +196,39 @@ class AggregateCost:
     def cycles_per_edge(self) -> float:
         return self.cycles / self.edges if self.edges else 0.0
 
+
+@dataclass
+class PackedAggregateCost:
+    """One aggregation under `P`-way destination packing.
+
+    Separate from `AggregateCost` rather than fields bolted onto it, because
+    stage 2's numbers have to stay reachable unchanged: nothing in this class
+    is on the path that produced them.  `baseline` is the same graph and width
+    at `pack = 1`, carried so `recovery` is a measurement against a real run
+    rather than against a formula.
+    """
+    feat_dim: int
+    qbit: int
+    pack: int
+    schedule: str
+    cycles: float
+    baseline_cycles: float
+    passes: float
+    nodes: float
+    edges: float
+    charged_degree: float        # mean degree charged, >= true mean when packed
+    distribution_aware: bool
+
+    @property
+    def recovery(self) -> float:
+        """Speedup over `pack = 1`.  Below 1 means packing made it worse."""
+        return (self.baseline_cycles / self.cycles) if self.cycles else 0.0
+
+    @property
+    def degree_inflation(self) -> float:
+        """How much the schedule overcharges degree by grouping unequal nodes."""
+        true_mean = self.edges / self.nodes if self.nodes else 0.0
+        return (self.charged_degree / true_mean) if true_mean else 1.0
 
 class GNNSimulator(UnitAwareSimulator):
     """`Simulator` plus a cycle model for sparse aggregation.
@@ -391,5 +431,144 @@ class GNNSimulator(UnitAwareSimulator):
         """
         for d in range(1, max_degree + 1):
             if self.pull_cycles(d, feat_dim, qbit) < self.vpu_cycles(1, feat_dim) * d:
+                return d
+        return None
+
+    # ---- Stage 3: P-way destination packing -------------------------------
+
+    def packed_pass_cycles(self, deg: int, feat_dim: int, qbit: int,
+                           pack: int) -> int:
+        """Cycles for **one** OS-V pass retiring `pack` destination nodes.
+
+        Delegates to `array_pack.packed_osv_cycles` with `batch_size = pack`,
+        so the pass count it computes is exactly 1 and what comes back is the
+        cost of a single pass.  Written this way rather than as arithmetic
+        here for the same reason `pull_cycles` calls `_calculate_cycles`: the
+        packing model is `analysis/array_packing/`'s, and this file must not
+        acquire a second copy of it that can drift.
+
+        `deg` is the degree the pass is *charged*, which under any real
+        schedule is the maximum degree among the `pack` nodes in it -- the
+        array issues one `ceil(K/MU)` operand stream for the whole pass.
+        """
+        return packed_osv_cycles(self.hw, 1, deg, feat_dim, qbit,
+                                 batch_size=pack, pack=pack,
+                                 mu=self.MU, num_rac=self.NUM_RAC)
+
+    def pack_recovery_bound(self, feat_dim: int) -> float:
+        """`array_m / n_tiles` -- the ceiling on packing recovery at width `F`.
+
+        Packing subdivides the array into `pack` groups of `array_m / pack`
+        rows; a node needs `n_tiles` rows, so once `array_m / pack` reaches
+        `n_tiles` the groups are exactly sized and further packing splits
+        rows it cannot split.  Hence `P* = array_m / n_tiles` and recovery
+        saturates there.  Section I measures this rather than trusting it.
+        """
+        n_tiles = math.ceil(feat_dim / (self.hw.array_n * self.NUM_RAC))
+        return self.hw.array_m / n_tiles
+
+    def max_useful_pack_for(self, feat_dim: int, deg: int, qbit: int) -> int:
+        """Largest `P` that strictly reduces per-node cycles, by search."""
+        return max_useful_pack(self.hw, feat_dim, K=deg, qbit=qbit,
+                               batch_size=self.hw.array_m,
+                               num_rac=self.NUM_RAC)
+
+    def _schedule_passes(self, buckets: List[Tuple[int, float]], pack: int,
+                         schedule: str) -> List[Tuple[int, float]]:
+        """`[(charged_degree, pass_count)]` for a schedule over degree buckets.
+
+        The three schedules differ only in how nodes are assigned to passes,
+        never in what a pass costs:
+
+          * `IDEAL` -- every pass holds `pack` nodes of *exactly* one degree
+            and partial passes are not charged.  A lower bound, not a
+            schedule: it needs `count / pack` to be an integer in every
+            bucket.  At `pack = 1` it is arithmetically identical to stage 2,
+            which is why it is the default and what pre-flight 16 checks.
+          * `EXACT` -- the same grouping with whole passes only.  This is the
+            honest cost of insisting on equal-degree packs, and on a power-law
+            distribution it is bad: thousands of high-degree buckets hold far
+            fewer than `pack` nodes each and every one of them costs a full
+            pass.
+          * `SORTED` -- sort by degree, fill passes greedily.  A pass pays the
+            largest degree it contains, but sorting keeps that close to the
+            smallest, so the overcharge is bounded by the bucket width rather
+            than by the spread of the whole distribution.
+
+        Buckets arrive ascending in degree, so under `SORTED` the last bucket
+        a pass touches is its maximum -- no per-pass max() is needed.
+        """
+        if schedule == IDEAL:
+            return [(d, c / pack) for d, c in buckets]
+        if schedule == EXACT:
+            return [(d, float(math.ceil(c / pack))) for d, c in buckets]
+        if schedule != SORTED:
+            raise ValueError(f"unknown schedule {schedule!r}")
+
+        out: List[Tuple[int, float]] = []
+        filled = 0.0
+        cur_max = 0
+        for d, c in sorted(buckets):
+            while c > 0:
+                take = min(c, pack - filled)
+                filled += take
+                c -= take
+                cur_max = d
+                if filled >= pack:
+                    out.append((cur_max, 1.0))
+                    filled, cur_max = 0.0, 0
+        if filled > 0:
+            # A partial tail pass costs a whole pass -- the array cannot issue
+            # a fraction of one.  Charging it is the difference between SORTED
+            # and IDEAL at the tail.
+            out.append((cur_max, 1.0))
+        return out
+
+    def packed_aggregate_cost(self, g, feat_dim: int, qbit: int, pack: int,
+                              schedule: str = IDEAL,
+                              distribution_aware: bool = True
+                              ) -> PackedAggregateCost:
+        """Pull aggregation over `g` under `pack`-way packing.
+
+        Pull only.  Push packs nothing: its `M` is the degree, so it already
+        occupies the array's rows, and stage 11's corrected round count is the
+        whole of what packing would have bought it.
+        """
+        if pack < 1 or self.hw.array_m % pack:
+            raise ValueError(
+                f"pack={pack} must divide array_m={self.hw.array_m}")
+        buckets = self._degree_buckets(g, distribution_aware)
+        nodes = sum(c for _, c in buckets)
+        edges = sum(d * c for d, c in buckets)
+
+        passes = self._schedule_passes(buckets, pack, schedule)
+        cycles = sum(self.packed_pass_cycles(d, feat_dim, qbit, pack) * n
+                     for d, n in passes)
+        n_passes = sum(n for _, n in passes)
+        charged_deg = (sum(d * n for d, n in passes) * pack / nodes
+                       if nodes else 0.0)
+
+        baseline = sum(self.pull_cycles(d, feat_dim, qbit) * c
+                       for d, c in buckets)
+
+        return PackedAggregateCost(
+            feat_dim=feat_dim, qbit=qbit, pack=pack, schedule=schedule,
+            cycles=cycles, baseline_cycles=baseline, passes=n_passes,
+            nodes=nodes, edges=edges, charged_degree=charged_deg,
+            distribution_aware=distribution_aware,
+        )
+
+    def packed_crossover_degree(self, feat_dim: int, qbit: int, pack: int,
+                                max_degree: int = 100_000) -> Optional[int]:
+        """`crossover_degree` with `pack` nodes sharing each pass.
+
+        The per-node LUT cost falls by up to `pack`, so the band `32*qbit < F`
+        that stage 2 found should widen to `32*qbit / pack`.  Searched, not
+        solved -- same `ceil` problem as the unpacked form.
+        """
+        vpu_per_node = self.vpu_cycles(1, feat_dim)
+        for d in range(1, max_degree + 1):
+            per_node = self.packed_pass_cycles(d, feat_dim, qbit, pack) / pack
+            if per_node < vpu_per_node * d:
                 return d
         return None
