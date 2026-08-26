@@ -84,6 +84,29 @@ nodes in most graphs have degree 2..31.  No push-vs-pull comparison in
     overlap between nodes** and no batching of same-degree nodes into one pass.
     That matches how the simulator prices a sequence of operations
     (`overlap_model = "serial"`).
+
+**Stage 3: P-way packing.**  `M = 1` is also an *opportunity*, and it is the
+one `analysis/array_packing/array_pack.py` already exploits for decode
+`attn_v`: consecutive destination nodes are independent instances, so `P` of
+them can share one OS-V pass, each owning `array_m / P` rows.  This file adds
+no cycle arithmetic for that either -- `packed_pull_cycles` calls
+`array_pack.packed_osv_cycles`, and pre-flight 15 asserts a real decode
+`attn_v` through `array_pack.PackedOSVSimulator` returns the identical count.
+Two things the packing model here has to say that the attention one did not:
+
+  * **The recovery is `P / ceil(P * n_tiles / array_m)`** per node, so it
+    saturates at `array_m / n_tiles` and packing past `P* = array_m / n_tiles`
+    buys nothing.  Measured, not assumed: section I.
+  * **The schedule matters more than P does.**  A packed pass charges
+    `ceil(K/MU)` once, so `P` nodes of different degree in one pass all pay the
+    *maximum* degree in the pass.  `schedule` selects between three: `"ideal"`
+    groups nodes of exactly equal degree and charges no partial pass (a lower
+    bound, and the one that is bit-identical to stage 2 at `P = 1`);
+    `"exact"` is the same grouping with whole passes, which fragments badly
+    because a power-law degree distribution has thousands of nearly-empty
+    buckets; `"sorted"` sorts by degree and fills passes greedily, paying the
+    group maximum.  Section K measures all three and `"sorted"` is the
+    realistic one.
 """
 
 import math
@@ -95,6 +118,11 @@ from typing import List, Optional, Tuple
 _here = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_here, '..', 'cycle_breakdown'))
 
+sys.path.insert(0, os.path.join(_here, '..', 'array_packing'))
+
+from array_pack import (                                         # noqa: E402
+    max_useful_pack, packed_osv_cycles,
+)
 from cycle_units import UnitAwareSimulator                       # noqa: E402
 from simulator import (                                          # noqa: E402
     ComputeMode, OperationMetrics, Simulator,
@@ -108,6 +136,25 @@ DATAFLOWS = (PULL, PUSH, VPU)
 # `per_round` for the M=1 OS-V branch is LUT_GEN(3) + k_eff + 1 + array_n +
 # OUTPUT(2).  Everything except k_eff is the fixed overhead.
 FIXED_PER_ROUND = 3 + 1 + 2      # + array_n, added where array_n is known
+
+IDEAL = 'ideal'      # equal-degree groups, partial passes not charged
+SORTED = 'sorted'    # degree-sorted greedy fill, group pays its max degree
+EXACT = 'exact'      # equal-degree groups, whole passes only
+SCHEDULES = (IDEAL, SORTED, EXACT)
+
+
+def live_row_bytes_per_cycle(hw, pack: int = 1,
+                             mu: int = Simulator.MU,
+                             num_rac: int = Simulator.NUM_RAC) -> int:
+    """KV-SRAM read bytes per cycle with `pack` OS-V rows live at once.
+
+    The same expression `pack_run.py` section E uses, kept here rather than
+    imported because it is arithmetic over `HardwareConfig` fields, not a
+    simulator call -- and because the number it produces for a GNN is **4x**
+    `study.md` section 16(d)'s, which was computed at `kv_cache_bits = 4`
+    while aggregation runs at 16.  See `gnn_run.py` section K.
+    """
+    return mu * hw.array_n * num_rac * hw.kv_cache_bits // 8 * pack
 
 
 @dataclass
