@@ -59,8 +59,12 @@ def omni_compute_energy(array_m: int, array_n: int, M, K, N, batch_size, qbit, m
             energy = energy_per_tile * m_tiles * n_tiles * qbit * batch_size
             if M == 1:
                 energy = energy / array_m
-        
 
-    return energy
+
+    # interp1d returns np.float64; coerce so OperationMetrics.compute_energy is
+    # always a plain float.  Numerically inert -- float(np.float64(x)) == x --
+    # but it stops numpy scalars leaking into every downstream consumer, where
+    # they serialize and compare differently from the other energy models.
+    return float(energy)
     
     

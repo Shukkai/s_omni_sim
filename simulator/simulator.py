@@ -131,6 +131,145 @@ class HardwareConfig:
     freq_mhz: int = 500
     dram_bandwidth_gbps: float = 51.2   # DRAM bandwidth in GB/s
 
+    # On-chip SRAM read+write bandwidth in GB/s.  0 = unlimited, the default,
+    # which is how every result predating this field was produced: capacity was
+    # enforced (`sram_capacity_kb`) but throughput never was, so an operation
+    # could move unbounded bytes per cycle to and from SRAM for free.
+    #
+    # The array geometry implies roughly `MU x array_n x NUM_RAC x kv_bits`
+    # = 4 x 4 x 32 x 4 b = 256 B/cycle, or 128 GB/s at 500 MHz -- but that is
+    # *one operand port*, while `sram_read` here is a lump of A-reads, B-reads
+    # and C accumulator traffic.  Charging the lump against one port's number
+    # over-charges, sometimes by a lot, which is exactly why this ships inert
+    # and the sweep that sets it reports what it does to every headline number
+    # (`analysis/memory/bandwidth_run.py`).
+    sram_bandwidth_gbps: float = 0.0
+
+    # How much an operation's memory time can hide behind another's compute.
+    #
+    #   "serial"     sum(max(compute, memory)) over operations -- no overlap at
+    #                all.  Every published latency number was produced this way,
+    #                so it is the default.
+    #   "pipelined"  max(sum(compute), sum(memory)) over a phase -- the opposite
+    #                extreme, where a deep enough software pipeline hides one
+    #                entirely behind the other.
+    #
+    # Neither is the truth; they **bracket** it.  Real hardware double-buffers,
+    # so op i+1's operands prefetch during op i's compute, and a long chain of
+    # such ops tends toward the pipelined bound -- but only with enough SRAM to
+    # hold two operand sets, which `sram_capacity_kb` would have to allow.
+    #
+    # The gap is not small.  It is widest where a phase alternates between
+    # memory-bound and compute-bound operations, which is exactly what decode
+    # does (AW projections are memory-bound, `attn_v` is compute-bound), so
+    # "serial" overstates decode TPOT by up to 1.75x -- more than most of the KV
+    # techniques in this repo were measured to *save*.
+    overlap_model: str = "serial"
+
+    # How `LUT_OS_V` counts output-stationary rounds.
+    #
+    #   "tiled"   rounds = ceil(M/array_m) * n_tiles, except at M == 1 which
+    #             has its own branch.  This is the original model and every
+    #             published number was produced with it, so it is the default.
+    #   "packed"  rounds = ceil(M * n_tiles / array_m), the accumulator-budget
+    #             form.
+    #
+    # **The two disagree by `array_m / M` for 2 <= M < array_m, and the
+    # original is the one that is wrong there.**  The array holds
+    # `array_m x (array_n x NUM_RAC)` accumulators, so a round can retire
+    # `array_m` accumulator tiles wherever they come from -- different output
+    # rows, different column tiles, or a mix.  "tiled" rounds `M` up to a whole
+    # 32-row tile *before* multiplying by `n_tiles`, so it never packs column
+    # tiles across rows unless `M >= array_m`, and charges a full 32-row pass
+    # for M=2.
+    #
+    # The `M == 1` branch already does the right thing, and that is the tell:
+    # `ceil(1 x n_tiles / array_m)` *is* `ceil(n_tiles / array_m)`, so the
+    # special case is not special -- it is the only place the general formula
+    # was written down.  "packed" restores it for every M.
+    #
+    # Measured effect: decode `q_proj` cycles go 32.96x from batch 1 to batch 2
+    # for a 2x workload under "tiled", then sit flat from batch 2 to batch 32 --
+    # the model charges the same cycles for 2 sequences as for 32.  That
+    # discontinuity is what makes decode look compute-bound from batch 2
+    # (`analysis/memory/regime_run.py`), so it gates the regime map.
+    #
+    # **Scope: `LUT_OS_V` only.**  `LUT_OS` carries the same accumulator
+    # argument but not the same evidence -- OMNI_LUT.pdf SS IV-C/IV-D documents
+    # the row-broadcast for the OS-V M=1 case specifically, and decode AW ops
+    # resolve to `LUT_OS_V`, which is where the defect was measured.  Widening
+    # it to `LUT_OS` would move prefill numbers on an argument from first
+    # principles alone.
+    os_rounds_model: str = "tiled"
+
+    # --- On-chip memory ---
+    # 0 = unlimited: peak_sram_bytes is reported but never enforced, which is
+    # how every result predating this field was produced.  Set a real capacity
+    # to make an operation whose working set does not fit pay for the spill.
+    sram_capacity_kb: int = 0
+
+    # How many batch elements are resident at once during *attention*.
+    #
+    #   "sequential"  one (batch, head) instance at a time -- the original
+    #                 model, and the default, so existing results stand.
+    #   "concurrent"  all batch elements co-resident, heads still sequential.
+    #
+    # Projections and FFN are unaffected by this switch: they are already
+    # issued as a single GEMM with M = batch x seq_len, so batch is a
+    # dimension there and their footprint already scales with it.  Attention
+    # is issued once per (batch, head) with batch folded into `batch_size`,
+    # which the footprint ignored -- so batch was a dimension in one half of
+    # the model and a loop in the other.  "concurrent" makes the two agree,
+    # which is what makes "how much batch fits" a well-posed question.
+    sram_batch_model: str = "sequential"
+
+    # --- DRAM access granularity ---
+    # Minimum useful transfer size, in bytes.  A DRAM controller moves whole
+    # bursts, so an access that touches `run` contiguous bytes actually costs
+    # `ceil(run / burst) * burst`.  0 = disabled: bytes are charged exactly as
+    # requested, which is how every result predating this field was produced.
+    #
+    # This is inert for contiguous traffic (a 16 KB weight block rounded to a
+    # 32 B burst is still 16 KB) and only bites when the access pattern is
+    # short-run -- a page-selective KV read, say -- which is exactly the case a
+    # flat bandwidth number makes look ~100x cheaper than it is.
+    dram_burst_bytes: int = 0
+
+    # --- On-chip KV buffer ---
+    # Bytes of KV cache held on chip *between decode steps*, in KB.
+    #
+    # The KV cache is append-only: entries 1..n-1 are bit-identical at step t
+    # and step t+1.  With no buffer the whole cache is re-read from DRAM every
+    # token, which is what this model did unconditionally and what every decode
+    # number predating this field assumes.  0 keeps that behaviour.
+    #
+    # This is a carve-out of `sram_capacity_kb`, not additional memory; keeping
+    # the two consistent is the caller's job, and `capacity_run.py` reports the
+    # working set a given configuration needs.
+    kv_sram_kb: int = 0
+
+    # --- Attention score staging ---
+    # On-chip buffer for the attention score matrix, in KB.  0 = the scores are
+    # written to DRAM by QK and read back by Attn.V unconditionally, which is
+    # what every number predating this field assumes.
+    #
+    # The test is per (batch, head) instance and at ROW granularity: the scores
+    # stay on chip iff one query row's score vector fits, `kv_len * act_bits/8`.
+    # A whole-matrix test would be false at every plausible size (a 32K score
+    # matrix is 2 GB per instance) and so would be inert exactly where the
+    # traffic is.  A row block that fits maps onto a real loop nest -- produce
+    # rows, softmax, consume in Attn.V -- and no score byte reaches DRAM.
+    #
+    # A carve-out of `sram_capacity_kb`, not additional memory.
+    score_sram_kb: int = 0
+
+    # Charge prefill attention for reading K/V from DRAM.  False reproduces the
+    # original model, which gates the KV read on `is_decode` and so charges
+    # prefill nothing -- it assumes K/V are resident while assuming the much
+    # larger score matrix is not.  Only meaningful together with
+    # `score_sram_kb`; see `_score_staged`.
+    prefill_kv_dram_read: bool = False
+
     # --- Bit widths ---
     act_bits: int = 16
     accumulate_bits: int = 32
@@ -164,9 +303,15 @@ class OperationMetrics:
     utilization: float = 0.0
     throughput: float = 0.0
 
-    # Memory access (bytes)
+    # Memory access (bytes).  dram_read / dram_write are *logical* bytes: what
+    # the operation asked for.  The _eff pair is what the DRAM actually moved
+    # once each access is rounded up to a burst.  They are equal unless
+    # hw.dram_burst_bytes is set, and both are kept so a report can show the
+    # waste rather than silently changing what "dram_read" has always meant.
     dram_read: int = 0
     dram_write: int = 0
+    dram_read_eff: int = 0
+    dram_write_eff: int = 0
     sram_read: int = 0
     sram_write: int = 0
 
@@ -179,6 +324,15 @@ class OperationMetrics:
 
     # SRAM capacity requirement (bytes)
     peak_sram_bytes: int = 0
+
+    # KV bytes held on chip between decode steps, and so NOT re-read from DRAM
+    # (only meaningful when hw.kv_sram_kb > 0)
+    kv_resident_bytes: int = 0
+
+    # Capacity enforcement (only meaningful when hw.sram_capacity_kb > 0)
+    sram_overflow: bool = False      # working set exceeded capacity
+    sram_refetch_bytes: int = 0      # extra DRAM reads charged by the spill policy
+                                     # (already included in dram_read)
 
     # --- Derived properties ---
     @property
@@ -205,6 +359,8 @@ def _aggregate_metrics(metrics_list: List[OperationMetrics]) -> OperationMetrics
         total.flops += m.flops
         total.dram_read += m.dram_read
         total.dram_write += m.dram_write
+        total.dram_read_eff += m.dram_read_eff
+        total.dram_write_eff += m.dram_write_eff
         total.sram_read += m.sram_read
         total.sram_write += m.sram_write
         total.compute_energy += m.compute_energy
@@ -214,6 +370,9 @@ def _aggregate_metrics(metrics_list: List[OperationMetrics]) -> OperationMetrics
         total.sram_write_energy += m.sram_write_energy
         weighted_util += m.utilization * m.cycles
         max_peak_sram = max(max_peak_sram, m.peak_sram_bytes)
+        total.sram_overflow |= m.sram_overflow
+        total.sram_refetch_bytes += m.sram_refetch_bytes
+        total.kv_resident_bytes += m.kv_resident_bytes
 
     total.utilization = weighted_util / total.cycles if total.cycles > 0 else 0.0
     total.peak_sram_bytes = max_peak_sram
@@ -472,6 +631,8 @@ class SimulationResults:
             "memory": {
                 "dram_read": m.dram_read,
                 "dram_write": m.dram_write,
+                "dram_read_eff": m.dram_read_eff,
+                "dram_write_eff": m.dram_write_eff,
                 "sram_read": m.sram_read,
                 "sram_write": m.sram_write,
             },
@@ -486,6 +647,9 @@ class SimulationResults:
                 "total": m.total_energy,
             },
             "peak_sram_bytes": m.peak_sram_bytes,
+            "sram_overflow": m.sram_overflow,
+            "sram_refetch_bytes": m.sram_refetch_bytes,
+            "kv_resident_bytes": m.kv_resident_bytes,
         }
 
 
@@ -647,7 +811,7 @@ class Simulator:
                 attn_q_len=attn_q_len, kv_len=kv_len,
                 batch_size=batch * num_heads,
                 kv_batch_size=batch * num_kv_heads,
-                is_decode=is_decode,
+                is_decode=is_decode, sram_batch=batch,
             )
             layer_ops.append((OperationType.FLASH_ATTN, ComputeMode.AA, flash_m))
         else:
@@ -657,7 +821,7 @@ class Simulator:
                 shape=(attn_q_len, head_dim, kv_len),
                 batch_size=batch * num_heads, is_decode=is_decode,
                 seq_len=seq_len, kv_len=kv_len,
-                kv_batch_size=batch * num_kv_heads,
+                kv_batch_size=batch * num_kv_heads, sram_batch=batch,
             )
             layer_ops.append((OperationType.QK_MATMUL, ComputeMode.AA, qk_m))
 
@@ -666,7 +830,7 @@ class Simulator:
                 shape=(attn_q_len, kv_len, head_dim),
                 batch_size=batch * num_heads, is_decode=is_decode,
                 seq_len=seq_len, kv_len=kv_len,
-                kv_batch_size=batch * num_kv_heads,
+                kv_batch_size=batch * num_kv_heads, sram_batch=batch,
             )
             layer_ops.append((OperationType.ATTN_V_MATMUL, ComputeMode.AA, av_m))
 
@@ -792,7 +956,7 @@ class Simulator:
         shape: Tuple[int, int, int],
         batch_size: int = 1, is_decode: bool = False,
         seq_len: int = 0, kv_len: int = 0,
-        kv_batch_size: int = 0,
+        kv_batch_size: int = 0, sram_batch: int = 1,
     ) -> OperationMetrics:
         """Simulate a single matrix multiplication A(M×K) @ B(K×N) = C(M×N).
 
@@ -800,6 +964,10 @@ class Simulator:
             kv_batch_size: Effective batch size for the B operand (K/V) DRAM
                 access.  For GQA, this is batch × num_kv_heads while batch_size
                 is batch × num_heads.  0 means same as batch_size (MHA).
+            sram_batch: The workload batch alone, heads excluded -- how many
+                attention instances must be co-resident under
+                `hw.sram_batch_model == "concurrent"`.  Only meaningful for
+                AA ops; AW ops already carry batch in M.
 
         Returns fully-populated OperationMetrics.
         """
@@ -825,13 +993,31 @@ class Simulator:
         )
         metrics.dram_read = mem["dram_read"]
         metrics.dram_write = mem["dram_write"]
+        metrics.dram_read_eff = mem["dram_read_eff"]
+        metrics.dram_write_eff = mem["dram_write_eff"]
+        metrics.kv_resident_bytes = mem["kv_resident_bytes"]
         metrics.sram_read = mem["sram_read"]
         metrics.sram_write = mem["sram_write"]
 
-        # 3. Peak SRAM footprint
+        # 3. Peak SRAM footprint, and the spill it forces if capacity is finite
         metrics.peak_sram_bytes = self._calculate_peak_sram(
             M, K, N, compute_mode, resolved_mode, batch_size,
+            sram_batch=sram_batch,
         )
+        metrics.sram_overflow, metrics.sram_refetch_bytes = (
+            self._apply_sram_capacity(
+                M, K, N, compute_mode, resolved_mode, batch_size,
+                metrics.peak_sram_bytes,
+            )
+        )
+        # Re-fetch traffic is real DRAM traffic: fold it in before energy and
+        # roofline see the operation, not after.  A spilled operand is re-read
+        # as a contiguous block, so it costs the same logically and effectively.
+        metrics.dram_read += metrics.sram_refetch_bytes
+        metrics.dram_read_eff += self._dram_effective_bytes(
+            metrics.sram_refetch_bytes, metrics.sram_refetch_bytes)
+        mem["dram_read"] = metrics.dram_read
+        mem["dram_read_eff"] = metrics.dram_read_eff
 
         # 4. Utilization
         metrics.utilization = (
@@ -857,7 +1043,7 @@ class Simulator:
         self, model: ModelConfig, workload: WorkloadConfig,
         attn_q_len: int, kv_len: int,
         batch_size: int, kv_batch_size: int,
-        is_decode: bool,
+        is_decode: bool, sram_batch: int = 1,
     ) -> OperationMetrics:
         """Simulate FlashAttention-style fused tiled attention.
 
@@ -923,9 +1109,25 @@ class Simulator:
         # KV DRAM reads scale with num_kv_heads (GQA), not num_heads
         eff_kv_batch = kv_batch_size if kv_batch_size > 0 else batch_size
         dram_read_bits = 0
+        kv_resident_bytes = 0
         if is_decode and kv_len > 1:
             kv_prev = kv_len - 1
             dram_read_bits = eff_kv_batch * kv_prev * head_dim * kv_bits * 2  # K + V
+            # One operation reads both K and V, so it gets the whole buffer.
+            kv_resident_bytes = self._kv_resident_bytes(
+                dram_read_bits // 8, share=1.0)
+            dram_read_bits -= kv_resident_bytes * 8
+        elif hw.prefill_kv_dram_read and kv_len > 0:
+            # Mirrors the standard path's prefill K/V read.  Flash re-reads the
+            # whole K/V once per Q block -- that is the real cost of its tiling,
+            # and the reason a larger block is cheaper.  Without this, giving
+            # only the standard path a prefill read would make flash look
+            # artificially cheap and invert the convergence check.
+            dram_read_bits = (eff_kv_batch * kv_len * head_dim * kv_bits * 2
+                              * num_q_blocks)
+            kv_resident_bytes = self._kv_resident_bytes(
+                dram_read_bits // 8, share=1.0)
+            dram_read_bits -= kv_resident_bytes * 8
         dram_write_bits = 0  # Attention scores never written to DRAM
 
         # --- Peak SRAM footprint ---
@@ -938,6 +1140,11 @@ class Simulator:
             + Br * head_dim * accum_bits      # O block (output accumulator)
             + Br * 2 * 32                     # Online softmax running max + sum
         )
+        # Same batch-residency rule as _calculate_peak_sram: one (batch, head)
+        # instance by default, all batch elements co-resident under
+        # "concurrent".  Flash is an AA path, so the switch applies here too.
+        if hw.sram_batch_model == "concurrent":
+            peak_sram_bits *= max(1, sram_batch)
 
         # --- Build metrics ---
         metrics = OperationMetrics(
@@ -951,15 +1158,34 @@ class Simulator:
             sram_write=sram_write_bits // 8,
         )
 
+        # Capacity check.  FlashAttention is already tiled to a fixed block, so
+        # there is no resident operand to spill -- the fix is a smaller Br/Bc,
+        # which is a re-tiling and out of scope for policy v1.  Flag it so an
+        # infeasible block size is visible, and charge nothing.
+        cap = hw.sram_capacity_kb * 1024
+        metrics.sram_overflow = cap > 0 and metrics.peak_sram_bytes > cap
+
         # Utilization
         metrics.utilization = (
             (metrics.flops / 2) / (metrics.cycles * self.LANES_EQUIV)
             if metrics.cycles > 0 else 0.0
         )
 
+        metrics.kv_resident_bytes = kv_resident_bytes
+
+        # Flash reads one contiguous K/V block per (batch, head), so its runs
+        # are long and the burst term is inert -- but compute it the same way
+        # rather than assuming, so a future short-run flash variant is covered.
+        metrics.dram_read_eff = self._dram_effective_bytes(
+            metrics.dram_read, metrics.dram_read)
+        metrics.dram_write_eff = self._dram_effective_bytes(
+            metrics.dram_write, metrics.dram_write)
+
         # Energy: memory
         mem_access = {
             "dram_read": metrics.dram_read, "dram_write": metrics.dram_write,
+            "dram_read_eff": metrics.dram_read_eff,
+            "dram_write_eff": metrics.dram_write_eff,
             "sram_read": metrics.sram_read, "sram_write": metrics.sram_write,
         }
         energy = self._calculate_memory_energy(mem_access)
@@ -1035,6 +1261,11 @@ class Simulator:
 
             if mode == "LUT_OS_V" and M == 1:
                 rounds = math.ceil(n_tiles / array_m / replication)
+            elif mode == "LUT_OS_V" and hw.os_rounds_model == "packed":
+                # Accumulator-budget form: a round retires `array_m` tiles
+                # wherever they come from.  Reduces to the M == 1 branch above
+                # at M = 1, which is the whole argument for it.
+                rounds = math.ceil(M * n_tiles / array_m / replication)
             else:
                 rounds = math.ceil(m_tiles * n_tiles / replication)
 
@@ -1086,6 +1317,172 @@ class Simulator:
 
     # ---- Memory access calculation ------------------------------------------
 
+    def _dram_effective_bytes(self, logical: int, run_bytes: int,
+                              cap_bytes: int = 0) -> int:
+        """Round a DRAM access up to whole bursts.
+
+        `logical` is the total bytes wanted; `run_bytes` is how many of them
+        are *contiguous* per access.  Each run costs
+        `ceil(run / burst) * burst`, so the total scales by that ratio.
+
+        The distinction is the whole point: 1 MB read as one contiguous block
+        and 1 MB read as 27,000 scattered 38-byte snippets are the same
+        `logical` and wildly different costs.  With `dram_burst_bytes = 0`,
+        or a run at least as long as a burst and burst-aligned, this returns
+        `logical` unchanged.
+        """
+        burst = self.hw.dram_burst_bytes
+        if burst <= 0 or run_bytes <= 0:
+            return logical
+        moved_per_run = math.ceil(run_bytes / burst) * burst
+        charged = logical * moved_per_run // run_bytes
+        # A scattered read can never cost more than giving up and reading the
+        # whole contiguous region the scattered set sits inside.  Without this
+        # a fine-grained mask prices above a dense read, which no controller
+        # would ever actually do.  `cap_bytes = 0` means "no covering region
+        # known", and every base-model access is already whole-entry runs, so
+        # this clamp is inert unless a sub-entry mask is in play.
+        if cap_bytes > 0:
+            return min(charged, cap_bytes)
+        return charged
+
+    def _kv_resident_bytes(self, kv_bytes: int, share: float = 0.5) -> int:
+        """How much of this op's KV working set stays on chip between steps.
+
+        The cache is append-only, so anything held in the KV buffer at step
+        `t` is still valid at `t+1` and costs no DRAM read.  Whatever does not
+        fit is streamed from DRAM every token, as before.
+
+        `share` splits the buffer between the two decode attention ops: QK
+        reads K, Attn·V reads V, so each gets half.  FlashAttention reads both
+        in one operation and passes `share=1.0`.
+
+        **Steady-state model.** The one-time cost of filling the buffer after
+        prefill is not charged, which slightly favours residency: over 256
+        output tokens the fill is under 0.4% of the KV traffic, and it is a
+        constant rather than a per-token term.  Charging it would need
+        `_calculate_memory_access` to know the decode step index, which it
+        deliberately does not.
+        """
+        buf = self.hw.kv_sram_kb * 1024
+        if buf <= 0:
+            return 0
+        return min(kv_bytes, int(buf * share))
+
+    def _score_staged(self, score_width: int) -> bool:
+        """Do the attention scores stay on chip between QK and Attn.V?
+
+        `score_width` is the score-vector width for ONE (batch, head) instance
+        -- `kv_len` -- deliberately *not* multiplied by `batch_size`.  The
+        write site multiplies by `batch_size = batch x num_heads`; if that
+        multiplied count were tested here, the buffer requirement would scale
+        with head count and staging would never fire.  Heads are processed as
+        separate instances, so one instance's row is what has to fit.
+
+        Both the QK write and the Attn.V read-back consult this one function,
+        so the two sides of the score cannot disagree about where it lives.
+        """
+        buf = self.hw.score_sram_kb * 1024
+        if buf <= 0 or score_width <= 0:
+            return False
+        return score_width * self.hw.act_bits // 8 <= buf
+
+    def _kv_dram_run_entries(self, kv_prev: int) -> int:
+        """Contiguous KV entries per DRAM access.
+
+        The cache is laid out per (batch, head), so a dense or compacted cache
+        reads one head's whole block contiguously -- the default here.  A
+        page-selective reader (Quest / TidalDecode / NSA) overrides this with
+        its page size, which is what makes the burst term bite.
+        """
+        return kv_prev
+
+    def _kv_dram_run_bytes(self, run_entries: int, head_dim: int,
+                           kv_bits: int) -> int:
+        """Contiguous bytes moved per KV DRAM access.
+
+        Default: whole entries, so one run is `run_entries` complete
+        `head_dim x kv_bits` rows and the run is always an exact multiple of
+        an entry.  That is what makes token-granular selection free on this
+        hardware -- a 4-bit entry is 64 B, exactly one burst.
+
+        An *unstructured channel* mask breaks that assumption, because it
+        fragments the entry itself: the run drops below one entry and burst
+        granularity starts to bite.  Overriding this is the only way to
+        express that, which is why it is a separate hook from
+        `_kv_dram_run_entries`.
+        """
+        return run_entries * head_dim * kv_bits // 8
+
+    def _sram_time(self, m) -> float:
+        """Seconds one operation spends moving bytes to and from SRAM.
+
+        0.0 when `sram_bandwidth_gbps` is 0 (unlimited), which makes every
+        roofline below reduce exactly to `max(compute, dram)` -- the two-term
+        form every published result was produced with.
+        """
+        bw = self.hw.sram_bandwidth_gbps * 1e9
+        if bw <= 0:
+            return 0.0
+        return (m.sram_read + m.sram_write) / bw
+
+    def _roofline_time_over(self, metrics, freq: float, dram_bw: float) -> float:
+        """Roofline time for a group of operations, honouring `overlap_model`.
+
+        `"serial"` sums each operation's own `max(...)`; `"pipelined"` sums each
+        resource across the group and takes one `max` at the end, which is the
+        limit a deep software pipeline approaches.  Every roofline site routes
+        through here so the two models cannot disagree between call sites.
+        """
+        if self.hw.overlap_model != "pipelined":
+            # Accumulated explicitly, NOT with sum(): CPython 3.12+ gives sum()
+            # compensated (Neumaier) summation over floats, which is more
+            # accurate and therefore differs from every previously published
+            # number in the last ULP.  The gate exists to make a real regression
+            # visible, and last-ULP noise across 22k values is exactly what
+            # would hide one.
+            total = 0.0
+            for m in metrics:
+                total += self._op_roofline_time(m, freq, dram_bw)
+            return total
+        compute = dram = sram = 0.0
+        for m in metrics:
+            compute += m.cycles / freq if freq > 0 else 0.0
+            dram += ((m.dram_read_eff + m.dram_write_eff) / dram_bw
+                     if dram_bw > 0 else 0.0)
+            sram += self._sram_time(m)
+        return max(compute, dram, sram)
+
+    def _op_roofline_time(self, m, freq: float, dram_bw: float) -> float:
+        """Roofline time for one operation: max(compute, DRAM, SRAM).
+
+        Every roofline site calls this rather than inlining the max, because a
+        term that reaches four of five sites is worse than no term at all --
+        the numbers stay plausible and stop being consistent.
+        """
+        ct = m.cycles / freq if freq > 0 else 0.0
+        mt = ((m.dram_read_eff + m.dram_write_eff) / dram_bw
+              if dram_bw > 0 else 0.0)
+        return max(ct, mt, self._sram_time(m))
+
+    def _kv_covering_bytes(self, logical_bytes: int, head_dim: int,
+                           kv_bits: int) -> int:
+        """Bytes of the contiguous region the scattered KV set sits inside.
+
+        This is the clamp on `_dram_effective_bytes`: a gathering reader can
+        always fall back to reading the whole covering region in one stream,
+        so it never pays more than that.
+
+        0 = "no covering region known", which disables the clamp, and is the
+        default *deliberately*.  For a dense or compacted read the covering
+        region is the read itself, so a clamp would be a no-op; for a
+        page-selective read it is the entire cache, far above anything the
+        burst term can charge.  Only a sub-entry mask -- where the charge can
+        exceed a dense read of the same region -- needs it, so only that
+        subclass supplies one, and no existing result can move.
+        """
+        return 0
+
     def _calculate_memory_access(
         self, M: int, K: int, N: int,
         compute_mode: ComputeMode, op_type: OperationType,
@@ -1119,8 +1516,10 @@ class Simulator:
         if op_type in (OperationType.K_PROJ, OperationType.V_PROJ):
             dram_write_bits = batch_size * M * N * kv_bits
         elif op_type == OperationType.QK_MATMUL:
-            # Attention scores (M × N) spill to DRAM between QK and Attn·V
-            dram_write_bits = batch_size * M * N * act_bits
+            # Attention scores (M × N) spill to DRAM between QK and Attn·V --
+            # unless a row's worth fits on chip, in which case they never leave.
+            dram_write_bits = (0 if self._score_staged(N)
+                               else batch_size * M * N * act_bits)
         else:
             dram_write_bits = 0
 
@@ -1157,7 +1556,13 @@ class Simulator:
             sram_write_bits = C_accum_bits
 
         # ---- DRAM reads ----
-        dram_read_bits = 0
+        # Tracked as (bits, contiguous-run-bytes) so each component can be
+        # rounded up to a burst independently: they have very different access
+        # shapes, and lumping them together would average that away.
+        # (bits, contiguous-run-bytes, covering-region-bytes); the third is 0
+        # when no covering region applies, which disables the clamp.
+        read_parts: List[Tuple[int, int, int]] = []
+        kv_resident_bytes = 0
         # Effective KV batch for GQA (defaults to batch_size for MHA)
         eff_kv_batch = kv_batch_size if kv_batch_size > 0 else batch_size
 
@@ -1167,18 +1572,66 @@ class Simulator:
             # Decode attention: read cached KV from DRAM (scales with num_kv_heads)
             head_dim = K if op_type == OperationType.QK_MATMUL else N
             kv_prev = max(0, kv_len - 1)
-            dram_read_bits = eff_kv_batch * kv_prev * head_dim * kv_bits
+            # One run is however many consecutive entries the reader takes in
+            # one go, times the per-entry width.
+            run_entries = min(kv_prev, self._kv_dram_run_entries(kv_prev))
+            kv_bits_total = eff_kv_batch * kv_prev * head_dim * kv_bits
+            # Whatever is held on chip between steps is not re-read.
+            resident = self._kv_resident_bytes(kv_bits_total // 8)
+            kv_resident_bytes = resident
+            kv_logical = kv_bits_total // 8 - resident
+            read_parts.append((kv_logical * 8,
+                               self._kv_dram_run_bytes(run_entries, head_dim,
+                                                       kv_bits),
+                               self._kv_covering_bytes(kv_logical, head_dim,
+                                                       kv_bits)))
+
+        elif (self.hw.prefill_kv_dram_read
+                and not is_decode
+                and op_type in (OperationType.QK_MATMUL,
+                                OperationType.ATTN_V_MATMUL)
+                and kv_len > 0):
+            # Prefill attention reads the K/V it just wrote back from DRAM.
+            # The original model charged nothing here -- the decode branch above
+            # is gated on `is_decode` and the AW branch below is an `elif`, so a
+            # prefill AA op reached neither.  That made prefill assert K/V were
+            # resident while asserting the (much larger) score matrix was not.
+            head_dim = K if op_type == OperationType.QK_MATMUL else N
+            run_entries = min(kv_len, self._kv_dram_run_entries(kv_len))
+            kv_bits_total = eff_kv_batch * kv_len * head_dim * kv_bits
+            resident = self._kv_resident_bytes(kv_bits_total // 8)
+            kv_resident_bytes = resident
+            kv_logical = kv_bits_total // 8 - resident
+            read_parts.append((kv_logical * 8,
+                               self._kv_dram_run_bytes(run_entries, head_dim,
+                                                       kv_bits),
+                               self._kv_covering_bytes(kv_logical, head_dim,
+                                                       kv_bits)))
 
         elif compute_mode == ComputeMode.AW:
-            # AW operations: weights loaded from DRAM
-            dram_read_bits = B_bits
+            # AW operations: weights loaded from DRAM -- one contiguous block
+            read_parts.append((B_bits, B_bits // 8, 0))
 
-        # Attn·V reads attention scores (A operand) back from DRAM
-        if op_type == OperationType.ATTN_V_MATMUL:
-            dram_read_bits += batch_size * M * K * act_bits
+        # Attn·V reads attention scores (A operand) back from DRAM, contiguous.
+        # `K` is kv_len here, so it is the same width the QK write tested.
+        if op_type == OperationType.ATTN_V_MATMUL and not self._score_staged(K):
+            score_bits = batch_size * M * K * act_bits
+            read_parts.append((score_bits, score_bits // 8, 0))
+
+        dram_read_bits = sum(bits for bits, _, _ in read_parts)
+        dram_read_eff = sum(
+            self._dram_effective_bytes(bits // 8, run, cap)
+            for bits, run, cap in read_parts
+        )
+        # Writes are contiguous in every path modelled so far.
+        dram_write_eff = self._dram_effective_bytes(
+            dram_write_bits // 8, dram_write_bits // 8)
 
         # Convert bits → bytes
         return {
+            "dram_read_eff":  dram_read_eff,
+            "dram_write_eff": dram_write_eff,
+            "kv_resident_bytes": kv_resident_bytes,
             "dram_read":  dram_read_bits  // 8,
             "dram_write": dram_write_bits // 8,
             "sram_read":  sram_read_bits  // 8,
@@ -1190,7 +1643,7 @@ class Simulator:
     def _calculate_peak_sram(
         self, M: int, K: int, N: int,
         compute_mode: ComputeMode, mode: str,
-        batch_size: int,
+        batch_size: int, sram_batch: int = 1,
     ) -> int:
         """Estimate peak SRAM footprint (bytes) for one operation.
 
@@ -1200,9 +1653,31 @@ class Simulator:
           - Input B tile
           - Output C accumulator tile
 
-        Operations across batches are sequential, so peak is per-element.
+        Batch residency differs by operand, and the difference is the point:
+
+          - **Projections and FFN** (`ComputeMode.AW`) are issued as a single
+            GEMM with `M = batch x seq_len`, so batch is already a dimension
+            here: A and C scale with it, while the weight tile does not.  That
+            is the correct picture -- weights are shared across the batch, and
+            sharing them is the whole reason to batch.
+          - **Attention** (`ComputeMode.AA`) is issued once per (batch, head)
+            with batch folded into `batch_size`, which this function
+            historically ignored -- so one instance was resident regardless of
+            batch.  `sram_batch` (the true batch, heads excluded) restores it
+            under `hw.sram_batch_model == "concurrent"`: batch elements are
+            co-resident, heads still run back-to-back.
+
+        `sram_batch` defaults to 1, and "sequential" ignores it, so the
+        original per-instance behaviour is what you get unless asked otherwise.
         """
         hw = self.hw
+        # Attention instances that must be resident together.  Only AA is
+        # affected: AW already carries batch in M (see above), so scaling it
+        # here as well would count the same batch twice.
+        if compute_mode == ComputeMode.AA and hw.sram_batch_model == "concurrent":
+            batch_resident = max(1, sram_batch)
+        else:
+            batch_resident = 1
         act_bits = hw.act_bits
         accum_bits = hw.accumulate_bits
         qbit = hw.weight_bits if compute_mode == ComputeMode.AW else hw.kv_cache_bits
@@ -1214,7 +1689,7 @@ class Simulator:
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = K * col_tile * qbit // 8
             C_tile = M * col_tile * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "LUT_WS":
             k_eff = math.ceil(K / self.MU)
@@ -1222,24 +1697,81 @@ class Simulator:
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = row_tile * col_tile * qbit // 8
             C_tile = M * col_tile * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "FPE_OS":
             B_tile = K * min(N, hw.FPE_array_size) * 16 // 8   # FP16
             C_tile = min(M, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "TENDER":
             B_tile = K * min(N, hw.FPE_array_size) * qbit // 8
             C_tile = min(M, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
-            return A_bytes + B_tile + C_tile
+            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "VPU":
             B_bytes = K * N * qbit // 8
             C_bytes = M * N * accum_bits // 8
-            return A_bytes + B_bytes + C_bytes
+            per_instance = A_bytes + B_bytes + C_bytes
 
-        return A_bytes  # Fallback: at least A
+        else:
+            per_instance = A_bytes  # Fallback: at least A
+
+        return per_instance * batch_resident
+
+    def _column_tiles(self, N: int, mode: str) -> int:
+        """Number of column tiles the operation loops over.
+
+        This is the loop across which A is reused, so it is also the number of
+        times A must be re-read if it cannot stay resident.
+        """
+        hw = self.hw
+        if mode in ("LUT_OS", "LUT_OS_V", "LUT_WS"):
+            return math.ceil(N / (hw.array_n * self.NUM_RAC))
+        if mode in ("FPE_OS", "TENDER"):
+            return math.ceil(N / hw.FPE_array_size)
+        return 1   # VPU processes the whole operand
+
+    def _apply_sram_capacity(
+        self, M: int, K: int, N: int,
+        compute_mode: ComputeMode, mode: str,
+        batch_size: int, peak_bytes: int,
+    ) -> Tuple[bool, int]:
+        """Spill policy v1.  Returns (overflow, extra DRAM read bytes).
+
+        `_calculate_peak_sram` models the working set as A + B_tile + C_tile:
+        B and C are already charged per tile, so A is the one operand the
+        footprint assumes stays resident for the whole operation.  When the
+        working set does not fit, A is the thing that has to go, and it is
+        re-read from DRAM once per column tile instead of once per operation.
+
+        Deliberately *not* modelled: re-tiling.  Shrinking the tile to fit
+        would change the cycle count as well as the traffic, and the cycle
+        model is out of scope here.  Two consequences worth stating plainly:
+
+          - If a single B_tile already exceeds capacity (LUT_OS_V at long
+            context, where the KV tile grows with kv_len), spilling A does not
+            actually rescue the operation and this returns a charge that is a
+            lower bound.  `sram_overflow` is still set, so the shortfall is
+            visible rather than silent.
+          - A single-column-tile operation overflows at zero charge for the
+            same reason.
+
+        The charge is the cost *under the modelled loop nest* (A resident, B
+        streamed per tile).  A scheduler free to re-tile M would hold A-tiles
+        and re-read the smaller operand instead, paying less -- so on a large
+        A this reads high, and the flag, not the byte count, is the load-
+        bearing output.  `sram_overflow` is the honest signal ("this
+        configuration does not fit"); `sram_refetch_bytes` is a first-order
+        cost, not a full spill model.
+        """
+        cap = self.hw.sram_capacity_kb * 1024
+        if cap <= 0 or peak_bytes <= cap:
+            return False, 0
+
+        A_bytes = batch_size * M * K * self.hw.act_bits // 8
+        n_tiles = self._column_tiles(N, mode)
+        return True, A_bytes * (n_tiles - 1)
 
     # ---- Energy calculation -------------------------------------------------
 
@@ -1293,10 +1825,21 @@ class Simulator:
         return 0.0
 
     def _calculate_memory_energy(self, mem_access: dict) -> dict:
-        """Calculate DRAM and SRAM energy from byte-level access counts."""
+        """Calculate DRAM and SRAM energy from byte-level access counts.
+
+        DRAM energy is charged on the *effective* bytes: moving a burst costs
+        its energy whether or not every byte in it was wanted.  Note that
+        `dram_power_model.dram_energy` already models 1024 B rows and 8 B
+        bursts internally, so this is the coarser, access-pattern-level
+        rounding layered on top of that -- the two describe different things
+        (which bytes get fetched vs. what fetching them costs), and the
+        effective count is the right input to the latter.
+        """
+        dram_read = mem_access.get("dram_read_eff", mem_access["dram_read"])
+        dram_write = mem_access.get("dram_write_eff", mem_access["dram_write"])
         return {
-            "dram_read":  dram_power_model.dram_energy(mem_access["dram_read"],  is_write=False),
-            "dram_write": dram_power_model.dram_energy(mem_access["dram_write"], is_write=True),
+            "dram_read":  dram_power_model.dram_energy(dram_read,  is_write=False),
+            "dram_write": dram_power_model.dram_energy(dram_write, is_write=True),
             "sram_read":  sram_power_model.sram_energy(mem_access["sram_read"],  is_write=False),
             "sram_write": sram_power_model.sram_energy(mem_access["sram_write"], is_write=True),
         }
@@ -1665,6 +2208,13 @@ class Simulator:
         f.write("-" * 80 + "\n")
         self._write_metrics_block(f, total)
         f.write(f"  Peak SRAM:           {peak_sram:,} bytes ({peak_sram / 1024:.2f} KB)\n")
+        cap_kb = self.hw.sram_capacity_kb
+        if cap_kb > 0:
+            verdict = "OVERFLOWS" if total.sram_overflow else "fits"
+            f.write(f"  SRAM capacity:       {cap_kb:,} KB -> {verdict}\n")
+            if total.sram_refetch_bytes:
+                f.write(f"  Spill re-fetch:      {total.sram_refetch_bytes:,} bytes "
+                        f"(included in DRAM read)\n")
         f.write("\n")
 
     def _write_kv_cache_summary(self, f, results: SimulationResults):
@@ -1723,6 +2273,12 @@ class Simulator:
         f.write(f"  Total FLOPs:         {m.flops:,}\n")
         f.write(f"  Avg Utilization:     {m.utilization:.2%}\n")
         f.write(f"  DRAM Read:           {m.dram_read:,} bytes ({m.dram_read / (1024**3):.2f} GB)\n")
+        if self.hw.dram_burst_bytes > 0:
+            moved = m.dram_read_eff + m.dram_write_eff
+            asked = m.dram_read + m.dram_write
+            waste = moved / asked if asked else 1.0
+            f.write(f"  DRAM moved (burst):  {moved:,} bytes "
+                    f"({moved / (1024**3):.2f} GB, {waste:.3f}x requested)\n")
         f.write(f"  DRAM Write:          {m.dram_write:,} bytes ({m.dram_write / (1024**3):.2f} GB)\n")
         f.write(f"  SRAM Read:           {m.sram_read:,} bytes ({m.sram_read / (1024**3):.2f} GB)\n")
         f.write(f"  SRAM Write:          {m.sram_write:,} bytes ({m.sram_write / (1024**3):.2f} GB)\n")
@@ -1807,9 +2363,9 @@ class Simulator:
 
             for m in op_list:
                 ct = m.cycles / freq
-                dram_bytes = m.dram_read + m.dram_write
+                dram_bytes = m.dram_read_eff + m.dram_write_eff
                 mt = dram_bytes / dram_bw if dram_bw > 0 else 0.0
-                rt = max(ct, mt)
+                rt = self._op_roofline_time(m, freq, dram_bw)
 
                 total_ct += ct
                 total_mt += mt
@@ -1901,14 +2457,12 @@ class Simulator:
         freq = self.hw.freq_mhz * 1e6
 
         def _phase_roofline_time(phase: PhaseMetrics) -> float:
-            total = 0.0
-            for ops_dict in (phase.aa_ops, phase.aw_ops):
-                for op_list in ops_dict.values():
-                    for m in op_list:
-                        ct = m.cycles / freq
-                        mt = (m.dram_read + m.dram_write) / dram_bw
-                        total += max(ct, mt)
-            return total
+            # Pipelining is a property of the whole phase, not of one operation,
+            # so the group handed over here is every GEMM in it.
+            return self._roofline_time_over(
+                (m for ops_dict in (phase.aa_ops, phase.aw_ops)
+                 for op_list in ops_dict.values() for m in op_list),
+                freq, dram_bw)
 
         ttft = _phase_roofline_time(results.prefill)
         decode_total = _phase_roofline_time(results.decode)
@@ -1941,16 +2495,29 @@ class Simulator:
             # AA ops
             for op_list in phase.aa_ops.values():
                 for m in op_list:
-                    ct = m.cycles / freq
-                    mt = (m.dram_read + m.dram_write) / dram_bw if dram_bw > 0 else 0.0
-                    aa_time += max(ct, mt)
+                    aa_time += self._op_roofline_time(m, freq, dram_bw)
 
             # AW ops
             for op_list in phase.aw_ops.values():
                 for m in op_list:
-                    ct = m.cycles / freq
-                    mt = (m.dram_read + m.dram_write) / dram_bw if dram_bw > 0 else 0.0
-                    aw_time += max(ct, mt)
+                    aw_time += self._op_roofline_time(m, freq, dram_bw)
+
+            # Under "pipelined" a per-category split is not measurable -- the
+            # whole point is that one category's memory hides behind another's
+            # compute, so the time does not belong to either.  Both categories
+            # are therefore scaled by the phase's pipelined/serial ratio, which
+            # keeps the parts summing to the total `compute_roofline_latency`
+            # reports.  Treat the split as an **attribution, not a measurement**;
+            # the totals are the trustworthy output.
+            if self.hw.overlap_model == "pipelined":
+                serial_gemm = aa_time + aw_time
+                if serial_gemm > 0:
+                    scale = self._roofline_time_over(
+                        (m for d in (phase.aa_ops, phase.aw_ops)
+                         for lst in d.values() for m in lst),
+                        freq, dram_bw) / serial_gemm
+                    aa_time *= scale
+                    aw_time *= scale
 
             # Non-GEMM ops (VPU) — cycle-bound only, no DRAM access
             for m in phase.non_gemm_ops:
