@@ -2,54 +2,17 @@
 
 ## 1. Is decode compute-bound or memory-bound?
 
-### 1.1 Why this has to be settled first
+Every KV-reduction paper rests on one premise: decode is memory-bound, so
+removing bytes buys time. This section tests that premise. The short version:
 
-"Decode is memory-bound" is stated in the field as though it were a property of
-decoding. It is the premise under every KV-reduction paper: bytes are the
-critical path, so removing bytes buys time.
+> **It is true only in a corner of the operating space — and inside that corner
+> the binding resource is weights, not KV.**
 
-On this hardware that premise is **conditionally false**, and the condition is
-not exotic — it is the batch size and context you actually run at. Establishing
-exactly where it holds is the prerequisite for everything else, because a
-technique aimed at the wrong side of the boundary cannot work no matter how well
-it is implemented.
+Three findings, in order.
 
-### 1.2 The method
+### 1.1 Memory-bound is a triangle, not a property
 
-Per operation, the roofline charges
-
-```
-time = max( cycles / freq ,  dram_bytes / bandwidth )
-```
-
-Sum that over every GEMM in a decode step, and separately accumulate the compute
-term `C` and the DRAM term `D`. The regime is then just `C/D`: **below 1.00 the
-array is waiting on memory; above 1.00 memory is waiting on the array.**
-
-**One methodological trap, and it caught us.** The obvious split is "AW ops are
-weights, AA ops are KV". That is wrong: `k_proj` and `v_proj` are AW operations
-that **write the KV cache**. Grouping them as weight traffic made weight DRAM
-drift 0.04% between batch 1 and batch 32 — a quantity that must be exactly
-constant. The split has to be **by read/write, not by operation**, and the
-pre-flight check that compares batch 1 against batch 32 is what exposed it.
-
-### 1.3 The balance point
-
-The machine's own crossover, computed in code rather than quoted so it cannot
-drift:
-
-```
-2 × LANES_EQUIV × freq / bandwidth = 2 × 4096 × 500e6 / 51.2e9 = 80 FLOP/byte
-```
-
-An operation with arithmetic intensity below 80 FLOP/byte is memory-bound in
-isolation. Decode attention sits far below it — which is precisely why the
-"memory-bound" claim sounds obviously true, and why the measurement below is
-worth doing anyway.
-
-### 1.4 The measurement — a triangle, not a property
-
-Decode compute / DRAM. **Below 1.00 the array waits on memory:**
+Decode compute ÷ DRAM per token. **Below 1.00 the array waits on memory:**
 
 | batch | 2K | 4K | 8K | 16K | 32K |
 |---:|---:|---:|---:|---:|---:|
@@ -60,54 +23,64 @@ Decode compute / DRAM. **Below 1.00 the array waits on memory:**
 | 16 | **1.57** | 1.93 | 2.27 | 2.54 | 2.73 |
 | 32 | 2.37 | 2.60 | 2.74 | 2.84 | 2.90 |
 
-> **The memory-bound region is a triangle in the low-batch, short-context
-> corner — not the whole space.** First compute-bound batch: **16 at 2K, 8 at
-> 4K, 4 at 8K, 2 at 16K and 2 at 32K.**
+The memory-bound cells form a triangle in the low-batch, short-context corner.
+Everywhere else the array is the constraint.
 
-**"Decode is DRAM-bound" is the batch-1 row, and only that row.**
+First compute-bound batch, by context:
 
-### 1.5 Why the boundary is a diagonal
+| context | 2K | 4K | 8K | 16K | 32K |
+|---|---:|---:|---:|---:|---:|
+| **batch** | 16 | 8 | 4 | 2 | 2 |
 
-The shape is not arbitrary. It follows from one measured fact:
+**So "decode is DRAM-bound" is the batch-1 row, and only that row.**
 
-> **Weight DRAM time is 49.81 ms per token at every cell of the grid** — every
+### 1.2 The boundary is diagonal because weight traffic is constant
+
+The triangle's shape is not arbitrary. It follows from one measured fact:
+
+> **Weight DRAM costs 49.81 ms per token at every cell of the grid** — every
 > batch, every context, without exception.
 
-Weights are read once per token regardless of how many sequences are in flight
-or how long they are. So the DRAM bill has a large **constant** floor, while
-compute grows on *both* axes — with batch (more sequences) and with context
-(attention's reduction dimension). At batch 1:
+Weights are read once per token no matter how many sequences are in flight or
+how long they are. DRAM therefore has a large fixed floor. Compute has no such
+floor: it grows with batch *and* with context.
 
-| ctx | compute | DRAM | of which weights | C/D |
+At batch 1, watch the two columns close:
+
+| ctx | compute | DRAM | weights' share of DRAM | C/D |
 |---:|---:|---:|---:|---:|
-| 2K | 7.67 ms | 51.28 ms | 49.81 ms (97.1%) | 0.15 |
-| 8K | 20.94 ms | 55.71 ms | 49.81 ms (89.4%) | 0.38 |
-| 32K | 73.33 ms | 73.40 ms | 49.81 ms (67.9%) | **1.00** |
+| 2K | 7.67 ms | 51.28 ms | 97.1% | 0.15 |
+| 8K | 20.94 ms | 55.71 ms | 89.4% | 0.38 |
+| 32K | 73.33 ms | 73.40 ms | 67.9% | **1.00** |
 
-The crossover is therefore just *"when does compute exceed the roughly constant
-50 ms of weight traffic?"* — and both axes push it the same way, which is why the
-boundary runs diagonally across the grid rather than sitting at a fixed batch or
-a fixed context.
+DRAM barely moves — 51 ms to 73 ms — while compute grows tenfold. The crossover
+is simply *"when does compute exceed the constant 50 ms of weight traffic?"*
+Both batch and context push it the same way, so the boundary cuts diagonally
+across the grid instead of sitting at a fixed batch or a fixed context.
 
-At 32K / batch 1 the two roofs are **73.33 against 73.40 ms** — as close to
-exactly balanced as the grid gets. That coincidence matters again in §5.
+At 32K / batch 1 the two roofs land at **73.33 against 73.40 ms** — the most
+evenly balanced point in the grid. That near-coincidence matters again in §5.
 
-### 1.6 At batch 1 the bottleneck is weights, not KV
+### 1.3 Inside the triangle, the bottleneck is weights — not KV
 
-This is the finding that reframes the KV literature:
+This is the finding that reframes the KV literature. Take the most
+memory-bound cell in the whole grid, 2K / batch 1:
 
-- At 2K / batch 1, DRAM is 51.28 ms of which **49.81 ms is weights (97.1%)**.
-  KV is **2.9%** — about 2.6 GB of weights per token against 80 MB of KV.
-- Compute is 7.67 ms inside a 54.83 ms token. **The array idles 86% of decode**,
-  waiting on traffic that is almost entirely *not KV*.
+| | time | share |
+|---|---:|---:|
+| weight DRAM | 49.81 ms | **97.1%** |
+| KV DRAM | ~1.5 ms | **2.9%** |
+| compute | 7.67 ms | array idle **86%** |
 
-So at batch 1 you can attack the KV cache as hard as you like and be optimising
-2.9% of the bottleneck.
+That is roughly 2.6 GB of weights per token against 80 MB of KV.
 
-### 1.7 What any lever could possibly buy
+**At batch 1 you can attack the KV cache as hard as you like and still be
+optimising 2.9% of the bottleneck.**
+
+### 1.4 What any lever could possibly buy
 
 The bound that makes this quantitative. Each column is the speedup if that
-resource became **entirely free** — an upper bound no algorithm can beat:
+resource became **entirely free** — a ceiling no algorithm can beat:
 
 | batch | ctx | packing | overlap | KV bytes | weight bytes |
 |---:|---:|---:|---:|---:|---:|
@@ -116,28 +89,56 @@ resource became **entirely free** — an upper bound no algorithm can beat:
 | 32 | 2K | 1.88× | 1.05× | 1.05× | 1.00× |
 | 32 | 32K | **3.12×** | 1.12× | 1.12× | 1.00× |
 
-- **Removing *all* KV traffic at batch 1 buys 1.01× at 2K and 1.07× at 32K.**
-  Not "eviction buys little" — *deleting the entire cache* buys 7%. This is an
-  algorithm-independent ceiling on the whole KV literature at batch 1, and it is
-  the one-line explanation for every negative result in §2.
-- **Inside the triangle the lever is weight bytes — 6.80×.** Outside it, array
-  occupancy — **3.12×**. Neither is a KV technique.
-- **The two profitable regimes want different machines.** A design tuned for
-  batch-1 short-context (weight bandwidth, weight compression) is not the design
-  tuned for batch-32 long-context (array occupancy). Two accelerators, not one.
+**Deleting the entire KV cache at batch 1 buys 1.01× at 2K and 1.07× at 32K.**
+Not "eviction buys little" — removing all of it buys 7%. That is an
+algorithm-independent ceiling on the whole KV literature at batch 1, and it is
+the one-line explanation for every negative result in §2.
 
-### 1.8 The answer, and one caveat
+The levers that are *not* bounded that way split by regime:
 
-> **Decode on Omni-LUT is memory-bound at low batch and short context, and
-> compute-bound everywhere else.** The premise the KV literature runs on holds
-> only in the corner of the operating space — and in that corner the binding
-> resource is *weights*, not KV.
+| regime | lever | worth |
+|---|---|---:|
+| inside the triangle (low batch, short ctx) | weight bytes | **6.80×** |
+| outside it (high batch, long ctx) | array occupancy | **3.12×** |
 
-**The caveat is that we had to fix our own model to see this.** The first version
-of this grid had every row but batch 1 in the wrong regime, because of a cycle
-defect that dropped the batch term entirely. That is §6, and it is reported
-rather than quietly corrected because the grid above is only as trustworthy as
-the audit behind it.
+Neither is a KV technique. And the two regimes want different machines — one
+tuned for weight bandwidth, one for array occupancy. **Two accelerators, not
+one.**
+
+### 1.5 How this was measured
+
+Per operation the roofline charges:
+
+```
+time = max( cycles / freq ,  dram_bytes / bandwidth )
+```
+
+Sum over every GEMM in a decode step, accumulating compute into `C` and DRAM
+into `D`. The regime is the ratio `C/D`.
+
+For reference, the machine's own crossover — computed in code rather than
+quoted, so it cannot drift:
+
+```
+2 × LANES_EQUIV × freq / bandwidth = 2 × 4096 × 500e6 / 51.2e9 = 80 FLOP/byte
+```
+
+Decode attention sits far below 80 FLOP/byte, which is exactly why
+"memory-bound" sounds obviously true, and why measuring it anyway was worth the
+trouble.
+
+**Two things nearly went wrong, both worth recording:**
+
+- **The obvious split is wrong.** Grouping AW ops as "weights" and AA ops as
+  "KV" fails, because `k_proj` and `v_proj` are AW operations that *write the KV
+  cache*. It made weight DRAM drift 0.04% between batch 1 and batch 32 — a
+  quantity that must be exactly constant. The split has to be **by read/write,
+  not by operation**, and the pre-flight comparing batch 1 to batch 32 is what
+  caught it.
+- **The first version of this grid was wrong.** Every row but batch 1 sat in the
+  wrong regime, because of a cycle defect that dropped the batch term entirely.
+  That is §6 — reported rather than quietly corrected, because the grid above is
+  only as trustworthy as the audit behind it.
 
 ---
 
@@ -238,7 +239,7 @@ pruning has a boundary to die on; bit-width does not.**
 > The question is never *"how many bytes does this remove?"*
 > It is *"does it reach `k_eff` or `qbit`?"*
 
-Every technique that touches only DRAM lands inside §1.7's batch-1 ceiling
+Every technique that touches only DRAM lands inside §1.4's batch-1 ceiling
 of **1.01–1.07×**. Every technique that lowers the compute roof
 survives. That is the entire selection rule, and it is checkable on paper before
 a single simulation runs.
