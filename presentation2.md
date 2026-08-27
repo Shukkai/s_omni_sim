@@ -1,17 +1,5 @@
 # Omni-LUT — The Argument, In Detail
 
-*Companion to `presentation.md`. That document states the findings; this one
-derives them — starting from the premise everything else rests on, and carrying
-through to the end.*
-
-**Where this starts.** Every KV-reduction paper rests on one premise: that
-decode is memory-bound. §1 tests that premise on this hardware, because if it is
-false the rest of the literature's value proposition is false with it. §2 then
-explains *why* the techniques that follow from it mostly do not work here — and
-every recommendation this document eventually makes descends from §2's table.
-
----
-
 ## 1. Is decode compute-bound or memory-bound?
 
 ### 1.1 Why this has to be settled first
