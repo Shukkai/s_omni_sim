@@ -4,52 +4,40 @@
 
 ### 1.1 The configuration
 
-| | value | source |
-|---|---|---|
-| PE array | **32 × 4**, 32 RACs/PE, MU=4 | = **4,096 lanes** |
-| clock | **500 MHz** | TSMC 7 nm |
-| precision | W4 A16 **KV4** | Omni-LUT-KV4 |
-| DRAM | **51.2 GB/s** peak, 64 B burst, ~90 ns | DDR5-6400 |
-| request queue | swept 16 → 128 outstanding | *not stated in the paper* |
-| operand port | **256 B/cycle = 128 GB/s** | `MU × array_n × NUM_RAC × kv_bits` |
-| unified buffer | swept 256 KB → unlimited | *not stated in the paper* |
-| model | LLaMA-3-8B, 32 layers, **GQA 32:8**, head_dim 128 | §1.6 scopes this |
+| | value |
+|---|---|
+| PE array | **32 × 4**, 32 RACs/PE, MU=4 = **4,096 lanes** |
+| clock | 500 MHz |
+| precision | W4 A16 **KV4** |
+| DRAM | **51.2 GB/s** peak, 64 B burst, ~90 ns |
+| request queue | swept 16 → 128 *(not stated in the paper)* |
+| operand port | **128 GB/s** = `MU × array_n × NUM_RAC × kv_bits` |
+| unified buffer | swept 256 KB → unlimited *(not stated in the paper)* |
+| model | LLaMA-3-8B, **GQA 32:8**, 32 layers, head_dim 128 |
 
-### 1.2 The datapath, and how the KV cache reaches the array
+### 1.2 The datapath, and how KV reaches the array
 
 ```
 DRAM ──► unified buffer ──► BQU ──► LGU ──► PE array ──► accumulator
-(KV cache,   (on-chip     (quantise   (build     (32×4,
- weights)     staging)     to BCQ)     the LUT)   32 RAC/PE)
-                                                       │
-        weight buffer ─────────────────────────────────┘
+(KV cache,   (staging,    (quantise  (build     (32×4,
+ weights)     not a cache)  to BCQ)   the LUT)   32 RAC/PE)
 ```
 
-The unified buffer is **staging, not a cache** — no tags, no replacement, no reuse tracking. In OS-V decode one LGU broadcasts to all 32 rows and the rest are gated off.
+- **KV does not live on-chip** — the whole cache is re-read from DRAM every decode step.
+- One KV entry = `128 × 4/8` = **64 B = exactly one DDR5 burst**. Per token, all layers = **32 KB**.
 
-**The KV cache does not live on-chip.** It is re-read from DRAM on **every decode step**:
-
-- one KV entry (one token, one head) = `128 × 4/8` = **64 B — exactly one DDR5 burst**
-- per token, all 32 layers = `2 × 8 kv_heads × 128 × 0.5 B × 32` = **32 KB**
-
-Per-step KV read is `32 KB × context × batch`, against a **constant** weight read:
+Per-step KV read vs a **constant** weight read:
 
 | | 2K ctx | 32K ctx |
 |---|---:|---:|
 | batch 1 | 0.06 GB (2.4% of DRAM) | 1.00 GB (28.2%) |
 | batch 32 | 2.00 GB (44.0%) | 32.00 GB (**92.6%**) |
 
-**The buffer holds one instance's tile, not all of them.** Measured peak working set is **2.06 MB at batch 1, 8 and 32 alike** — *constant in batch*. That is the pipeline assumption stated out loud: instances stream one at a time, so the buffer needs one 2 MB tile, never the **512 MB** the full working set would occupy at batch 32.
+- Peak working set is **2.06 MB at batch 1, 8 and 32 alike** — constant in batch. Instances stream one at a time: the buffer holds one tile, not the **512 MB** the full set would need.
 
 ### 1.3 The roofline
 
 ![Decode roofline](analysis/memory/roofline.png)
-
-Three roofs, only one of which is on a datasheet.
-
-The textbook reading says decode attention is memory-bound: intensity **14.2 FLOP/byte** against a ridge of `2 × 4096 × 500e6 / 51.2e9` = **80 FLOP/byte** — five and a half times inside the bandwidth-limited region.
-
-**That reading is wrong.** The 80 FLOP/byte ridge assumes all 4,096 lanes work. `attn_v` is `(M=1, K=kv_len, N=head_dim)`: it lights **one of 32 PE rows** and attains **125 GFLOP/s — 3.1% of peak** — at every batch and every context. Against *that* ceiling the ridge is `125 / 51.2` = **2.4 FLOP/byte**, and 14.2 clears it comfortably.
 
 | op | intensity | attained | of peak |
 |---|---:|---:|---:|
@@ -58,15 +46,15 @@ The textbook reading says decode attention is memory-bound: intensity **14.2 FLO
 | `qk_matmul` | 14.2 | 2,774 GFLOP/s | 68% |
 | **`attn_v_matmul`** | 14.2 | **128 GFLOP/s** | **3.1%** |
 
-- **`attn_v` is compute-bound not because it does much arithmetic, but because the array is bad at this shape.**
-- **Batching moves the projections across the ridge** — intensity 4.0 at batch 1 (weight-dominated) → **128.0** at batch 32. That one number is the whole batch story: weights are read once per step regardless of N, so batching multiplies compute by N and DRAM by less.
-- **Attention cannot be moved that way**: its intensity is 14.2 at *every* batch, because both its FLOPs and its KV bytes scale with N.
-- The identity `C/D = intensity ÷ effective ridge` reproduces the grid exactly: b1/2K `4.3 ÷ 28.7` = 0.15; b1/32K `7.3 ÷ 7.29` = 1.00.
-- **The orange roof is the same machine with a 32-deep request queue** (§1.4). It drags the nominal ridge from 80 to **180 FLOP/byte**; `attn_v`'s effective ridge moves 2.4 → **5.5**, still under its 14.2, so the one compute-bound operation stays compute-bound and everything else gets worse.
+- **The 80 FLOP/byte ridge assumes all 4,096 lanes work.** `attn_v` lights one of 32 rows, attains **3.1% of peak**, so its *effective* ridge is `125/51.2` = **2.4 FLOP/byte**. At 14.2 it clears that: **compute-bound, because the array is bad at this shape.**
+- **Batching moves the projections across the ridge** — 4.0 → **128.0**. Weights are read once per step, so batch multiplies compute by N and DRAM by less.
+- **Attention cannot be moved that way** — 14.2 at *every* batch; its FLOPs and its KV bytes both scale with N.
+- **Orange roof** = same machine, 32-deep queue. Ridge 80 → **180**; `attn_v`'s effective ridge 2.4 → **5.5**, still under 14.2.
+- `C/D = intensity ÷ effective ridge` reproduces the grid exactly.
 
-### 1.4 The other two legs: SRAM, and DRAM latency
+### 1.4 The other two legs
 
-**SRAM never decides it.** Charged at the array's own 128 GB/s operand port, at datasheet DRAM bandwidth:
+**SRAM never decides it.** At the 128 GB/s operand port, datasheet DRAM:
 
 | batch | ctx | compute | DRAM | SRAM | SRAM/max |
 |---:|---:|---:|---:|---:|---:|
@@ -75,37 +63,29 @@ The textbook reading says decode attention is memory-bound: intensity **14.2 FLO
 | 8 | 2K | 57.5 ms | **61.6 ms** | 59.6 ms | **0.97** |
 | 32 | 32K | **2331.5 ms** | 804.8 ms | 1342.5 ms | 0.58 |
 
-- The 0.97 near-miss is **itself an artefact of ideal DRAM**: charge for a finite queue and the DRAM leg doubles while SRAM does not move, so the worst ratio falls to **0.78×**. Under realistic memory the port has margin everywhere.
-- **A finite buffer barely touches decode** — DRAM is unchanged from unlimited down to **1 MB**, moving 2.7% only at 256 KB, and never from attention. Prefill DRAM rises **3.3× at 8 MB**: decode re-reads everything every step, so a small buffer destroys no reuse.
+- The 0.97 near-miss is **itself an ideal-DRAM artefact** — under a finite queue it falls to **0.78×**.
+- **Capacity barely touches decode**: DRAM unchanged from unlimited down to **1 MB** (2.7% only at 256 KB). Prefill rises **3.3× at 8 MB** — decode re-reads everything anyway, so there is no reuse to lose.
 
-**DRAM latency decides it.** 51.2 GB/s is a peak; reaching it needs enough reads in flight to cover the round trip (Little's law):
-
-```
-reachable_bw = min(peak, outstanding × burst / latency)
-```
-
-At 90 ns and a 64 B burst, **72 reads must be in flight** — 4.5 KB in the air at all times. What a real queue reaches, and what it does to the grid:
+**DRAM latency decides it.** `reachable = min(peak, outstanding × burst / latency)`. At 90 ns, **72 reads must be in flight** to sustain 51.2 GB/s.
 
 | queue depth | reachable | memory-bound cells | C/D at b1/32K |
 |---:|---:|---:|---:|
-| no latency term | 51.2 GB/s | **11 of 30** | 1.00 |
-| 128 | 51.2 GB/s | 11 of 30 | 1.00 |
+| none (ideal) | 51.2 GB/s | **11 of 30** | 1.00 |
 | 64 | 45.5 GB/s | 13 of 30 | 0.89 |
 | **32** | **22.8 GB/s** (44%) | **21 of 30** | **0.44** |
 | **16** | **11.4 GB/s** (22%) | **30 of 30** | **0.22** |
 
-> **Bandwidth is a property of the DRAM *and the requester*. The compute-bound triangle was an artefact of assuming an infinitely deep request queue.**
+> **Bandwidth is a property of the DRAM *and the requester*. The compute-bound triangle was an artefact of assuming an infinitely deep queue.**
 
-Weight DRAM stays constant at every cell either way — 49.81 ms per token at datasheet, **112.1 ms** at a 32-deep queue. Only the size of the floor moves.
+Weight DRAM stays constant either way — 49.81 ms/token at datasheet, **112.1 ms** at 32-deep. Only the floor moves.
 
 ### 1.5 The verdict
 
-> **Ideal memory:** memory-bound in a low-batch, short-context triangle — **11 of 30 cells** — compute-bound elsewhere.
-> **A 32-deep request queue:** memory-bound in **21 of 30**.
-> **A 16-deep queue:** memory-bound **everywhere**.
-> **SRAM decides none of it** — neither capacity above ~2 MB nor the operand port at its design rate. What decides it is DRAM, and how deep a queue you can keep full.
+> **Ideal memory:** memory-bound in a low-batch, short-context triangle (**11 of 30**).
+> **32-deep queue:** **21 of 30**. **16-deep:** **everywhere**.
+> **SRAM decides none of it.** What decides it is DRAM, and how deep a queue you can keep full.
 
-Compute ÷ DRAM at datasheet bandwidth; below 1.00 the array waits. Bold = first compute-bound cell in its column.
+Compute ÷ DRAM at datasheet bandwidth; below 1.00 the array waits:
 
 | batch | 2K | 4K | 8K | 16K | 32K |
 |---:|---:|---:|---:|---:|---:|
@@ -116,27 +96,23 @@ Compute ÷ DRAM at datasheet bandwidth; below 1.00 the array waits. Bold = first
 | 16 | **1.57** | 1.93 | 2.27 | 2.54 | 2.73 |
 | 32 | 2.37 | 2.60 | 2.74 | 2.84 | 2.90 |
 
-At a 32-deep queue every cell divides by ~2.2 and the boundary retreats to batch 8–32.
-
-**Inside the memory-bound region the binding resource is weights, not KV.** At 2K / batch 1 the byte split is weights **97.1%**, KV **2.9%** — a ratio latency cannot change, since it scales both legs alike. What latency changes is the waiting: the array idles **86%** of decode at datasheet bandwidth, **94%** at a 32-deep queue. **Latency does not shift the blame from weights to KV; it deepens the hole weights already dug.**
+- **Inside the memory-bound region the binding resource is weights, not KV** — 2K/batch 1 is **97.1% weights, 2.9% KV**. Latency scales both legs alike, so it cannot change that ratio; it only deepens the wait (array idle **86% → 94%**).
 
 ### 1.6 Scope, and what is still idealised
 
-**This is a GQA result.** The Omni-LUT paper evaluates OPT-1.3B/2.7B/6.7B/13B/30B and LLaMA2-7B/13B — **all MHA**:
+**This is a GQA result.** The paper evaluates OPT-1.3B…30B and LLaMA2-7B/13B — **all MHA**:
 
-| configuration | max `C/D` over 30 cells | compute-bound cells |
+| configuration | max `C/D` | compute-bound cells |
 |---|---:|---|
 | LLaMA-3-8B GQA, KV4 | 2.90 | the triangle |
 | OPT-6.7B **MHA**, KV4 | 1.07 | 1 of 30 |
 | OPT-6.7B **MHA**, KV16 | **0.94** | **none** |
 
-**So there were two independent reasons this model disagreed with the literature about bound-ness, and either alone is sufficient:** the paper measures MHA, and no roofline here charged for latency. Under either correction decode is memory-bound where the paper says it is.
+**Two independent reasons this model disagreed with the literature, either sufficient:** the paper measures MHA, and no roofline here charged for latency.
 
-Still idealised, in order of how much it matters:
-
-1. **The latency term is a throughput clamp, not a latency model** — steady-state streaming reads, no dependent chains, no row misses, no refresh. **A scattered KV read does worse than modelled here.**
-2. **KV buffer pressure is inexpressible.** The spill charge is `A_bytes × (n_tiles − 1)`, and `attn_v` has `n_tiles = 1` → **identically zero at any buffer size**, against a 2.06 MB working set. The operation that is 88% of decode cycles is the one that cannot be charged for buffering.
-3. **The prefill spill charge prices an assumed loop order.** Read prefill capacity numbers as *the predicate fires here*, not as *prefill costs this much*.
+1. **The latency term is a throughput clamp, not a latency model** — no dependent chains, row misses or refresh. **A scattered KV read does worse than modelled.**
+2. **KV buffer pressure is inexpressible** — the spill charge is `A_bytes × (n_tiles − 1)` and `attn_v` has `n_tiles = 1`, so it is **zero at any buffer size** against a 2.06 MB working set.
+3. **The prefill spill charge prices an assumed loop order** — read it as *the predicate fires here*, not as a cost.
 
 ---
 
