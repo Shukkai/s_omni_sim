@@ -1,24 +1,115 @@
-# Omni-LUT — What Bounds Decode, and Which Pruning Axis Survives
+# Omni-LUT — The Memory Model, and What Bounds Decode
 
-## 1. Is decode compute-bound or memory-bound?
+## 1. The memory model
 
-**Why it matters**
+### 1.1 The configuration being simulated
 
-- Every KV-reduction paper rests on one premise: decode is memory-bound, so removing bytes buys time.
-- A technique aimed at the wrong side of the boundary cannot work, however well implemented.
+| | value | where it comes from |
+|---|---|---|
+| PE array | **32 × 4**, 32 RACs/PE, MU=4 | = **4,096 lanes**, matched to a 64×64 MAC array |
+| clock | **500 MHz** | paper, TSMC 7 nm |
+| precision | W4 A16 **KV4** | Omni-LUT-KV4 |
+| DRAM | **51.2 GB/s**, 64 B burst | DDR5-6400 |
+| operand port | **256 B/cycle = 128 GB/s** | `MU × array_n × NUM_RAC × kv_bits` |
+| unified buffer | swept 256 KB → unlimited | *not stated in the paper* |
+| model | LLaMA-3-8B, 32 layers, **GQA 32:8**, head_dim 128 | §1.8 scopes this |
 
-**Verdict**
+Balance point: `2 × 4096 × 500e6 / 51.2e9` = **80 FLOP/byte**.
 
-> - On **GQA + KV4**: memory-bound only in a low-batch, short-context corner — and inside that corner the binding resource is **weights, not KV**.
-> - On **MHA + KV16**: memory-bound **everywhere**. §1.5 shows GQA is the reason.
+### 1.2 The datapath
 
-*§1.1–§1.4 are LLaMA-3-8B (GQA 32:8, KV4). §1.5 varies both.*
+```
+DRAM ──► unified buffer ──► BQU ──► LGU ──► PE array ──► accumulator
+(KV cache,   (on-chip     (quantise   (build     (32×4,
+ weights)     staging)     to BCQ)     the LUT)   32 RAC/PE)
+                                                       │
+        weight buffer ─────────────────────────────────┘
+```
 
----
+- **Unified buffer** — on-chip staging for activations and KV. Not a cache: no tags, no replacement policy, no reuse tracking in this model.
+- **BQU** — quantises K/V to BCQ online, reading from and writing back to the unified buffer.
+- **LGU** — builds the lookup table from a 4-activation group. In OS-V decode, **one** LGU broadcasts to all 32 rows and the rest are gated off.
+- **PE array** — each PE holds a LUT for a 4-activation group, shared by 32 binary weights read-and-accumulated per cycle.
 
-### 1.1 It is a triangle, not a property
+### 1.3 What "buffering" means here — and what it does not
 
-Decode compute ÷ DRAM per token. **Below 1.00 the array waits on memory:**
+The model prices **three** things and ignores a fourth:
+
+| priced | how |
+|---|---|
+| DRAM **bytes** | `dram_read_eff + dram_write_eff`, with burst rounding |
+| SRAM **bytes** | `sram_read + sram_write`, ÷ `sram_bandwidth_gbps` |
+| SRAM **capacity** | `peak_sram_bytes` vs `sram_capacity_kb`, spilling to a refetch charge |
+| **not priced** | **latency.** No tRC/tRCD/CAS, no queueing, no MSHRs, no bank conflicts. |
+
+That last row is the load-bearing limitation, and §1.8 returns to it.
+
+### 1.4 How the KV cache actually reaches the array
+
+**It does not live on-chip.** `kv_sram_kb = 0` by default, so **the entire KV cache is re-read from DRAM on every decode step.** For LLaMA-3-8B at KV4:
+
+- one KV entry (one token, one head) = `128 × 4/8` = **64 B — exactly one DDR5 burst**
+- per token per layer = `2 × 8 kv_heads × 128 × 0.5 B` = **1,024 B**
+- per token, all 32 layers = **32 KB**
+
+So the per-step KV read is `32 KB × context × batch`:
+
+| | 2K ctx | 32K ctx |
+|---|---:|---:|
+| batch 1 | 0.06 GB | 1.00 GB |
+| batch 8 | 0.50 GB | 8.00 GB |
+| batch 32 | 2.00 GB | 32.00 GB |
+
+against a **constant 2.55 GB of weights** per step. KV goes from **2.4%** of the DRAM bill to **92.6%** across that grid.
+
+**The buffer holds one instance's tile, not all of them.** `attn_v` is issued once per `(batch, kv_head)` instance, and each streams its own V tile:
+
+| | one V tile | all 8 kv_heads × batch 32 |
+|---|---:|---:|
+| 2K | 0.12 MB | 32 MB |
+| 8K | 0.50 MB | 128 MB |
+| 32K | **2.00 MB** | **512 MB** |
+
+Measured `peak_sram` for decode at 32K is **2.06 MB at batch 1, 8 and 32 alike** — *constant in batch*. That is the model telling you its own pipeline assumption: **instances are streamed one at a time, so the buffer needs one tile, never the 512 MB the whole working set would occupy.**
+
+### 1.5 What scales with batch, and what scales with context
+
+Three quantities, three behaviours — this is the whole mechanism:
+
+| | with batch | with context |
+|---|---|---|
+| **compute** | ×N — each sequence needs its own projections and attention | grows — `kv_len` is attention's reduction dim |
+| **KV DRAM** | ×N — each sequence has its own cache | ×N — cache grows with length |
+| **weight DRAM** | **×1** — read once per step, serves all N | **×1** — independent of length |
+
+Measured: **weight DRAM is 49.81 ms per token at every cell of the grid.** Every batch, every context, no exception.
+
+So batching multiplies compute by N but DRAM by *less* than N — and how much less depends entirely on how much of DRAM was weights.
+
+### 1.6 The three legs: what actually binds
+
+Decode, per token, with the operand port charged at 128 GB/s:
+
+| batch | ctx | compute | DRAM | SRAM | SRAM/max | **bound by** |
+|---:|---:|---:|---:|---:|---:|---|
+| 1 | 2K | 7.7 ms | **51.3 ms** | 24.9 ms | 0.49 | DRAM |
+| 1 | 8K | 20.9 ms | **55.7 ms** | 32.2 ms | 0.58 | DRAM |
+| 1 | 32K | 73.3 ms | **73.4 ms** | 61.3 ms | 0.83 | DRAM |
+| 8 | 2K | 57.5 ms | **61.6 ms** | 59.6 ms | **0.97** | DRAM |
+| 8 | 8K | **163.7 ms** | 97.0 ms | 117.8 ms | 0.72 | compute |
+| 8 | 32K | **582.9 ms** | 238.6 ms | 350.6 ms | 0.60 | compute |
+| 32 | 2K | **230.2 ms** | 97.0 ms | 178.6 ms | 0.78 | compute |
+| 32 | 8K | **654.8 ms** | 238.6 ms | 411.4 ms | 0.63 | compute |
+| 32 | 32K | **2331.5 ms** | 804.8 ms | 1342.5 ms | 0.58 | compute |
+
+- **The operand port never wins — but by 3%, not comfortably.** Its worst cell is 0.97× at batch 8 / 2K, which flips at **124 GB/s against a 128 GB/s port.** Per-cell flip bandwidths: 62 (b1/2K), 107 (b1/32K), **124 (b8/2K)**, 99 (b32/2K), 74 (b32/32K).
+- That test **over-charges**: `sram_read + sram_write` lumps A-reads, B-reads and accumulator traffic against a *single* port. A real design splits them, so the true margin is wider.
+- **A finite buffer barely touches decode.** DRAM is unchanged from unlimited down to **1 MB**, moving 2.7% only at 256 KB — and never from attention. Prefill DRAM rises **3.3× at 8 MB**. Decode re-reads the whole cache every step, so a small buffer has no reuse to destroy; prefill has reuse and loses it.
+- **The regime map is identical at 4 MB + 128 GB/s to the ideal-memory numbers, cell for cell.**
+
+### 1.7 The verdict
+
+> **Memory-bound at low batch and short context; compute-bound everywhere else. The on-chip memory system decides neither.**
 
 | batch | 2K | 4K | 8K | 16K | 32K |
 |---:|---:|---:|---:|---:|---:|
@@ -29,108 +120,36 @@ Decode compute ÷ DRAM per token. **Below 1.00 the array waits on memory:**
 | 16 | **1.57** | 1.93 | 2.27 | 2.54 | 2.73 |
 | 32 | 2.37 | 2.60 | 2.74 | 2.84 | 2.90 |
 
-- Memory-bound cells form a **triangle** in the low-batch, short-context corner.
-- First compute-bound batch: **16 at 2K · 8 at 4K · 4 at 8K · 2 at 16K · 2 at 32K.**
-- **"Decode is DRAM-bound" is the batch-1 row, and only that row.**
-- Even batch 1 / 32K is *exactly 1.00* — balanced, not memory-bound.
+- Compute ÷ DRAM. Below 1.00 the array waits on memory. First compute-bound batch: **16 at 2K · 8 at 4K · 4 at 8K · 2 at 16K · 2 at 32K.**
+- **The boundary is diagonal because weight DRAM is a constant floor** (49.81 ms) while compute grows on *both* axes. At batch 1, DRAM moves 1.43× from 2K→32K while compute moves 9.56×.
+- **And inside the memory-bound corner, the binding resource is weights, not KV.** At 2K / batch 1: weights **97.1%** of DRAM, KV **2.9%**, array idle **86%**.
+- **Ceiling if a resource were free:** deleting the *entire* KV cache at batch 1 buys **1.01× at 2K, 1.07× at 32K**. Weight bytes buy **6.80×** inside the triangle; array occupancy **3.12×** outside it. Neither is a KV technique.
 
-### 1.2 The boundary is diagonal because weight traffic is constant
+### 1.8 Scope, and what the model idealises
 
-- **Weight DRAM = 49.81 ms per token at every cell of the grid.** Every batch, every context, no exception.
-- Weights are read **once per token** regardless of batch or context → DRAM has a large fixed floor.
-- Compute has no floor: it grows with **batch** (more sequences) *and* **context** (attention's reduction dim).
-
-At batch 1:
-
-| ctx | compute | DRAM | weights' share | C/D |
-|---:|---:|---:|---:|---:|
-| 2K | 7.67 ms | 51.28 ms | 97.1% | 0.15 |
-| 8K | 20.94 ms | 55.71 ms | 89.4% | 0.38 |
-| 32K | 73.33 ms | 73.40 ms | 67.9% | **1.00** |
-
-- **DRAM moves 1.43× (51→73 ms). Compute moves 9.56× (7.67→73.33 ms).** That asymmetry is the mechanism.
-- Crossover = *"when does compute exceed the constant ~50 ms of weight traffic?"*
-- Both axes push it the same way → the boundary runs **diagonally**, not at a fixed batch or context.
-- At 32K / batch 1 the roofs are **73.33 vs 73.40 ms** — the most balanced point in the grid.
-
-### 1.3 Inside the triangle, the bottleneck is weights — not KV
-
-At **2K / batch 1**, the most memory-bound cell in the whole grid:
-
-| | time | share |
-|---|---:|---:|
-| weight DRAM | 49.81 ms | **97.1%** |
-| KV DRAM | ~1.5 ms | **2.9%** |
-| compute | 7.67 ms | array idle **86%** |
-
-- ≈ **2.6 GB of weights** per token against **80 MB of KV**.
-- Picking the *most* memory-bound cell is deliberate — if KV is 2.9% here, it is less everywhere else in the triangle.
-- **At batch 1 you can attack the KV cache as hard as you like and still be optimising 2.9% of the bottleneck.**
-
-### 1.4 What any lever could possibly buy
-
-Speedup if that resource became **entirely free** — a ceiling no algorithm can beat:
-
-| batch | ctx | packing | overlap | KV bytes | weight bytes |
-|---:|---:|---:|---:|---:|---:|
-| 1 | 2K | 1.07× | 1.07× | **1.01×** | **6.80×** |
-| 1 | 32K | 1.75× | 1.75× | **1.07×** | 1.57× |
-| 32 | 2K | 1.88× | 1.05× | 1.05× | 1.00× |
-| 32 | 32K | **3.12×** | 1.12× | 1.12× | 1.00× |
-
-- **Deleting the entire KV cache at batch 1 buys 1.01× at 2K, 1.07× at 32K.** Not "eviction buys little" — removing *all* of it buys 7%.
-- Algorithm-independent ceiling on the whole KV literature at batch 1 → the one-line explanation for every negative result in §2.
-- The levers that are **not** bounded that way:
-
-| regime | lever | worth |
-|---|---|---:|
-| inside the triangle (low batch, short ctx) | weight bytes | **6.80×** |
-| outside it (high batch, long ctx) | array occupancy | **3.12×** |
-
-- Neither is a KV technique.
-- The two regimes want different machines → **two accelerators, not one.**
-
-### 1.5 The triangle is a GQA result, not an Omni-LUT result
-
-- §1.1–§1.4 run **LLaMA-3-8B = GQA 32:8** (8 KV heads). That choice, not the accelerator, does most of the work.
-- The Omni-LUT paper evaluates OPT-1.3B/2.7B/6.7B/13B/30B and LLaMA2-7B/13B — **all MHA**, 32 KV heads, 4× the KV bytes with no change to attention compute.
+**This is a GQA result.** The Omni-LUT paper evaluates OPT-1.3B/2.7B/6.7B/13B/30B and LLaMA2-7B/13B — **all MHA**:
 
 | configuration | max `C/D` over 30 cells | compute-bound cells |
 |---|---:|---|
-| LLaMA-3-8B GQA, KV4 *(§1.1–§1.4)* | 2.90 | the triangle |
-| LLaMA-3-8B GQA, KV16 | 3.22 | almost all |
-| OPT-6.7B **MHA**, KV4 | 1.07 | **1 of 30** (batch 32 / 2K) |
+| LLaMA-3-8B GQA, KV4 *(above)* | 2.90 | the triangle |
+| OPT-6.7B **MHA**, KV4 | 1.07 | **1 of 30** |
 | OPT-6.7B **MHA**, KV16 | **0.94** | **none** |
 
-- **On MHA at KV16 — the baseline every KV paper argues against — decode is memory-bound in every cell. There is no triangle.** The literature's premise is right for the configuration it was written about.
-- **GQA is the dominant term.** At batch 1 / 32K: `C/D` = 1.00 on GQA KV4, 0.49 on MHA KV4. GQA divides KV traffic by 4 and attention compute by nothing → 4× the arithmetic intensity.
-- **More KV bits make decode *more* compute-bound, not less.** GQA KV4 → KV16 takes `C/D` from 1.00 → 2.08 at batch 1 / 32K, because `cycles ∝ qbit` on a bit-serial array quadruples AA compute while quadrupling only the KV slice of DRAM.
-- **Under MHA the boundary stops being diagonal.** On GQA, `C/D` rises with context at every batch. On MHA at batch 32 it **falls** — 1.07 at 2K → 0.83 at 32K — because KV bytes outgrow attention compute.
+- On MHA at KV16 decode is memory-bound **in every cell**. The literature's premise is right for the configuration it was written about.
+- GQA divides KV traffic by 4 and attention compute by nothing → 4× the arithmetic intensity.
+- **More KV bits make decode *more* compute-bound** (`cycles ∝ qbit` on a bit-serial array).
+- So the 1.01–1.07× KV ceiling is **what remains after GQA and KV4 have been applied** — on MHA/KV16 it is 1.11×/1.46×.
 
-What that does to §1.3 and §1.4:
+**Three idealisations, in order of how much they matter:**
 
-| | GQA KV4 | MHA KV4 | MHA KV16 |
-|---|---:|---:|---:|
-| KV share of decode DRAM, b1 / 2K | 2.9% | 7.9% | **25.2%** |
-| KV share of decode DRAM, b1 / 32K | 32.1% | 57.9% | **84.3%** |
-| ceiling if all KV free, b1 / 2K | 1.01× | 1.03× | **1.11×** |
-| ceiling if all KV free, b1 / 32K | 1.07× | 1.30× | **1.46×** |
+1. **No latency term anywhere.** No tRC/tRCD/CAS, no queueing, no MSHRs, no contention. Every number is a bandwidth-and-count roofline.
+2. **KV buffer pressure is inexpressible.** The spill charge is `A_bytes × (n_tiles − 1)`, and `attn_v` has `N = head_dim = 128` → `n_tiles = 1` → the charge is **identically zero at any buffer size**, against a 2.06 MB working set. At a 256 KB buffer every other decode op pays a refetch charge and attention pays nothing. **The op that is 88% of decode cycles is the one the model cannot charge for buffering.** Zero extra *bytes* is defensible — there is no reuse to lose — but what a small buffer really costs is keeping the array fed across DRAM latency, and see (1).
+3. **The prefill spill charge prices an assumed loop order**, re-reading `A` once per N-tile. Read prefill capacity numbers as *the overflow predicate fires here*, not as *prefill costs this much*.
 
-> **§1.4's ceiling is not a universal bound on KV work — it is what remains once GQA and 4-bit KV have already been applied.** A compliment to the design, not a refutation of the literature.
+> **What this licenses:** the compute/memory verdict is robust to on-chip capacity above ~2 MB and to any operand port at or above the array's own feed rate.
+> **What it does not:** any claim about how small the unified buffer can be.
 
-- **Caveat the other way:** the paper never states a batch size, and its edge framing implies **batch 1** — the memory-bound row in *every* configuration above, ours included. At the paper's operating point our grid agrees with it. The compute-bound half of §1.1 lives at batch ≥ 2, which the paper does not evaluate.
-
-### 1.6 How this was measured
-
-- Roofline per op: `time = max(cycles / freq, dram_bytes / bandwidth)`.
-- Sum over every decode GEMM → compute `C`, DRAM `D`. Regime = `C/D`.
-- Balance point, computed in code so it cannot drift: `2 × 4096 × 500e6 / 51.2e9` = **80 FLOP/byte**.
-- Decode attention sits far below 80 FLOP/byte — which is why "memory-bound" *sounds* obviously true. But 80 assumes all 4,096 lanes work; at `M=1` only **3.12%** do, so the effective balance point is ≈ **2.5 FLOP/byte**, while `attn_v` under GQA 32/8 at KV4 runs at **16 FLOP/byte**. Below 80, above 2.5 — hence the measurement disagrees with the intuition.
-
-**Two things that nearly went wrong:**
-
-- **The obvious split is wrong.** "AW = weights, AA = KV" fails: `k_proj`/`v_proj` are AW ops that *write the KV cache*. It made weight DRAM drift 0.04% between batch 1 and 32 — a quantity that must be exactly constant, which is what made it detectable. Split **by read/write, not by operation.**
-- **The first version of this grid was wrong.** Every row but batch 1 sat in the wrong regime, from a cycle defect that dropped the batch term (`ceil(M/32) = 1` for all M in 1..32). Reported, not quietly corrected.
+*Measured by `analysis/memory/regime_run.py` and `analysis/memory/sram_run.py`.*
 
 ---
 
@@ -208,7 +227,7 @@ rounds    = ceil(1/32)   = 1
 > The question is never *"how many bytes does this remove?"*
 > It is *"does it reach `k_eff` or `qbit`?"*
 
-- Touches only DRAM → lands inside §1.4's **1.01–1.07×** batch-1 ceiling.
+- Touches only DRAM → lands inside §1.7's **1.01–1.07×** batch-1 ceiling.
 - Lowers the compute roof → survives.
 - Checkable on paper before a single simulation runs.
 
@@ -216,7 +235,7 @@ rounds    = ceil(1/32)   = 1
 
 - **The mechanism is confirmed by construction.** The Omni-LUT paper builds KV3 and KV2 and states it in our terms: KV2 "eliminates 33% (vs. KV3) and 50% (vs. KV4) of the computational workload from these AA-GEMM bottlenecks" — that is `cycles ∝ qbit`.
 - **The payoff is smaller than the halving implies.** Its Fig. 10 energy bars put KV2 within ≈ **1.07×** of KV4 on a decode-heavy workload (2K in, 2048 out) and ≈ **1.14×** on a prefill-heavy one (8K in, 256 out) — for an axis that halves bytes *and* cycles.
-- Same lesson as §1.4, on a different metric: even the axis with no null runs into the fact that neither KV bytes nor AA cycles are the whole of decode.
+- Same lesson as §1.7, on a different metric: even the axis with no null runs into the fact that neither KV bytes nor AA cycles are the whole of decode.
 - **It composes with eviction rather than competing.** `cycles ∝ k_eff × qbit` → the two axes are orthogonal and **multiply**; evict-1024 at KV3 ≈ the *product*, not the larger.
 - Contrast: channel + token pruning both claim bytes from the same tensor, so their savings sub-add.
 - **Still open on our side:** the paper measures *energy*. The **latency** effect of KV3/KV2, and how it stacks with eviction, is what our model can add.
@@ -240,7 +259,7 @@ rounds    = ceil(1/32)   = 1
 ### 2.8 What §2 does *not* establish
 
 - **The channel null is `attn_v`-specific** — it depends on `head_dim ≤ 128` making `n_tiles = 1`. A wider head, or `qk` instead of `attn_v`, changes the row.
-- **"Compute-bound" is scoped to GQA + KV4** (§1.5). On MHA at KV16 the KV share is 25–84%, not 2.9%, and the ceiling is 1.11–1.46×.
+- **"Compute-bound" is scoped to GQA + KV4** (§1.8). On MHA at KV16 the KV share is 25–84%, not 2.9%, and the ceiling is 1.11–1.46×.
 - **The batch-1 numbers assume the serial roofline.** Under pipelining, eviction's 2.46× becomes 1.452× — which strengthens §2.3 and weakens nothing in §2.6.
 
 ---
