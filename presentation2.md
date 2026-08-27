@@ -57,13 +57,15 @@ Per-step KV read = `32 KB × context × batch`, against a **constant 2.55 GB of 
 | **KV DRAM** | ×N | ×N |
 | **weight DRAM** | **×1** — read once per step, serves all N | **×1** |
 
-Measured: **weight DRAM is 49.81 ms per token at every cell of the grid.**
+Measured: **weight DRAM is constant at every cell of the grid** — 49.81 ms per token at the datasheet 51.2 GB/s, **112.1 ms** once a 32-deep request queue is charged for (§1.7). Constant either way; only the size of the floor moves.
 
 Batching multiplies compute by N but DRAM by *less* than N — and how much less is entirely how much of DRAM was weights.
 
 ### 1.5 The roofline
 
 ![Decode roofline](analysis/memory/roofline.png)
+
+Three roofs, only one of which is on a datasheet.
 
 The textbook reading says decode attention is memory-bound: intensity **14.2 FLOP/byte** against a ridge of `2 × 4096 × 500e6 / 51.2e9` = **80 FLOP/byte**, five and a half times inside the bandwidth-limited region.
 
@@ -80,10 +82,11 @@ The textbook reading says decode attention is memory-bound: intensity **14.2 FLO
 - **Batching moves the projections across the ridge**: intensity 4.0 at batch 1 (weight-dominated, DRAM-bound) → 128.0 at batch 32 (compute-bound). That single number is the whole batch story.
 - Attention's intensity is **14.2 at every batch** — both its FLOPs and its KV bytes scale with N, so batching cannot move it.
 - The identity `C/D = intensity ÷ effective ridge` reproduces the grid exactly: at b1/2K, `4.3 ÷ 28.7` = 0.15; at b1/32K, `7.3 ÷ 7.29` = 1.00.
+- **The orange roof is the same machine with a 32-deep request queue (§1.7).** It drags the nominal ridge from 80 to **180 FLOP/byte** and every operation further inside the bandwidth-limited region. `attn_v`'s own effective ridge moves 2.4 → **5.5 FLOP/byte** — still under its 14.2, so the one operation that was compute-bound stays compute-bound, and everything else gets worse.
 
 ### 1.6 The third leg: SRAM
 
-Charged at the array's own 128 GB/s operand port:
+Charged at the array's own 128 GB/s operand port, **at datasheet DRAM bandwidth**:
 
 | batch | ctx | compute | DRAM | SRAM | SRAM/max |
 |---:|---:|---:|---:|---:|---:|
@@ -92,7 +95,8 @@ Charged at the array's own 128 GB/s operand port:
 | 8 | 2K | 57.5 ms | **61.6 ms** | 59.6 ms | **0.97** |
 | 32 | 32K | **2331.5 ms** | 804.8 ms | 1342.5 ms | 0.58 |
 
-- **SRAM never sets the roofline — but by 3%, not comfortably.** Its worst cell flips at **124 GB/s against a 128 GB/s port**.
+- **SRAM never sets the roofline — but at datasheet bandwidth only by 3%.** Its worst cell flips at **124 GB/s against a 128 GB/s port**.
+- **That near-miss is itself an artefact of ideal DRAM.** Charge for a 32-deep queue and the DRAM leg roughly doubles while the SRAM leg does not move at all, so the worst SRAM ratio falls from **0.97× (batch 8 / 2K) to 0.78× (batch 32 / 2K)**. **Under a realistic memory system the operand port has comfortable margin everywhere** — the 3% was a consequence of assuming DRAM was faster than it is.
 - The test **over-charges**: A-reads, B-reads and accumulator traffic are lumped against a *single* port. A real design splits them.
 - **A finite buffer barely touches decode.** DRAM is unchanged from unlimited down to **1 MB**, moving 2.7% only at 256 KB — and never from attention. Prefill DRAM rises **3.3× at 8 MB**: decode re-reads everything every step, so a small buffer destroys no reuse; prefill has reuse and loses it.
 
@@ -158,7 +162,7 @@ At a 32-deep queue the same grid:
 | 16 | 0.70 | 0.86 | **1.01** | **1.13** | **1.21** |
 | 32 | **1.05** | **1.16** | **1.22** | **1.26** | **1.29** |
 
-**And inside the memory-bound region the binding resource is weights, not KV.** At 2K / batch 1: weights **97.1%** of DRAM, KV **2.9%**, array idle **86%** — and latency does not change that, it deepens it.
+**And inside the memory-bound region the binding resource is weights, not KV.** At 2K / batch 1 the byte split is weights **97.1%**, KV **2.9%** — a ratio latency cannot change, since it scales both legs alike. What latency changes is how much of the token is spent waiting: the array idles **86%** of decode at datasheet bandwidth and **94%** at a 32-deep queue. **Latency does not shift the blame from weights to KV; it deepens the hole weights already dug.**
 
 ### 1.9 Scope, and what is still idealised
 
@@ -218,7 +222,7 @@ rounds    = ceil(1/32)   = 1
 | token, read-only | Quest, TidalDecode | `k_eff`, storage unchanged | linear | linear | 12.85× b32 |
 | **bit-width** (`qbit`) | KV3 / KV2 | outer multiplier | **linear** | **linear** | **~1.07–1.14× energy** * |
 
-<sub>\* KV2 vs KV4, from the Omni-LUT paper's Fig. 10 energy bars — the one row measured elsewhere, and in a different unit. Every other figure is TPOT from our own model.</sub>
+<sub>\* KV2 vs KV4, from the Omni-LUT paper's Fig. 10 energy bars — the one row measured elsewhere, and in a different unit. Every other figure is TPOT from our own model **at datasheet DRAM bandwidth**; §2.4 re-measures the ceilings under a finite request queue.</sub>
 
 ### 2.3 Row by row
 
@@ -296,7 +300,7 @@ The bound that makes this quantitative: speedup if that resource became **entire
 - **Weight traffic is constant in batch** — read once, however many sequences are in flight.
 - **KV traffic scales with batch** — every sequence carries its own cache.
 - So KV's *share* of DRAM, and the payoff for cutting it, **grows with batch**.
-- `evict-1024`: **2.46× at batch 1 → 15.96× at batch 32.**
+- `evict-1024`: **2.46× at batch 1 → 15.96× at batch 32** (datasheet bandwidth; §2.4 shows what a finite queue does to the ceiling these sit under).
 
 ### 2.8 Eviction is the exception that still obeys the rule
 

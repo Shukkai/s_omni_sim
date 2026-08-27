@@ -54,6 +54,11 @@ FREQ = 500e6
 PEAK = Simulator.LANES_EQUIV * 2 * FREQ / 1e9      # 4096 GFLOP/s
 DRAM_BW, SRAM_BW = 51.2, 128.0                     # GB/s
 
+#: What a 32-deep request queue actually sustains at 90 ns and a 64 B burst
+#: (Little's law).  The datasheet roof is the one every published number here
+#: was drawn against; this is the one a real requester reaches.
+DRAM_BW_REAL = 32 * 64 / 90e-9 / 1e9               # 22.8 GB/s
+
 ATTN = ('qk_matmul', 'attn_v_matmul')
 
 
@@ -77,7 +82,9 @@ def ops(batch, ctx):
 def panel(ax, batch, ctx):
     I = np.logspace(-0.5, 3, 400)
     ax.plot(I, np.minimum(PEAK, DRAM_BW * I), color='#222', lw=1.8,
-            label=f'DRAM roof ({DRAM_BW:.1f} GB/s)')
+            label=f'DRAM roof, datasheet ({DRAM_BW:.1f} GB/s)')
+    ax.plot(I, np.minimum(PEAK, DRAM_BW_REAL * I), color='#e08214', lw=1.8,
+            label=f'DRAM roof, 32-deep queue ({DRAM_BW_REAL:.1f} GB/s)')
     ax.plot(I, np.minimum(PEAK, SRAM_BW * I), color='#777', lw=1.4, ls='--',
             label=f'SRAM operand port ({SRAM_BW:.0f} GB/s)')
 
@@ -117,13 +124,15 @@ def panel(ax, batch, ctx):
                     textcoords='offset points', fontsize=8.5, color='#c0392b')
 
     ax.axvline(PEAK / DRAM_BW, color='#999', lw=0.8, ls='-.')
+    ax.axvline(PEAK / DRAM_BW_REAL, color='#e08214', lw=0.8, ls='-.',
+               alpha=0.7)
     ax.annotate(f'nominal ridge  {PEAK/DRAM_BW:.0f} FLOP/byte',
                 xy=(PEAK / DRAM_BW, PEAK * 1.55), fontsize=8, color='#666',
                 ha='right', va='center', xytext=(-6, 0),
                 textcoords='offset points')
 
     ax.set_xscale('log'); ax.set_yscale('log')
-    ax.set_xlim(0.3, 1000); ax.set_ylim(15, PEAK * 2.6)
+    ax.set_xlim(0.3, 2000); ax.set_ylim(15, PEAK * 2.6)
     ax.set_xlabel('arithmetic intensity (FLOP / byte of DRAM)')
     ax.set_title(f'batch {batch}, {ctx // 1024}K context')
     ax.grid(alpha=0.25, which='both', lw=0.4)
@@ -134,9 +143,11 @@ def main():
     panel(axes[0], 1, 2048)
     panel(axes[1], 32, 32768)
     axes[0].set_ylabel('attained rate (GFLOP/s)')
-    axes[0].legend(loc='lower right', framealpha=0.95, fontsize=8)
-    fig.suptitle('Decode roofline — the ceiling that matters is the array, '
-                 'not the bandwidth', y=0.99)
+    h, l = axes[0].get_legend_handles_labels()
+    fig.legend(h, l, loc='lower center', ncol=3, fontsize=8.5,
+               frameon=False, bbox_to_anchor=(0.5, -0.10))
+    fig.suptitle('Decode roofline — two roofs the datasheet does not show: '
+                 'the array at M=1, and a finite request queue', y=0.99)
     fig.tight_layout()
     for ext in ('png', 'pdf'):
         fig.savefig(os.path.join(_here, f'roofline.{ext}'), dpi=200,
