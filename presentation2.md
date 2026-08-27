@@ -4,9 +4,6 @@
 derives them — starting from the premise everything else rests on, and carrying
 through to the end.*
 
-**Setup.** LLaMA-3-8B (GQA 32/8) on Omni-LUT-KV4 — 32×4 LUT array, W4A16KV4,
-500 MHz, 51.2 GB/s = DDR5-6400. Decode, 32K context unless stated.
-
 **Where this starts.** Every KV-reduction paper rests on one premise: that
 decode is memory-bound. §1 tests that premise on this hardware, because if it is
 false the rest of the literature's value proposition is false with it. §2 then
