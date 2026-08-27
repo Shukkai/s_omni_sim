@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "0695c661dbc13e40e87fa40beb605a0f5e5272f2a18ad9e8ccaace88e1d4a294",
+  "full_sha256": "95dce1cd69a85225ea3bf14ed288d60e89ff33cd9e328b69dc6860fb3060144d",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -12,6 +12,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -812,7 +814,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "e8818135dd7812c9a285d8b579ed9250c40790ad98327ab67817a9e4a5142ca0",
+  "full_sha256": "21b192597dcd8e9d18ebbf4873bfd3bd7f9087a9e2e4af4cd452e87c7e63b4ec",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -824,6 +826,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -1696,7 +1700,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "0d5702bf7aa5a045bb5024a8a3ed45d6561a0a76df104b664123c95f0ba7b627",
+  "full_sha256": "81b12fd0556ac8fcc3f2bbc00d16a5da53b90ea7eca709f798a82e99e5e35442",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1708,6 +1712,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -2580,7 +2586,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "072c5f9a60051c9554342c66e50e8f22a75f5475828998b9c84b82b341c30867",
+  "full_sha256": "9e183fa95a32a421181cdcd5305ceeee1bae0c7ab3682bc9774dddad611c9615",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2592,6 +2598,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -3464,7 +3472,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "fcee4e767af5a0e96c261e66c726cd104794bef85beb10d03e86478d88c95bfa",
+  "full_sha256": "c3b5ba9202ec0086c88ea12dc60698a23fceee0146881fae6e3115518121b5c2",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3476,6 +3484,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -4348,7 +4358,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "c94ebe1e43a6a9a19ba6e16e7ebe4aedea9853c30b1e5d97bdb56a9adc42bd0c",
+  "full_sha256": "dbe80a0e3da1a0066d2828e577371f4a0c83f08c247d9b4f020594cacd61a70d",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -4360,6 +4370,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -5160,7 +5172,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "b6cd50f940a6738250320a4b8b873c2b5c9eb549f7587b9f570b1ece7e237a93",
+  "full_sha256": "1bc84ce0882ceae14442904fb817ff77fd72f2e48f72e6296cde3ca212c26bff",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5172,6 +5184,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -5972,7 +5986,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "2ecf9cef5ea475c030724d8b868ebdcd67d7c22e1a8f175f3362d9b1ccb28806",
+  "full_sha256": "fab352103f033e083e08d8e5c237321c3770daf14125275a34dcfab6951ba982",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5984,6 +5998,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -6856,7 +6872,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "e7caa1103481d3a92ce0dede153e3afb8e2e858fd70aaed4e71a9d554cfb9937",
+  "full_sha256": "72a894b9eb46876bd0e195153aa2f96e05594ce5888fa4de9586bcb5e6c3b1fd",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6868,6 +6884,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -7740,7 +7758,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "0084104b8678ad886855557877cb645959be1227b4dd625881e1ede60d251b30",
+  "full_sha256": "b21e92df8e83ef9b17c146bfef00667b90194038beb756eb269d7c4d08171b38",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7752,6 +7770,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -8624,7 +8644,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "ddebd9b129a15f9a0099e5d918ed42e37a2e4ea05cf8b15fb073d528d51b250e",
+  "full_sha256": "02c8729c9adc74c68c5f6f0b20df8f85637cfbc740c2c0097d63534bf4761b5c",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8636,6 +8656,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -9508,7 +9530,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "9d37626b92ff8c218656920189f4c970146b6a6ae961137ac868dd165438398e",
+  "full_sha256": "4c5dc60e870c5ad72ff6357eca7cc4d417abcae05392654b8470b759a5ca8da5",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -9520,6 +9542,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
@@ -10320,7 +10344,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "d36f6595963ee5e3720185c9a17b737ffc85397c94f1d9c16a968d6f9bd77e0b",
+  "full_sha256": "dec51a550d8cbffe1ae66741c00c2d0aedfbdab9f7e8a3877fccf6961c60214f",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10332,6 +10356,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -11132,7 +11158,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "2fe3ef989895aed9e494319d1751212455f6d799e0569f8bf8cfd570bec67b3e",
+  "full_sha256": "366b6c10f273e9a30a7141c73c4f611cf2f03de97e6bc13ace455619b9070a0e",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11144,6 +11170,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -12016,7 +12044,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "e64c072536211f93ae9707f2e0aa473594ff4d6f74bbe459c9690a9afd162763",
+  "full_sha256": "df28eb918228b16d6a1fe01c3d5fbd7a0068eeb1ee18243d2a1491fe6d360965",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12028,6 +12056,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -12900,7 +12930,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "a40ef3a67d4bddb7aecdf213b75683a0199c334a16fb606f212af18ea68c5abf",
+  "full_sha256": "ff763031608028ad9aea0d17627f74e4cb1dd8589901c7b0434f841d4b681e5c",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12912,6 +12942,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -13784,7 +13816,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "bd2a481d76ff56432bfe1861654bff84317cbbe426cc912037944fd83ec00472",
+  "full_sha256": "c4c617cc42ad4066c384615023e8d8688114b87ea1350e8bb94c08dd71a72409",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -13796,6 +13828,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -14668,7 +14702,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "e40810c62d5914bfbfa3bc372aab7190de0f1f4d08fc57a4fbed9edb401c7f03",
+  "full_sha256": "afcc68ce51016ddf96fc606efcb321315e515c9ad14df35ef96eb5f66de89a74",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14680,6 +14714,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -15480,7 +15516,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "c586096d4bfba0e29f08b352afb5901c29841f90e79d482f0fce307455eaf3cf",
+  "full_sha256": "879abce4c956a124320fd821c38a954bdb9e93fe782db8b45a9d9f439e8c1fb7",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15492,6 +15528,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
@@ -16292,7 +16330,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "6748cedb96ca0155dc1cf51861b760eb9b477c00c9ebae76634e73539239d99b",
+  "full_sha256": "ac4494aacbbc48ff7d63530673c75f6097ee6076b4abcb241009bd8dcd27a495",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16304,6 +16342,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
@@ -17176,7 +17216,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "ce211920bed0aafa22d5cebf88a4fd878c6a4cd1f1ba18e07815ac229cb22fd1",
+  "full_sha256": "369f6f8a87ed0f71a1d6e8c1aa5fb3772020375a4d233bf16d0e7f2df4fbf675",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17188,6 +17228,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
@@ -18060,7 +18102,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "061fc43fe79c47854386040f2d69be4da95ce885a896ef101082618ade124f14",
+  "full_sha256": "a3c26b4a3f86c1d29c12a986c026efd12f756ca7e6912d7c9c42c31d45ec5b51",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18072,6 +18114,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
@@ -18944,7 +18988,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "a4500409304f42c1846f3611f82ccd087fb12efd58ff2489241c174157597dd3",
+  "full_sha256": "ac03858d062e2beef01b4e11d5c93cb3688aabb3d8f0272cada2e6a42d901459",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18956,6 +19000,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
@@ -19828,7 +19874,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "dd8dd01a2a7d89ee1516c43bba2acf380644ec7c27056d9feb3324598e1e6733",
+  "full_sha256": "f0e95e52aa711951824b817f44b03f76b6d13b4a53b06d78804e611156662b19",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19840,6 +19886,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
@@ -20640,7 +20688,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "9a3b9c2608c687c2d5d25a9ed98396385bf1efb6a54a5a7c3f4cc18a7b187292",
+  "full_sha256": "e91c2b8e27daa1f89b6cc16722445b785fdc23e2ae6ca7dc3604bae00c3a8078",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20652,6 +20700,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -21452,7 +21502,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "f3addadb21ad5ca23fe6538aedf56ed3f951db8970e48d3801b20148327395cc",
+  "full_sha256": "9d88c06cee60e99d518d51f3396f2c446d5db5369d1e4ced0d032f5dd44d7fbb",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21464,6 +21514,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -22336,7 +22388,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "266df12749fb87547aef7e7c72bccbb91fda608e46ff5a14169622f6f2d4f30a",
+  "full_sha256": "c1b4cd9d52d0906928b57dd801e3ae6ce79d2dccb884e343fe7973825e107f67",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -22348,6 +22400,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -23220,7 +23274,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "fef923a2363a3c090512921bc8a47e92e7803d5a422188e57e8ad54835082a43",
+  "full_sha256": "b71200f435bf84b6a00523c4be3527ac00008812424ab4fab851fc3d27bd6efc",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23232,6 +23286,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -24104,7 +24160,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "07af466f3d40daa330f3b3ad8087817f87ac32885ffffcc528382a75784530b0",
+  "full_sha256": "4af815120bb4d172aa2aab2efb2aad1af383e58a137b9b362b82cb88cf158692",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24116,6 +24172,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -24988,7 +25046,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "092a73638c6deb7f0e60515185b2f4a5fa5ca7b9a53d0864ae79f11becb236a5",
+  "full_sha256": "783f551204e6363f48f19986b2f966e6e30eb15b724237ba270bd15eb07580aa",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -25000,6 +25058,8 @@
    "array_n": 4,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
@@ -25800,7 +25860,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "136ed1c223dfae79df9257b669be8266a49f5b7c96a26006994c2a01826c05ab",
+  "full_sha256": "52a6078882c27a1fb999d28c6605c1302aef866bca23470e4c6c86d6b937fae1",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25812,6 +25872,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
@@ -26612,7 +26674,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "ba0dc625f517e5b00f7549c1aa5212ba157d5ef9918bfbdf747222d51bb89713",
+  "full_sha256": "28b5d54f4a33bd991b2da37783c36103f2dc5a2227fe20313e7c4a565c9b518a",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -26624,6 +26686,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
@@ -27496,7 +27560,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "8f956db8976a8690cc4fc4aa369bccab02860f0d2040e0f7567c910e2bab5386",
+  "full_sha256": "db5464c122d0f7e074a3d17c07163a8a53cace49e07231df91ce191ded0f0d31",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27508,6 +27572,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
@@ -28380,7 +28446,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "1b1c092de52672b1c7cee9e14927e29702c576c52dc69e40ec32226588d51dcd",
+  "full_sha256": "c764d685f636efd6ae897f0b3bbc79bcd8e7f4645213000d312eefa949182772",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -28392,6 +28458,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
@@ -29264,7 +29332,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "b17076728c24e0fd39a1d333af15d1c35ed22bc06c86a9a50ae819955e93d89c",
+  "full_sha256": "8a5220289271013264e0d4fb4160ab8cdc7b0a9af812775d107e2e2c1d61e7c4",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29276,6 +29344,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
@@ -30148,7 +30218,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "d48ef9990d9ba231cb808e16ef6cf7ca202913c1107737abd14d67c9b1fa24e4",
+  "full_sha256": "2493036e339bd076b58b66c3050832af6ac437c4cb698c45a6b048e7c9f978dd",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -30160,6 +30230,8 @@
    "array_n": 64,
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
+   "dram_latency_ns": 0.0,
+   "dram_max_outstanding": 0,
    "freq_mhz": 500,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,

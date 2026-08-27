@@ -131,6 +131,34 @@ class HardwareConfig:
     freq_mhz: int = 500
     dram_bandwidth_gbps: float = 51.2   # DRAM bandwidth in GB/s
 
+    # --- DRAM latency, and the concurrency needed to hide it ---
+    #
+    # `dram_bandwidth_gbps` above is a *peak*.  Reaching it requires enough
+    # reads in flight to cover the round trip, which is Little's law:
+    #
+    #     reachable_bw = min(peak, outstanding x burst_bytes / latency)
+    #
+    # DDR5-6400 at a 64 B burst and ~90 ns loaded latency needs
+    # `51.2e9 x 90e-9 / 64` = **72 reads in flight** to sustain peak.  An
+    # accelerator with a 32-deep queue reaches 22.8 GB/s -- 45% of the number
+    # on the datasheet -- and every roofline in this repo predating these two
+    # fields assumed the datasheet number.
+    #
+    # Both default to 0, which disables the clamp and reproduces those results
+    # bit-for-bit.  Set both to enable it; setting only one is a no-op, because
+    # neither alone determines a bandwidth.
+    #
+    # Scope, deliberately narrow: this is a *steady-state throughput* clamp, not
+    # a latency model.  It says what bandwidth a given queue depth can sustain
+    # on a streaming read.  It does not model a dependent access chain, a row
+    # miss, refresh, or a gather whose requests are not independent -- for a
+    # scattered read the effective `outstanding` is lower than configured and
+    # this term is optimistic.  `dram_burst_bytes` supplies the request size;
+    # when it is 0 the burst is taken as 64 B, since a request granularity of
+    # "one byte" would make the clamp meaningless.
+    dram_latency_ns: float = 0.0
+    dram_max_outstanding: int = 0
+
     # On-chip SRAM read+write bandwidth in GB/s.  0 = unlimited, the default,
     # which is how every result predating this field was produced: capacity was
     # enforced (`sram_capacity_kb`) but throughput never was, so an operation
@@ -1414,6 +1442,39 @@ class Simulator:
         """
         return run_entries * head_dim * kv_bits // 8
 
+    def effective_dram_bw_gbps(self, nominal: float | None = None) -> float:
+        """Bandwidth a streaming read can actually sustain, in GB/s.
+
+        Little's law against the configured queue depth.  Returns `nominal`
+        unchanged (default `hw.dram_bandwidth_gbps`) when either
+        `dram_latency_ns` or `dram_max_outstanding` is 0, which is what makes
+        the two fields jointly inert by default.
+
+        The clamp only ever *lowers* the number: a queue deep enough to cover
+        the latency gives back the peak exactly.
+        """
+        bw = self.hw.dram_bandwidth_gbps if nominal is None else nominal
+        lat_ns = self.hw.dram_latency_ns
+        depth = self.hw.dram_max_outstanding
+        if lat_ns <= 0 or depth <= 0:
+            return bw
+        burst = self.hw.dram_burst_bytes or 64
+        reachable = depth * burst / (lat_ns * 1e-9) / 1e9      # GB/s
+        return min(bw, reachable)
+
+    def required_outstanding(self, nominal: float | None = None) -> float:
+        """Reads in flight needed to sustain `nominal` GB/s at this latency.
+
+        The inverse of `effective_dram_bw_gbps`, reported rather than derived
+        at the call site so a study can state the requirement instead of the
+        shortfall.
+        """
+        bw = self.hw.dram_bandwidth_gbps if nominal is None else nominal
+        if self.hw.dram_latency_ns <= 0:
+            return 0.0
+        burst = self.hw.dram_burst_bytes or 64
+        return bw * 1e9 * self.hw.dram_latency_ns * 1e-9 / burst
+
     def _sram_time(self, m) -> float:
         """Seconds one operation spends moving bytes to and from SRAM.
 
@@ -2453,6 +2514,7 @@ class Simulator:
         """
         if dram_bandwidth_gbps is None:
             dram_bandwidth_gbps = self.hw.dram_bandwidth_gbps
+        dram_bandwidth_gbps = self.effective_dram_bw_gbps(dram_bandwidth_gbps)
         dram_bw = dram_bandwidth_gbps * 1e9
         freq = self.hw.freq_mhz * 1e6
 
@@ -2484,6 +2546,7 @@ class Simulator:
         """
         if dram_bandwidth_gbps is None:
             dram_bandwidth_gbps = self.hw.dram_bandwidth_gbps
+        dram_bandwidth_gbps = self.effective_dram_bw_gbps(dram_bandwidth_gbps)
         dram_bw = dram_bandwidth_gbps * 1e9
         freq = self.hw.freq_mhz * 1e6
 
@@ -2560,6 +2623,7 @@ class Simulator:
         """
         if dram_bandwidth_gbps is None:
             dram_bandwidth_gbps = self.hw.dram_bandwidth_gbps
+        dram_bandwidth_gbps = self.effective_dram_bw_gbps(dram_bandwidth_gbps)
         dram_bw = dram_bandwidth_gbps * 1e9   # bytes/s
         freq = self.hw.freq_mhz * 1e6         # Hz
 
@@ -2631,6 +2695,7 @@ class Simulator:
         """
         if dram_bandwidth_gbps is None:
             dram_bandwidth_gbps = self.hw.dram_bandwidth_gbps
+        dram_bandwidth_gbps = self.effective_dram_bw_gbps(dram_bandwidth_gbps)
         if vpu_config is None:
             vpu_config = vpu_energy_model.DEFAULT_VPU_ENERGY
         
