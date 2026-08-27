@@ -1,24 +1,164 @@
 # Omni-LUT — The Argument, In Detail
 
 *Companion to `presentation.md`. That document states the findings; this one
-derives them. It starts where the argument turns — at the recurring pattern —
-and carries through to the end.*
+derives them — starting from the premise everything else rests on, and carrying
+through to the end.*
 
 **Setup.** LLaMA-3-8B (GQA 32/8) on Omni-LUT-KV4 — 32×4 LUT array, W4A16KV4,
 500 MHz, 51.2 GB/s = DDR5-6400. Decode, 32K context unless stated.
 
-**Why start here.** `presentation.md` §1–§4 establish *what* happens: decode is
-memory-bound only in a triangle, attention is the only target, there is a fixed
-overhead that does not shrink, and channel pruning is exactly null. Those are
-observations. From §5 onward the document stops reporting and starts
-**explaining** — and every recommendation it eventually makes descends from the
-one table below.
+**Where this starts.** Every KV-reduction paper rests on one premise: that
+decode is memory-bound. §1 tests that premise on this hardware, because if it is
+false the rest of the literature's value proposition is false with it. §2 then
+explains *why* the techniques that follow from it mostly do not work here — and
+every recommendation this document eventually makes descends from §2's table.
 
 ---
 
-## 1. The recurring pattern — one formula behind every result
+## 1. Is decode compute-bound or memory-bound?
 
-### 1.1 The claim
+### 1.1 Why this has to be settled first
+
+"Decode is memory-bound" is stated in the field as though it were a property of
+decoding. It is the premise under every KV-reduction paper: bytes are the
+critical path, so removing bytes buys time.
+
+On this hardware that premise is **conditionally false**, and the condition is
+not exotic — it is the batch size and context you actually run at. Establishing
+exactly where it holds is the prerequisite for everything else, because a
+technique aimed at the wrong side of the boundary cannot work no matter how well
+it is implemented.
+
+### 1.2 The method
+
+Per operation, the roofline charges
+
+```
+time = max( cycles / freq ,  dram_bytes / bandwidth )
+```
+
+Sum that over every GEMM in a decode step, and separately accumulate the compute
+term `C` and the DRAM term `D`. The regime is then just `C/D`: **below 1.00 the
+array is waiting on memory; above 1.00 memory is waiting on the array.**
+
+**One methodological trap, and it caught us.** The obvious split is "AW ops are
+weights, AA ops are KV". That is wrong: `k_proj` and `v_proj` are AW operations
+that **write the KV cache**. Grouping them as weight traffic made weight DRAM
+drift 0.04% between batch 1 and batch 32 — a quantity that must be exactly
+constant. The split has to be **by read/write, not by operation**, and the
+pre-flight check that compares batch 1 against batch 32 is what exposed it.
+
+### 1.3 The balance point
+
+The machine's own crossover, computed in code rather than quoted so it cannot
+drift:
+
+```
+2 × LANES_EQUIV × freq / bandwidth = 2 × 4096 × 500e6 / 51.2e9 = 80 FLOP/byte
+```
+
+An operation with arithmetic intensity below 80 FLOP/byte is memory-bound in
+isolation. Decode attention sits far below it — which is precisely why the
+"memory-bound" claim sounds obviously true, and why the measurement below is
+worth doing anyway.
+
+### 1.4 The measurement — a triangle, not a property
+
+Decode compute / DRAM. **Below 1.00 the array waits on memory:**
+
+| batch | 2K | 4K | 8K | 16K | 32K |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 0.15 | 0.23 | 0.38 | 0.62 | 1.00 |
+| 2 | 0.28 | 0.43 | 0.67 | **1.04** | 1.51 |
+| 4 | 0.52 | 0.76 | **1.12** | 1.56 | 2.02 |
+| 8 | 0.93 | **1.28** | 1.69 | 2.10 | 2.44 |
+| 16 | **1.57** | 1.93 | 2.27 | 2.54 | 2.73 |
+| 32 | 2.37 | 2.60 | 2.74 | 2.84 | 2.90 |
+
+> **The memory-bound region is a triangle in the low-batch, short-context
+> corner — not the whole space.** First compute-bound batch: **16 at 2K, 8 at
+> 4K, 4 at 8K, 2 at 16K and 2 at 32K.**
+
+**"Decode is DRAM-bound" is the batch-1 row, and only that row.**
+
+### 1.5 Why the boundary is a diagonal
+
+The shape is not arbitrary. It follows from one measured fact:
+
+> **Weight DRAM time is 49.81 ms per token at every cell of the grid** — every
+> batch, every context, without exception.
+
+Weights are read once per token regardless of how many sequences are in flight
+or how long they are. So the DRAM bill has a large **constant** floor, while
+compute grows on *both* axes — with batch (more sequences) and with context
+(attention's reduction dimension). At batch 1:
+
+| ctx | compute | DRAM | of which weights | C/D |
+|---:|---:|---:|---:|---:|
+| 2K | 7.67 ms | 51.28 ms | 49.81 ms (97.1%) | 0.15 |
+| 8K | 20.94 ms | 55.71 ms | 49.81 ms (89.4%) | 0.38 |
+| 32K | 73.33 ms | 73.40 ms | 49.81 ms (67.9%) | **1.00** |
+
+The crossover is therefore just *"when does compute exceed the roughly constant
+50 ms of weight traffic?"* — and both axes push it the same way, which is why the
+boundary runs diagonally across the grid rather than sitting at a fixed batch or
+a fixed context.
+
+At 32K / batch 1 the two roofs are **73.33 against 73.40 ms** — as close to
+exactly balanced as the grid gets. That coincidence matters again in §5.
+
+### 1.6 At batch 1 the bottleneck is weights, not KV
+
+This is the finding that reframes the KV literature:
+
+- At 2K / batch 1, DRAM is 51.28 ms of which **49.81 ms is weights (97.1%)**.
+  KV is **2.9%** — about 2.6 GB of weights per token against 80 MB of KV.
+- Compute is 7.67 ms inside a 54.83 ms token. **The array idles 86% of decode**,
+  waiting on traffic that is almost entirely *not KV*.
+
+So at batch 1 you can attack the KV cache as hard as you like and be optimising
+2.9% of the bottleneck.
+
+### 1.7 What any lever could possibly buy
+
+The bound that makes this quantitative. Each column is the speedup if that
+resource became **entirely free** — an upper bound no algorithm can beat:
+
+| batch | ctx | packing | overlap | KV bytes | weight bytes |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 2K | 1.07× | 1.07× | **1.01×** | **6.80×** |
+| 1 | 32K | 1.75× | 1.75× | **1.07×** | 1.57× |
+| 32 | 2K | 1.88× | 1.05× | 1.05× | 1.00× |
+| 32 | 32K | **3.12×** | 1.12× | 1.12× | 1.00× |
+
+- **Removing *all* KV traffic at batch 1 buys 1.01× at 2K and 1.07× at 32K.**
+  Not "eviction buys little" — *deleting the entire cache* buys 7%. This is an
+  algorithm-independent ceiling on the whole KV literature at batch 1, and it is
+  the one-line explanation for every negative result in §2.
+- **Inside the triangle the lever is weight bytes — 6.80×.** Outside it, array
+  occupancy — **3.12×**. Neither is a KV technique.
+- **The two profitable regimes want different machines.** A design tuned for
+  batch-1 short-context (weight bandwidth, weight compression) is not the design
+  tuned for batch-32 long-context (array occupancy). Two accelerators, not one.
+
+### 1.8 The answer, and one caveat
+
+> **Decode on Omni-LUT is memory-bound at low batch and short context, and
+> compute-bound everywhere else.** The premise the KV literature runs on holds
+> only in the corner of the operating space — and in that corner the binding
+> resource is *weights*, not KV.
+
+**The caveat is that we had to fix our own model to see this.** The first version
+of this grid had every row but batch 1 in the wrong regime, because of a cycle
+defect that dropped the batch term entirely. That is §6, and it is reported
+rather than quietly corrected because the grid above is only as trustworthy as
+the audit behind it.
+
+---
+
+## 2. The recurring pattern — one formula behind every result
+
+### 2.1 The claim
 
 > Channel pruning, select-without-evict and KV residency each removed real DRAM
 > traffic and each produced little or no speedup. Eviction removed the same kind
@@ -34,7 +174,7 @@ When three unrelated methods fail identically, the failure is a property of the
 resource, not of any method. That inference is what makes this a *pattern* and
 not three unlucky measurements.
 
-### 1.2 The formula, in full
+### 2.2 The formula, in full
 
 Everything follows from the OS-V cycle count:
 
@@ -50,7 +190,7 @@ With this machine's constants — `MU = 4`, `array_m = 32`, `array_n = 4`,
 `NUM_RAC = 32` — and decode `attn_v`'s shape `(M=1, K=kv_len, N=head_dim=128)`:
 
 ```
-per_round = ceil(kv_len/4) + 10          ← the 10 is §3's knee constant
+per_round = ceil(kv_len/4) + 10          ← `presentation.md` §3's knee
 n_tiles   = ceil(128 / 128) = 1
 rounds    = ceil(1 / 32)   = 1
 ```
@@ -65,14 +205,14 @@ expression**. This is the whole analysis:
 | token, read-only | Quest, TidalDecode | `k_eff`, storage unchanged | linear | linear | 12.85× b32 |
 | **bit-width** (`qbit`) | KV3 / KV2 | outer multiplier | **linear** | **linear** | **unmeasured** |
 
-### 1.3 Reading the table one row at a time
+### 2.3 Reading the table one row at a time
 
 **Channel — the null.** `head_dim` is `attn_v`'s **output** dimension `N`, and
 `N` reaches the cycle count through exactly one term: `ceil(N/128)`. For every
 `N ≤ 128` that term is `1`. Pruning 128 channels to 64, or to 8, does not change
 it. **`N` is not merely weakly present — it is absent.**
 
-This is why §4's result is *exactly* 1.000× rather than "small". A weak effect
+This is why `presentation.md` §4's result is *exactly* 1.000× rather than "small". A weak effect
 would be 1.03×; an absent term is 1.000×. The measurement distinguishes them,
 and it came out on the "absent" side.
 
@@ -86,7 +226,7 @@ while attn_v's is `head_dim` (serialised over the cache).
 inside `per_round`. That term is linear and unbounded. So eviction **must**
 remove cycles — not "might", must — and therefore **must** work.
 
-This row is the reason §5 is a model rather than an excuse. A framework that
+This row is the reason this section is a model rather than an excuse. A framework that
 only ever explains failures is unfalsifiable. This one commits in both
 directions from the same arithmetic, and the commitment holds: eviction to 1024
 entries is **15.96× at batch 32**.
@@ -108,17 +248,17 @@ batch.
 Contrast that with channel pruning, which dies on a rounding boundary. **Channel
 pruning has a boundary to die on; bit-width does not.**
 
-### 1.4 The discriminator, stated plainly
+### 2.4 The discriminator, stated plainly
 
 > The question is never *"how many bytes does this remove?"*
 > It is *"does it reach `k_eff` or `qbit`?"*
 
-Every technique that touches only DRAM lands inside `presentation.md` §1's
-batch-1 ceiling of **1.01–1.07×**. Every technique that lowers the compute roof
+Every technique that touches only DRAM lands inside §1.7's batch-1 ceiling
+of **1.01–1.07×**. Every technique that lowers the compute roof
 survives. That is the entire selection rule, and it is checkable on paper before
 a single simulation runs.
 
-### 1.5 Why bit-width is the experiment to run
+### 2.5 Why bit-width is the experiment to run
 
 Two properties, and the second is the one usually missed:
 
@@ -136,11 +276,11 @@ stacks cleanly on the axis that already works.
 **Status: still unmeasured.** It remains the highest-value open experiment in
 the study.
 
-### 1.6 The correction — all of it was measured in the wrong place
+### 2.6 The correction — all of it was measured in the wrong place
 
 ![KV reduction vs batch](analysis/memory/kv_batch.png)
 
-A second, independent finding, and it partially rescues the techniques §1.3 just
+A second, independent finding, and it partially rescues the techniques §2.3 just
 demolished:
 
 - **Weight traffic is constant in batch** — 7.65 GB, read once per token no
@@ -150,7 +290,7 @@ demolished:
 So KV's *share* of DRAM grows with batch, and with it the payoff for cutting it.
 `evict-1024` goes **2.46× at batch 1 → 15.96× at batch 32.**
 
-### 1.7 The exception that still obeys the rule
+### 2.7 The exception that still obeys the rule
 
 Eviction's 16× is a **batch-32** result. At batch 1 it is worth **1.45×** under
 the pipelined model — inside the same ceiling as everything else in the section.
@@ -164,9 +304,9 @@ regime map requires.
 And at batch 32 it wins for a second reason the table already names: eviction
 lowers the **compute** roof too, because `kv_len` is `attn_v`'s reduction
 dimension. A technique that moves both roofs is robust; one that moves only the
-slack roof is not. That distinction returns, sharpened, in §4.
+slack roof is not. That distinction returns, sharpened, in §5.
 
-### 1.8 What §1 does *not* establish
+### 2.8 What §2 does *not* establish
 
 - **Bit-width is a prediction, not a result.** The formula guarantees the cycle
   reduction. Nothing here measures KV3/KV2 accuracy, or whether the operand path
@@ -177,23 +317,23 @@ slack roof is not. That distinction returns, sharpened, in §4.
 - **"Compute-bound" is scoped to KV4.** At 16-bit KV the byte cost quadruples
   and the balance shifts. Every statement here lives inside the W4A16KV4
   configuration.
-- **The batch-1 numbers are themselves revised in §4** — 2.46× becomes 1.452×
-  under pipelining. That strengthens §1.3 and weakens nothing in §1.6.
+- **The batch-1 numbers are themselves revised in §5** — 2.46× becomes 1.452×
+  under pipelining. That strengthens §2.3 and weakens nothing in §2.6.
 
 ---
 
-## 2. Layout decides which pruning axis is even allowed to work
+## 3. Layout decides which pruning axis is even allowed to work
 
 ![Unstructured masks](analysis/memory/unstructured.png)
 
-### 2.1 The question everyone skips
+### 3.1 The question everyone skips
 
-Everything in §1 assumed a **compacted** retained set — that after pruning, what
+Everything in §2 assumed a **compacted** retained set — that after pruning, what
 survives is contiguous. Real masks are irregular. The DRAM controller does not
 move elements; it moves **bursts**. So the real question is not "how many
 elements survive" but "how many bursts contain at least one survivor".
 
-### 2.2 The coincidence the whole section turns on
+### 3.2 The coincidence the whole section turns on
 
 > A 4-bit KV entry is `head_dim 128 × 4/8` = **64 B — exactly one DDR5 burst.**
 
@@ -204,7 +344,7 @@ One entry, one burst. That single alignment makes the outcome binary.
 | **token-major** (today) | cuts *between* entries → **100% kept** | cuts *inside* one → **0% kept** |
 | **channel-major** | **0% kept** | **99.9% kept** |
 
-### 2.3 Why it is antisymmetric, and why there is no third option
+### 3.3 Why it is antisymmetric, and why there is no third option
 
 An element has two indices. In any linear memory one is **minor** (contiguous)
 and the other is **strided**. A mask along the minor axis removes whole bursts;
@@ -214,7 +354,7 @@ There is no layout in which both axes are minor. **The antisymmetry is not an
 implementation artefact — it is a counting argument**, and it means the choice
 of layout *selects which body of pruning literature is deployable at all*.
 
-### 2.4 A cliff, not a slope
+### 3.4 A cliff, not a slope
 
 The result that makes this actionable: channel groups of 1, 2, 4, 8, 16, 32
 **and 64** all keep **exactly 0%**.
@@ -227,7 +367,7 @@ with the burst or you do not.
 **Consequence:** head-wise pruning is the only axis free in **both** layouts
 (2.00× at half the KV heads) — and it is the axis the literature uses least.
 
-### 2.5 Memory technology moves the cliff
+### 3.5 Memory technology moves the cliff
 
 ![Memory technology](analysis/memory/memory_tech.png)
 
@@ -245,16 +385,16 @@ Two further results, and the second is the more transferable:
 - **Token pruning is worth the same on both technologies** — 1.936× against
   1.921×. It cuts `kv_len`, the `K` of both attention GEMMs, so it removes
   **cycles**. *Its value is portable precisely because it was never a bandwidth
-  optimisation in the first place.* That is §1's discriminator, restated as a
+  optimisation in the first place.* That is §2's discriminator, restated as a
   portability property.
 
 ---
 
-## 3. Array packing — the only lever that is not memory
+## 4. Array packing — the only lever that is not memory
 
 ![OS-V packing](analysis/memory/packing.png)
 
-### 3.1 The observation
+### 4.1 The observation
 
 Decode `attn_v` is `(M=1, K=kv_len, N=128)`. `M = 1` means **one of 32 PE rows
 does work, at any context, at any batch.** Occupancy is **3.12%** of 4,096
@@ -264,7 +404,7 @@ back to back.
 This is not a memory problem, which is what makes it the only lever in the
 document that §1's ceiling does not bound.
 
-### 3.2 The mechanism and its ceiling
+### 4.2 The mechanism and its ceiling
 
 Packing `P` instances gives each its own LGU driving `array_m / P` rows.
 
@@ -282,7 +422,7 @@ ceiling reasserts itself on what remains.
 **The ceiling is P=8.** Beyond it, packing buys literally nothing. That is a
 design specification, not a limitation to work around.
 
-### 3.3 Why it is a recommendation and not an observation
+### 4.3 Why it is a recommendation and not an observation
 
 Two independent constraints were checked, and they land on the same point:
 
@@ -296,11 +436,11 @@ a measurement into a build recommendation.
 
 ---
 
-## 4. The assumption under every number above
+## 5. The assumption under every number above
 
 ![Overlap](analysis/memory/overlap.png)
 
-### 4.1 What is being audited
+### 5.1 What is being audited
 
 The roofline sums per-operation `max(compute, memory)`. It never lets one
 operation's memory hide behind another's compute. Real hardware double-buffers.
@@ -313,7 +453,7 @@ truth**, and this section measures how wide that bracket is.
 | **32K** | **1** | **73.3 ms** | **73.4 ms** | **1.75×** |
 | 32K | 32 | 2331.5 ms | 804.8 ms | 1.12× |
 
-### 4.2 The uncomfortable number
+### 5.2 The uncomfortable number
 
 **1.75× is larger than most techniques in this study were measured to save.**
 
@@ -321,7 +461,7 @@ The bound is rigorous rather than empirical: `sum(max)` exceeds `max(sum)` by at
 most **2×**, attained exactly when the two roofs are equal. At 32K / batch 1 they
 are **73.3 vs 73.4 ms** — which is why that row nearly reaches the ceiling.
 
-### 4.3 The counterintuitive part
+### 5.3 The counterintuitive part
 
 **Pipelining pays *least* where the imbalance is worst.** At 2K / batch 1 — the
 most memory-bound point in the entire grid — overlap buys only **1.069×**: there
@@ -332,7 +472,7 @@ So the intuition "we are memory-bound, therefore overlapping will help a lot" is
 **exactly backwards**. Overlap pays most where compute and memory are balanced,
 which is the regime where you needed it least.
 
-### 4.4 It corrects our own results
+### 5.4 It corrects our own results
 
 | technique | b1 serial | b1 pipelined | b32 serial | b32 pipelined |
 |---|---:|---:|---:|---:|
@@ -350,14 +490,14 @@ which is the regime where you needed it least.
 
 > **The general lesson:** a technique that moves *both* roofs is robust to how
 > they are combined; one that moves only the *slack* roof is an artefact of the
-> combination rule. §1's discriminator and §4's bracket are the same test
+> combination rule. §2's discriminator and §5's bracket are the same test
 > applied at different levels.
 
 ---
 
-## 5. The defect we found in our own model
+## 6. The defect we found in our own model
 
-### 5.1 What it was
+### 6.1 What it was
 
 `_calculate_cycles` counted OS-V rounds as `ceil(M/array_m) × n_tiles`. And
 `ceil(M/32) = 1` for **every M in 1..32** — so `M` vanished from the round count
@@ -377,7 +517,7 @@ The correct form comes from the accumulator budget: the array holds
 `array_m × (array_n × NUM_RAC)` accumulators, so a round retires `array_m` tiles
 wherever they come from, giving `ceil(M × n_tiles / array_m)`.
 
-### 5.2 Why it is included
+### 6.2 Why it is included
 
 Two reasons, and they are both about trust.
 
@@ -389,7 +529,7 @@ in the study predates the fix and survives it.
 
 **The blast radius is asserted, not assumed.** Decode `qk` and `attn_v` are
 issued with `M = 1` and are **bit-identical under both models**, so every KV
-result in §1–§2 is untouched. So are `LUT_OS`, `LUT_WS`, `FPE_OS` and `TENDER`.
+result in §2–§3 is untouched. So are `LUT_OS`, `LUT_WS`, `FPE_OS` and `TENDER`.
 Only the middle of the batch axis moves.
 
 Shipped inert behind `hw.os_rounds_model`; the regression baseline moved zero
@@ -400,17 +540,17 @@ value keys.
 
 ---
 
-## 6. GNNs — the knee as a workload, and packing's second win
+## 7. GNNs — the knee as a workload, and packing's second win
 
-### 6.1 Why a second workload at all
+### 7.1 Why a second workload at all
 
-§1 identified a fixed 10-cycle overhead that does not shrink with the operand.
+§2 identified a fixed 10-cycle overhead that does not shrink with the operand.
 The obvious objection is that this is an artefact of KV compaction — of
 squeezing a workload into a regime it was never meant to occupy.
 
 A GNN tests that, because the smallness is **built in** rather than applied.
 
-### 6.2 The mapping is an identity, not an analogy
+### 7.2 The mapping is an identity, not an analogy
 
 A GCN layer is `H' = σ(Â(HW))`. **Combine** (`HW`) is a dense GEMM and needed
 nothing new: `_simulate_matmul` is shape-driven, and `HW` is an FFN with nodes
@@ -422,9 +562,9 @@ in the token slot.
 
 Proved rather than asserted: a real decode `attn_v` at
 `(kv_len, head_dim) = (deg, F)` returns the identical cycle count over 30 pairs.
-So §1's knee does not *resemble* aggregation's, it **is** aggregation's.
+So §2's knee does not *resemble* aggregation's, it **is** aggregation's.
 
-### 6.3 The knee we engineered toward is where a graph starts
+### 7.3 The knee we engineered toward is where a graph starts
 
 | deg(v) | cycles | fixed % | vs VPU |
 |---:|---:|---:|---:|
@@ -437,7 +577,7 @@ Cora's mean degree is 3.9 → **90.9% overhead**, against the **23.5%** that was
 the most extreme point in the entire KV study. §3 of `presentation.md` needed a
 0.4% KV budget to reach that regime. **A citation graph is born past it.**
 
-### 6.4 Two of our own hypotheses, falsified
+### 7.4 Two of our own hypotheses, falsified
 
 Worth recording because they were both stated in advance:
 
@@ -451,7 +591,7 @@ Worth recording because they were both stated in advance:
   arithmetic. The FLOP count was right; the LUT does not spend its cycles on
   FLOPs.
 
-### 6.5 Packing reverses the verdict — and only for the large graphs
+### 7.5 Packing reverses the verdict — and only for the large graphs
 
 Packing recovers **exactly `array_m / n_tiles`**. Measured `P*` equals that bound
 at every width with no rounding slack, and is **1.00× at F=4096**, where packing
@@ -478,12 +618,12 @@ the same statement about `n_tiles` reaching `array_m`.
   equal* degree instead hits **0.05× on ogbn-arxiv — 20× slower than not
   packing** — because a power-law tail has thousands of sub-`P` buckets, each
   still costing a whole pass.
-- **The bill is 8.19 TB/s** of KV-SRAM port at `P*=16` — **4×** §3's figure for
+- **The bill is 8.19 TB/s** of KV-SRAM port at `P*=16` — **4×** §4's figure for
   the same `P`, because attention packs at 4-bit and aggregation runs at 16.
 
 > **Verdict.** Omni-LUT is an excellent Combine engine and the wrong shape for
 > Aggregate *at P=1*. The shape problem is `M=1`, it is fixable by packing, and
-> what it costs is bandwidth — the same sentence §3 ended on, reached from a
+> what it costs is bandwidth — the same sentence §4 ended on, reached from a
 > completely different workload.
 
 ---
