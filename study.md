@@ -433,24 +433,59 @@ Decode TPOT speedup vs dense at 32K:
 
 ---
 
-## 13. The recurring pattern
+## 13. The recurring pattern, and the axis that escapes it
 
 Three independent techniques — ThinK channel pruning, select-without-evict, and
 KV residency — each removed real DRAM traffic and each produced little or no
 speedup, for the same reason: **`attn_v` is compute-bound under a 4-bit KV
 cache, so KV bytes are usually not the critical path.**
 
-- The axes differ in whether they touch cycles at all:
+**Eviction (H2O, SnapKV) removed the same kind of traffic and did produce
+speedup — 15.96× at batch 32.** That is not a counterexample to the pattern, it
+is the control that shows the pattern is a model rather than an excuse. One
+table accounts for both outcomes.
 
-  | axis | cycles | DRAM |
-  |---|---|---|
-  | channel (`head_dim` = N) | **null** — no N term | linear |
-  | token (`kv_len` = K) | linear via `k_eff` | linear |
-  | **bit-width (`qbit`)** | **linear** | **linear** |
+- A KV cache has exactly three reducible dimensions — how many entries, how wide
+  each is, how many bits per element — and
+  `cycles = batch_size x per_round x rounds x qbit` says what each one reaches:
 
-- `cycles = batch_size x per_round x rounds x qbit`, so **bit-width is the only
-  axis that is a direct multiplier on cycles as well as bytes**, with no null
-  anywhere, and it composes with eviction rather than competing.
+  | axis | technique | cycles | DRAM | measured |
+  |---|---|---|---|---:|
+  | channel (`head_dim` = N) | ThinK | **null** — N enters only via `ceil(N/128)` | linear | **1.000×** |
+  | token (`kv_len` = K) | **eviction** (H2O, SnapKV) | **linear** via `k_eff` | linear | **1.45× b1 · 15.96× b32** |
+  | token, read-only | Quest, TidalDecode | linear | linear | 12.85× b32 |
+  | **bit-width (`qbit`)** | KV3 / KV2 | **linear** — outer multiplier | **linear** | **unmeasured** |
+
+- **The classification is exhaustive and predictive, not fitted.** The channel
+  null falls out of `ceil(N/128) = 1` for every `N <= 128` before anything is
+  measured; §5's 1.000× confirms the table rather than being its source. And the
+  table is equally committed in the other direction: eviction cuts `k_eff`, so
+  it *must* remove cycles, so it *must* work. Same bytes, same hardware,
+  opposite outcome, one line of arithmetic apart.
+- **The discriminator is never "how many bytes", it is "does it reach `k_eff` or
+  `qbit`".** Everything that touches only DRAM lands inside §18's 1.01-1.07×
+  batch-1 ceiling; everything that lowers the compute roof survives.
+- **Select-without-evict sits between the two and shows what the axis is worth
+  on its own.** Quest reads fewer blocks but stores the same cache, so it is
+  byte-identical to eviction (§10) while still lowering `k_eff` — and it tracks
+  eviction at batch 32 (12.85× against 15.96×). The remaining gap is storage,
+  not compute.
+- **Bit-width is the only axis with no null anywhere.** `qbit` is an outer
+  multiplier on the whole expression, so no `ceil` can absorb it: KV4 -> KV3 is
+  0.75× cycles *and* 0.75× bytes, unconditionally, at every context and batch.
+  Channel pruning dies on a rounding boundary; bit-width has no boundary to die
+  on.
+- **And it composes with eviction rather than competing.** `cycles` is
+  proportional to `k_eff x qbit`, so the two axes are orthogonal and multiply —
+  evict-1024 at KV3 is approximately the product of the two speedups, not the
+  larger of them. Channel and token pruning, by contrast, both claim bytes from
+  the same tensor and partially overlap. **Still unmeasured; it remains the
+  highest-value open experiment in this study.**
+- **Eviction is the exception that still obeys the rule.** Its batch-1 figure is
+  1.45× under the pipelined model (§17), inside the same ceiling as every
+  technique above. The 15.96× is a *batch-32* result, earned exactly where §18's
+  regime map says bytes finally bind — and where eviction additionally lowers
+  the compute roof, since `kv_len` is `attn_v`'s reduction dimension.
 - Separately, decode `attn_v` occupancy is 3.12% of 4096 lanes because `M=1`.
   Cycles scale *exactly* linearly with `batch x heads`, so at batch 32 there are
   1,024 instances each lighting 128 of 4,096 lanes, run back-to-back.

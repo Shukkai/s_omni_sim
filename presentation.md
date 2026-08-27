@@ -109,27 +109,51 @@ here at once** — eviction, selection, residency, channel pruning:
 - Best case ever measured: **1.052×**, at batch 32 / 32K, DRAM-only.
 - More batch cannot fix it — the bytes were never on the critical path.
 
-## 5. The recurring pattern
+## 5. The recurring pattern — and the axis that escapes it
 
 Channel pruning, select-without-evict and KV residency each removed real DRAM
 traffic and each produced little or no speedup, for one reason: **`attn_v` is
-compute-bound under a 4-bit KV cache.**
+compute-bound under a 4-bit KV cache.** Eviction removed the same kind of
+traffic and **did** produce speedup. One table explains both.
 
-| axis | cycles | DRAM |
-|---|---|---|
-| channel (`head_dim` = N) | **null** — no N term | linear |
-| token (`kv_len` = K) | linear via `k_eff` | linear |
-| **bit-width (`qbit`)** | **linear** | **linear** |
+A KV cache has exactly three reducible dimensions, and
+`cycles = batch × per_round × rounds × qbit` says what each one touches:
 
-- `cycles = batch × per_round × rounds × qbit` — **bit-width is the only axis
-  that multiplies cycles as well as bytes**, and it composes with eviction
-  rather than competing. **Unmeasured. Highest-value open experiment.**
+| axis | technique | cycles | DRAM | measured |
+|---|---|---|---|---:|
+| channel (`head_dim` = N) | ThinK | **null** — N enters only via `ceil(N/128)` | linear | **1.000×** |
+| token (`kv_len` = K) | **eviction** (H2O, SnapKV) | **linear** via `k_eff` | linear | **1.45× b1 · 15.96× b32** |
+| token, read-only | Quest, TidalDecode | linear | linear | 12.85× b32 |
+| **bit-width (`qbit`)** | KV3 / KV2 | **linear** — outer multiplier | **linear** | **unmeasured** |
+
+- **The table predicts the successes as well as the failures, which is what
+  makes it a model rather than an excuse.** Channel pruning has no cycle term,
+  so it is null *before* anything is measured. **Eviction is on the token axis,
+  cuts `k_eff`, and therefore removes cycles — so it works.** Same bytes, same
+  hardware, opposite outcome, one line of arithmetic apart.
+- **The discriminator is never "how many bytes", it is "does it reach `k_eff`
+  or `qbit`".** Every technique here that touches only DRAM lands in §1's
+  1.01–1.07× ceiling; every one that lowers the compute roof survives.
+- **Select-without-evict is the control that proves it.** Quest reads fewer
+  blocks but stores the same cache — byte-identical to eviction, and it does
+  lower `k_eff`, so it tracks eviction at batch 32 (12.85× vs 15.96×). The gap
+  between them is storage, not compute.
+- **Bit-width is the only axis with no null anywhere.** `qbit` is an outer
+  multiplier, so no `ceil` can absorb it — KV4→KV3 is 0.75× cycles *and* 0.75×
+  bytes unconditionally. And since `cycles ∝ k_eff × qbit`, it **multiplies with
+  eviction instead of competing with it**: the two axes are orthogonal, so
+  evict-1024 at KV3 is roughly their product. **Unmeasured. Highest-value open
+  experiment.**
 
 ![KV reduction vs batch](analysis/memory/kv_batch.png)
 
-- **And they were measured in the wrong place.** Weight traffic is constant in
-  batch (7.65 GB, read once); KV traffic scales with it. `evict-1024` goes
+- **And all of it was measured in the wrong place.** Weight traffic is constant
+  in batch (7.65 GB, read once); KV traffic scales with it, so KV's *share* of
+  DRAM — and the payoff for cutting it — grows with batch. `evict-1024` goes
   **2.46× at batch 1 → 15.96× at batch 32.**
+- **Which is why eviction is the exception and still obeys the rule.** At batch
+  1 it is worth 1.45× (§8), inside the same ceiling as everything else. Its 16×
+  is a *batch-32* result, earned where §1's triangle says bytes finally bind.
 
 ## 6. Layout decides which pruning axis may work
 
