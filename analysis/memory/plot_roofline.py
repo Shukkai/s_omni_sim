@@ -19,6 +19,20 @@ ridge is 32 FLOP/byte and whose effective ridge under the OS-V ceiling is
 0.98 FLOP/byte -- below every operation here, which is why the third leg never
 sets the roofline.
 
+**Attention's intensity does not move with context, and that is not a
+plotting artefact.**  `attn_v` FLOPs are `2 x kv_len x head_dim x batch x
+num_heads` and its KV bytes are `kv_len x head_dim x kv_bits/8 x batch x
+num_kv_heads`, so the ratio is `2 x num_heads / (kv_bits/8 x num_kv_heads)`
+-- **`kv_len` and `batch` both cancel**.  Measured, it is 14.23 at 2K and
+14.22 at 32K, identical at batch 1 and batch 32.
+
+What context changes is the *attained rate*, so the attention operations move
+straight up the plot.  `qk` climbs **1,562 -> 2,774 GFLOP/s** (38.1% -> 67.7%
+utilisation) because its `N = kv_len` fills more tiles as the cache grows.
+`attn_v` creeps **125.4 -> 127.8**, asymptotic to 128 = 1/32 of peak, because
+`per_round = ceil(kv_len/4) + 10` amortises its fixed 10 cycles but can never
+light more than one of 32 rows.  The faint vertical trails show both.
+
 Run:  python analysis/memory/plot_roofline.py
 """
 
@@ -60,6 +74,9 @@ DRAM_BW, SRAM_BW = 51.2, 128.0                     # GB/s
 DRAM_BW_REAL = 32 * 64 / 90e-9 / 1e9               # 22.8 GB/s
 
 ATTN = ('qk_matmul', 'attn_v_matmul')
+
+#: Contexts swept to draw the attention trail in each panel.
+CONTEXT_TRAIL = (2048, 4096, 8192, 16384, 32768)
 
 
 def ops(batch, ctx):
@@ -113,6 +130,26 @@ def panel(ax, batch, ctx):
         ax.annotate('k/v_proj', xy=lo, xytext=(6, -4),
                     textcoords='offset points', fontsize=7.5, color='#2c6fbb')
 
+    # Attention's intensity is invariant in context AND batch -- FLOPs and KV
+    # bytes are both linear in kv_len and in batch, so the ratio cancels.  What
+    # context changes is the attained rate, so the operations move *vertically*.
+    # The trail makes that visible; without it the reader cannot tell whether
+    # the point is static or the panel simply did not sweep.
+    trail = {n: [] for n in ATTN}
+    for c in CONTEXT_TRAIL:
+        for name, i_d, _s, rate in ops(batch, c):
+            if name in ATTN:
+                trail[name].append((i_d, rate))
+    for name, pts_c in trail.items():
+        xs = [q[0] for q in pts_c]
+        ys = [q[1] for q in pts_c]
+        ax.plot(xs, ys, color='#c0392b', lw=1.0, alpha=0.45, zorder=4)
+        ax.plot(xs, ys, ls='none', marker='_', ms=9, color='#c0392b',
+                alpha=0.55, zorder=4)
+    ax.annotate('2K → 32K\ncontext', xy=(trail['qk_matmul'][-1]),
+                xytext=(16, 10), textcoords='offset points', fontsize=7.5,
+                color='#c0392b', alpha=0.85)
+
     for name, i_d, _i_s, rate in pts:
         if name not in ATTN:
             continue
@@ -120,7 +157,7 @@ def panel(ax, batch, ctx):
                 zorder=6, mec='white', mew=0.9,
                 label='attention' if (batch == 1 and name == ATTN[0]) else None)
         ax.annotate(name.replace('_matmul', ''), xy=(i_d, rate),
-                    xytext=(7, -10 if name == 'attn_v_matmul' else 5),
+                    xytext=(7, -11 if name == 'attn_v_matmul' else 5),
                     textcoords='offset points', fontsize=8.5, color='#c0392b')
 
     ax.axvline(PEAK / DRAM_BW, color='#999', lw=0.8, ls='-.')
@@ -146,8 +183,8 @@ def main():
     h, l = axes[0].get_legend_handles_labels()
     fig.legend(h, l, loc='lower center', ncol=3, fontsize=8.5,
                frameon=False, bbox_to_anchor=(0.5, -0.10))
-    fig.suptitle('Decode roofline — two roofs the datasheet does not show: '
-                 'the array at M=1, and a finite request queue', y=0.99)
+    fig.suptitle('Decode roofline — attention moves vertically with context, '
+                 'never sideways', y=0.99)
     fig.tight_layout()
     for ext in ('png', 'pdf'):
         fig.savefig(os.path.join(_here, f'roofline.{ext}'), dpi=200,
