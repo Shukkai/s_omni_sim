@@ -134,7 +134,7 @@ def main():
     panel(axes[0], 1, 2048)
     panel(axes[1], 32, 32768)
     axes[0].set_ylabel('attained rate (GFLOP/s)')
-    axes[0].legend(loc='upper left', framealpha=0.95, fontsize=8)
+    axes[0].legend(loc='lower right', framealpha=0.95, fontsize=8)
     fig.suptitle('Decode roofline — the ceiling that matters is the array, '
                  'not the bandwidth', y=0.99)
     fig.tight_layout()
