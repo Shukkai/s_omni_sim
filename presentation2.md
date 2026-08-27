@@ -5,10 +5,13 @@
 Every KV-reduction paper rests on one premise: decode is memory-bound, so
 removing bytes buys time. This section tests that premise. The short version:
 
-> **It is true only in a corner of the operating space — and inside that corner
-> the binding resource is weights, not KV.**
+> **On a GQA model at 4-bit KV it is true only in a corner of the operating
+> space — and inside that corner the binding resource is weights, not KV. On an
+> MHA model it is true everywhere, and §1.5 shows GQA is the reason.**
 
-Three findings, in order.
+Four findings, in order. Everything through §1.4 is measured on **LLaMA-3-8B
+(GQA 32:8, KV4)**; §1.5 varies both of those and is where the scope of the
+result actually lives.
 
 ### 1.1 Memory-bound is a triangle, not a property
 
@@ -105,7 +108,67 @@ Neither is a KV technique. And the two regimes want different machines — one
 tuned for weight bandwidth, one for array occupancy. **Two accelerators, not
 one.**
 
-### 1.5 How this was measured
+### 1.5 The triangle is a GQA result, not an Omni-LUT result
+
+Everything above runs on LLaMA-3-8B, which is **GQA 32:8** — 8 KV heads feeding
+32 query heads. That choice, not the accelerator, is doing most of the work.
+
+The Omni-LUT paper evaluates OPT-1.3B/2.7B/6.7B/13B/30B and LLaMA2-7B/13B.
+**Every one of them is MHA** — 32 KV heads — which is 4× the KV bytes per token
+while leaving attention compute unchanged. Re-running the same grid on the
+paper's own model:
+
+| configuration | max `C/D` in the 30-cell grid | compute-bound cells |
+|---|---:|---|
+| LLaMA-3-8B GQA, KV4 *(§1.1–§1.4)* | 2.90 | the triangle |
+| LLaMA-3-8B GQA, KV16 | 3.22 | almost all |
+| OPT-6.7B **MHA**, KV4 | 1.07 | **1 of 30** (batch 32 / 2K) |
+| OPT-6.7B **MHA**, KV16 | **0.94** | **none** |
+
+> **On an MHA model at 16-bit KV — the baseline every KV paper argues against —
+> decode is memory-bound in every cell of the grid. There is no triangle.** The
+> literature's premise is correct for the configuration it was written about.
+
+Two variables move the boundary, and one of them moves the wrong way:
+
+- **GQA is the dominant term.** At batch 1 / 32K, `C/D` is 1.00 on GQA KV4 and
+  0.49 on MHA KV4. GQA divides KV traffic by 4 and divides attention compute by
+  nothing, so it multiplies attention's arithmetic intensity by 4 and lifts
+  decode off the memory roof.
+- **More KV bits make decode *more* compute-bound, not less.** GQA KV4 → KV16
+  takes `C/D` from 1.00 to 2.08 at batch 1 / 32K. On a bit-serial LUT array
+  `cycles ∝ qbit`, so 16-bit KV quadruples AA compute while quadrupling only the
+  KV slice of DRAM. This is §2's bit-width row seen from the other direction.
+- **Under MHA, context stops helping.** On GQA, `C/D` rises with context at
+  every batch. On MHA at batch 32 it *falls* — 1.07 at 2K down to 0.83 at 32K —
+  because KV bytes now outgrow attention compute. The diagonal boundary of §1.2
+  is itself a GQA phenomenon.
+
+What that does to §1.3 and §1.4:
+
+| | GQA KV4 | MHA KV4 | MHA KV16 |
+|---|---:|---:|---:|
+| KV share of decode DRAM, b1 / 2K | 2.9% | 7.9% | **25.2%** |
+| KV share of decode DRAM, b1 / 32K | 32.1% | 57.9% | **84.3%** |
+| ceiling if all KV free, b1 / 2K | 1.01× | 1.03× | **1.11×** |
+| ceiling if all KV free, b1 / 32K | 1.07× | 1.30× | **1.46×** |
+
+**So §1.4's ceiling is not a universal bound on KV work — it is what is left of
+that bound once GQA and 4-bit KV have already been applied.** 1.46× is a
+different claim from 1.07×. The honest statement of the whole section is:
+
+> **GQA and KV4 between them have already taken most of what KV reduction had
+> to give. Omni-LUT-KV4 on a GQA model is a machine on which further KV work
+> has little left to remove — which is a compliment to the design, not a
+> criticism of the literature.**
+
+One caveat in the other direction: the paper never states a batch size, and its
+edge framing implies **batch 1** — the memory-bound row in *every* configuration
+above, ours included. At the paper's own operating point our grid agrees with
+it. The compute-bound half of §1.1 lives at batch ≥ 2, which the paper does not
+evaluate.
+
+### 1.6 How this was measured
 
 Per operation the roofline charges:
 
@@ -189,7 +252,11 @@ expression**. This is the whole analysis:
 | channel (`head_dim` = N) | ThinK | only `ceil(N/128)` | **null** | linear | **1.000×** |
 | token (`kv_len` = K) | **eviction** (H2O, SnapKV) | `k_eff = ceil(K/4)` | **linear** | linear | **1.45× b1 · 15.96× b32** |
 | token, read-only | Quest, TidalDecode | `k_eff`, storage unchanged | linear | linear | 12.85× b32 |
-| **bit-width** (`qbit`) | KV3 / KV2 | outer multiplier | **linear** | **linear** | **unmeasured** |
+| **bit-width** (`qbit`) | KV3 / KV2 | outer multiplier | **linear** | **linear** | **~1.07–1.14× energy** * |
+
+<sub>\* KV2 vs KV4, read from the Omni-LUT paper's Fig. 10 energy bars — the one
+row measured elsewhere, and in a different unit. Every other figure is TPOT
+from our own model.</sub>
 
 ### 2.3 Reading the table one row at a time
 
@@ -259,8 +326,23 @@ Compare with channel-plus-token pruning: both claim bytes from the same tensor,
 so their savings partially overlap and sub-add. Bit-width is the only axis that
 stacks cleanly on the axis that already works.
 
-**Status: still unmeasured.** It remains the highest-value open experiment in
-the study.
+**Status: measured by the paper, not by us — and the gain is modest.** The
+Omni-LUT paper builds Omni-LUT-KV3 and Omni-LUT-KV2 and states the mechanism in
+our terms: KV2 "eliminates 33% (vs. KV3) and 50% (vs. KV4) of the computational
+workload from these AA-GEMM bottlenecks", which is exactly `cycles ∝ qbit`. So
+the *cycle* half of the prediction is confirmed by construction.
+
+What it buys end to end is smaller than that halving suggests. Reading the
+normalized-energy bars of the paper's Fig. 10, Omni-LUT-KV2 lands within
+roughly **1.07×** of KV4 on a decode-heavy workload (2K in, 2048 out) and
+**1.14×** on a prefill-heavy one (8K in, 256 out) — for an axis that halves both
+the bytes *and* the AA-GEMM cycles. That is the same lesson as §1.4 arriving on
+a different metric: even the one axis with no null anywhere runs into the fact
+that neither KV bytes nor AA cycles are the whole of decode.
+
+**Still open on our side:** the paper measures *energy*. The *latency* effect of
+KV3/KV2, and how it composes with eviction, is what our model could add and has
+not.
 
 ### 2.6 The correction — all of it was measured in the wrong place
 
@@ -626,7 +708,9 @@ the same statement about `n_tiles` reaching `array_m`.
    batch 32, fits in 4.5 MB, and survives its own 1.02 TB/s check.
 4. **Prune bit-width, not channels.** The only axis that multiplies cycles *and*
    bytes, that composes with eviction rather than competing, and that has no
-   rounding boundary to die on. **Still unmeasured.**
+   rounding boundary to die on. The paper has built KV3/KV2 and measures
+   ~1.07–1.14× in energy; **the latency effect and its composition with
+   eviction are what remain open.**
 5. **Pick the KV layout before the pruning algorithm.** It silently decides which
    pruning literature is deployable at all — and it is a cliff, not a slope.
 6. **Cost the SRAM port next.** Packing is the lever in both workloads and both

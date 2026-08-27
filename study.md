@@ -454,7 +454,11 @@ table accounts for both outcomes.
   | channel (`head_dim` = N) | ThinK | **null** — N enters only via `ceil(N/128)` | linear | **1.000×** |
   | token (`kv_len` = K) | **eviction** (H2O, SnapKV) | **linear** via `k_eff` | linear | **1.45× b1 · 15.96× b32** |
   | token, read-only | Quest, TidalDecode | linear | linear | 12.85× b32 |
-  | **bit-width (`qbit`)** | KV3 / KV2 | **linear** — outer multiplier | **linear** | **unmeasured** |
+  | **bit-width (`qbit`)** | KV3 / KV2 | **linear** — outer multiplier | **linear** | **~1.07-1.14x energy** * |
+
+  \* KV2 vs KV4, read from the Omni-LUT paper's Fig. 10 energy bars -- the one
+  row measured elsewhere, and in a different unit.  Every other figure in the
+  table is TPOT from this repo's own model.
 
 - **The classification is exhaustive and predictive, not fitted.** The channel
   null falls out of `ceil(N/128) = 1` for every `N <= 128` before anything is
@@ -479,8 +483,22 @@ table accounts for both outcomes.
   proportional to `k_eff x qbit`, so the two axes are orthogonal and multiply —
   evict-1024 at KV3 is approximately the product of the two speedups, not the
   larger of them. Channel and token pruning, by contrast, both claim bytes from
-  the same tensor and partially overlap. **Still unmeasured; it remains the
-  highest-value open experiment in this study.**
+  the same tensor and partially overlap.
+- **The Omni-LUT paper has built this axis, and its result cuts both ways.**
+  Omni-LUT-KV3 and Omni-LUT-KV2 are evaluated there, and the paper states the
+  mechanism in the same terms this section derives it: KV2 "eliminates 33% (vs.
+  KV3) and 50% (vs. KV4) of the computational workload from these AA-GEMM
+  bottlenecks". So `cycles x qbit` is confirmed by construction, not merely
+  predicted here. What it buys end to end is smaller than the halving implies --
+  reading the normalized-energy bars of the paper's Fig. 10, KV2 lands within
+  roughly **1.07x** of KV4 on a decode-heavy workload (2K in, 2048 out) and
+  **1.14x** on a prefill-heavy one (8K in, 256 out). **The axis with no null
+  anywhere still runs into the fact that neither KV bytes nor AA cycles are the
+  whole of decode** -- the same lesson section 18's ceilings teach on a
+  different metric.
+- **What remains unmeasured is ours to measure.** The paper reports *energy*.
+  The *latency* effect of KV3/KV2 under this repo's roofline, and how it
+  composes with eviction, is the experiment this study can still add.
 - **Eviction is the exception that still obeys the rule.** Its batch-1 figure is
   1.45× under the pipelined model (§17), inside the same ceiling as every
   technique above. The 15.96× is a *batch-32* result, earned exactly where §18's
@@ -884,6 +902,46 @@ which is what "what is worth researching here" needs, and nothing more.
 Full tables: `analysis/memory/rounds_report.md`, `analysis/memory/regime_report.md`.
 
 ---
+
+### The scope of the grid: GQA, not Omni-LUT
+
+The grid above is **LLaMA-3-8B (GQA 32:8) at KV4**, and the regime it reports is
+mostly a property of that model rather than of this array. Re-running the same
+`measure()` across the two axes that differ from the Omni-LUT paper's own
+evaluation — every model it reports (OPT-1.3B/2.7B/6.7B/13B/30B, LLaMA2-7B/13B)
+is **MHA**, and its baselines are **KV16**:
+
+| configuration | max `C/D` over 6 batches x 5 contexts | compute-bound cells |
+|---|---:|---|
+| LLaMA-3-8B GQA, KV4 (the grid above) | 2.90 | the triangle |
+| LLaMA-3-8B GQA, KV16 | 3.22 | all but the 2K/4K corner |
+| OPT-6.7B MHA, KV4 | 1.07 | **1 of 30** (batch 32 / 2K) |
+| OPT-6.7B MHA, KV16 | **0.94** | **none** |
+
+- **On MHA at 16-bit KV, decode is memory-bound in every cell of the grid.**
+  There is no triangle, and the premise the KV literature rests on is correct
+  for the configuration it was written about. Section 13's negative results are
+  therefore statements about *this* configuration, not about KV reduction.
+- **GQA is the dominant variable.** At batch 1 / 32K, `C/D` is 1.00 on GQA KV4
+  and 0.49 on MHA KV4: GQA divides KV traffic by four and attention compute by
+  nothing, so it multiplies attention's arithmetic intensity by four.
+- **Raising KV bit-width makes decode *more* compute-bound, not less** -- GQA
+  KV4 to KV16 moves `C/D` from 1.00 to 2.08 at batch 1 / 32K, because
+  `cycles x qbit` on a bit-serial array quadruples AA compute while quadrupling
+  only the KV slice of DRAM.
+- **Under MHA the boundary stops being diagonal.** On GQA, `C/D` rises with
+  context at every batch. On MHA at batch 32 it falls -- 1.07 at 2K down to 0.83
+  at 32K -- because KV bytes outgrow attention compute.
+- **What that does to the ceilings.** KV share of decode DRAM at batch 1 / 2K is
+  2.9% on GQA KV4 and **25.2%** on MHA KV16; the bound from freeing all KV rises
+  from 1.01x to **1.11x** at 2K and from 1.07x to **1.46x** at 32K.
+
+**So the ceiling is not a universal bound on KV work -- it is what is left of
+that bound once GQA and 4-bit KV have already been applied.** The paper also
+never states a batch size, and its edge framing implies batch 1, which is the
+memory-bound row in every configuration including ours: at its own operating
+point this grid agrees with it.
+
 
 ## 19. GNNs — the same array, a workload that is all knee
 

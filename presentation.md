@@ -66,6 +66,31 @@ here at once** — eviction, selection, residency, channel pruning:
 - **Inside the triangle the lever is weight bytes (6.80×). Outside it, array
   occupancy (3.12×).** Two accelerators, not one.
 
+### The triangle is a GQA result
+
+All of the above is **LLaMA-3-8B, GQA 32:8, KV4**. That choice, not the
+accelerator, produces the triangle. Re-run on the model the Omni-LUT paper
+actually evaluates — every one of OPT-1.3B/2.7B/6.7B/13B/30B and LLaMA2-7B/13B
+is **MHA**:
+
+| configuration | max `C/D` in the 30-cell grid | compute-bound cells |
+|---|---:|---|
+| LLaMA-3-8B GQA, KV4 *(above)* | 2.90 | the triangle |
+| OPT-6.7B **MHA**, KV4 | 1.07 | **1 of 30** |
+| OPT-6.7B **MHA**, KV16 | **0.94** | **none** |
+
+- **On MHA at KV16 — the baseline every KV paper argues against — decode is
+  memory-bound in every cell.** The literature's premise is right for the
+  configuration it was written about.
+- **GQA is the dominant term**, not the array: it divides KV traffic by 4 and
+  attention compute by nothing, so it multiplies arithmetic intensity by 4.
+- **More KV bits make decode *more* compute-bound**, since `cycles ∝ qbit` on a
+  bit-serial array. That is §5's bit-width row seen from the other side.
+- So the **1.01–1.07× KV ceiling is what remains after GQA and KV4 have already
+  been applied** — on MHA/KV16 it is **1.11× at 2K and 1.46× at 32K**. A
+  compliment to the design, not a refutation of the literature.
+
+
 ## 2. Attention is the only target — and cycles lie about it
 
 ![Stage breakdown](analysis/cycle_breakdown/cycle_breakdown_norm.png)
@@ -124,7 +149,10 @@ A KV cache has exactly three reducible dimensions, and
 | channel (`head_dim` = N) | ThinK | **null** — N enters only via `ceil(N/128)` | linear | **1.000×** |
 | token (`kv_len` = K) | **eviction** (H2O, SnapKV) | **linear** via `k_eff` | linear | **1.45× b1 · 15.96× b32** |
 | token, read-only | Quest, TidalDecode | linear | linear | 12.85× b32 |
-| **bit-width (`qbit`)** | KV3 / KV2 | **linear** — outer multiplier | **linear** | **unmeasured** |
+| **bit-width (`qbit`)** | KV3 / KV2 | **linear** — outer multiplier | **linear** | **~1.07–1.14× energy** * |
+
+<sub>\* KV2 vs KV4, read from the Omni-LUT paper's Fig. 10 energy bars. Every
+other figure in this table is TPOT from our own model.</sub>
 
 - **The table predicts the successes as well as the failures, which is what
   makes it a model rather than an excuse.** Channel pruning has no cycle term,
@@ -142,8 +170,14 @@ A KV cache has exactly three reducible dimensions, and
   multiplier, so no `ceil` can absorb it — KV4→KV3 is 0.75× cycles *and* 0.75×
   bytes unconditionally. And since `cycles ∝ k_eff × qbit`, it **multiplies with
   eviction instead of competing with it**: the two axes are orthogonal, so
-  evict-1024 at KV3 is roughly their product. **Unmeasured. Highest-value open
-  experiment.**
+  evict-1024 at KV3 is roughly their product.
+- **The Omni-LUT paper has already built this axis — it confirms the mechanism
+  and bounds the payoff.** Omni-LUT-KV3/KV2 exist, and the paper states that KV2
+  "eliminates 33% (vs. KV3) and 50% (vs. KV4) of the computational workload" of
+  AA-GEMM — `cycles ∝ qbit`, in its own words. But its Fig. 10 energy bars put
+  KV2 within roughly **1.07×–1.14×** of KV4 in total energy, for an axis that
+  halves bytes *and* cycles. **What is still unmeasured is the latency effect
+  and how it composes with eviction** — that is what our model can add.
 
 ![KV reduction vs batch](analysis/memory/kv_batch.png)
 
@@ -351,7 +385,9 @@ nothing. Packing and the N-null end at the same width, for the same reason.
 - **Build P=8 packing.** Largest lever outside the triangle, 3.118× at batch 32,
   fits in 4.5 MB, and survives its own 1.02 TB/s bandwidth check.
 - **Prune bit-width, not channels.** The only axis that multiplies cycles and
-  bytes, composes with eviction, and is still unmeasured.
+  bytes and composes with eviction. The paper has built KV3/KV2 and measured
+  ~1.07–1.14× in energy; **the latency effect, and how it stacks with eviction,
+  is what is still open.**
 - **Pick the KV layout before the pruning algorithm.** It silently decides which
   pruning literature is deployable at all.
 - **Packing is the lever in both workloads, and both times the open question
