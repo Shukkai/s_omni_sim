@@ -1200,7 +1200,7 @@ tiebreaker if they ever disagree.
 | 10 — compute/memory overlap | `overlap_model` | `"serial"` = no overlap | §17 | `4d593bc` |
 | 12 — per-port SRAM | `sram_port_model`, `accum_bandwidth_gbps` | `"lumped"`, `0.0` | §19 | `f9b27f0` |
 | 6 — prefill row tiling | `sram_m_tile` | `0` = untiled | §20 | `90dbeb5` |
-| 13 — FFN activation sparsity | *(three default-identical hooks)* | — | §21 | *(next commit)* |
+| 13 — FFN activation sparsity | *(three default-identical hooks)* | — | §21 | `57931d5` |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones
