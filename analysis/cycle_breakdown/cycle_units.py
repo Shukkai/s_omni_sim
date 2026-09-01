@@ -122,12 +122,18 @@ def cycle_units(hw, M: int, K: int, N: int, qbit: int, mode: str,
         k_tiles = math.ceil(k_eff / array_m)
         n_tiles = math.ceil(N / (array_n * num_rac))
 
+        # Row blocking (`hw.sram_m_tile`) re-pays fill/drain, the input load
+        # and the accumulator drain once per block, while the activation
+        # stream stays `M` long in total.  `m_blocks == 1` -- the untiled
+        # default -- gives back the original dict entry for entry.
+        mt = getattr(hw, 'sram_m_tile', 0)
+        m_blocks = 1 if (mt <= 0 or mt >= M) else math.ceil(M / mt)
         per_round = {
             'lgu': 0,   # pipelined into the M-long activation stream
             'pe_array_compute': M,
-            'pe_array_fill_drain': array_n + array_m,
-            'input_load': INPUT_CYCLES,
-            'accumulator': OUTPUT_CYCLES,
+            'pe_array_fill_drain': (array_n + array_m) * m_blocks,
+            'input_load': INPUT_CYCLES * m_blocks,
+            'accumulator': OUTPUT_CYCLES * m_blocks,
         }
         scale = batch_size * math.ceil(n_tiles * k_tiles / replication) * qbit
 

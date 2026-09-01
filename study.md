@@ -282,12 +282,12 @@ the resident operand once per column tile (no re-tiling).
   1024 KB at 32K the binding term is the KV tile itself, which needs re-tiling,
   so v1 flags the overflow and charges nothing — the *larger* overflow prices
   lower. Use `sram_overflow`; treat `sram_refetch_bytes` as first-order only.
-- **Prefill is excluded, and this is a model gap not a result.**
-  `_calculate_peak_sram` holds the entire prefill activation matrix —
-  O(seq x d_model), 59 MB at 2K context and 2.1 GB at 32K — so it overflows at
-  every plausible capacity and its spill charge is a meaningless ~770 GB
-  constant. A real accelerator tiles prefill over the sequence; the model does
-  not. **Open.**
+- ~~**Prefill is excluded, and this is a model gap not a result.**~~
+  **Closed by §20.** `_calculate_peak_sram` held the entire prefill activation
+  matrix — O(seq x d_model), 2.1 GB at 32K — so prefill overflowed at every
+  plausible capacity and its spill charge was a meaningless constant.
+  `hw.sram_m_tile` blocks the row loop, and the table this section could not
+  publish is in §20(b).
 
 ---
 
@@ -911,17 +911,100 @@ Full tables: `analysis/memory/ports_report.md`.
 
 ---
 
+## 20. Prefill row tiling — the one outright bug
+
+`_calculate_peak_sram` held the whole activation matrix, `A_bytes = M x K x
+act_bits/8` with `M` the entire prefill sequence. So prefill's claimed working
+set was **2.16 GB at 32K**, no capacity fitted it, its spill charge was a
+constant, and §7 could publish only a decode table.
+
+**It is a capacity bug and only a capacity bug** — §19 is what settled that.
+§16(c) had suspected the same untiled A of corrupting the SRAM *traffic* terms
+too, and parked prefill's bandwidth numbers behind this fix; the activation term
+turned out to measure 255.7 B/cycle against an array that consumes 256. This
+section inherited a smaller problem than it was handed.
+
+`hw.sram_m_tile` (0 = untiled, the default) blocks the row loop.
+
+### (a) The frontier
+
+| row block | prefill peak | smaller by | TTFT | vs untiled |
+|---|---:|---:|---:|---:|
+| untiled | 2.16 GB | 1× | 219.3 s | 1.000× |
+| 2,048 | 129.0 MB | 16× | 223.2 s | 1.018× |
+| **512** | **32.3 MB** | **64×** | **235.7 s** | **1.075×** |
+| 128 | 8.1 MB | 256× | 285.8 s | 1.303× |
+| 32 | 2.0 MB | 1,020× | 486.0 s | 2.216× |
+| 8 | 524 KB | 4,033× | 1,286.9 s | 5.868× |
+
+- **The knee is wide, and 512 rows is the operating point**: 64× less on-chip
+  memory for 7.5% of TTFT.
+- **Tiling is a frontier, not a free fix.** Weight-stationary holds B across the
+  whole `M` stream, so a row block re-loads the weight tile and re-pays the
+  array's fill/drain once per block. Footprint falls and TTFT rises,
+  monotonically in both — asserted, not observed.
+- **Below 128 rows the curve turns hard**, because the fill/drain re-paid per
+  block starts to dominate the activation stream itself.
+- **Output-stationary and FPE pay nothing but the footprint.** Their traffic
+  terms already re-read B once per `array_m` (or `FPE_array_size`) row tile,
+  which only makes sense if one row tile of A is resident — so for those modes
+  the footprint was simply *inconsistent with the loop nest the traffic model
+  already described*, and tiling makes the two agree at zero cycles and zero
+  bytes. Only `LUT_WS` was ever really untiled.
+- **Decode does not move and cannot**: its GEMMs have `M = 1` or `M = batch`.
+
+### (b) §7's prefill row, finally
+
+Largest — so cheapest — row block whose prefill working set fits, at 32K:
+
+| SRAM | largest block that fits | prefill peak | TTFT vs untiled |
+|---|---:|---:|---:|
+| 1 MB | 8 rows | 0.5 MB | 5.868× |
+| 2 MB | 16 rows | 1.0 MB | 3.433× |
+| 4 MB | 32 rows | 2.0 MB | 2.216× |
+| 8 MB | 64 rows | 4.0 MB | 1.607× |
+| 16 MB | 128 rows | 8.1 MB | 1.303× |
+| 32 MB | 256 rows | 16.1 MB | 1.151× |
+
+- **Capacity and TTFT now trade smoothly**, where every row of this table was
+  "overflow, charge a constant" before.
+- **§7's decode floor of 924.5 KB sits underneath all of it**, so a chip sized
+  for decode alone pays 5.9× TTFT to run prefill at all. Prefill is what sets
+  the SRAM budget on this accelerator, and it could not be said before.
+
+### (c) How the bug scaled with context
+
+| context | untiled peak | 512-row peak | smaller by |
+|---|---:|---:|---:|
+| 2,048 | 57 MB | 14.3 MB | 4× |
+| 8,192 | 228 MB | 14.3 MB | 16× |
+| 32,768 | 2,064 MB | 32.3 MB | 64× |
+
+- **The untiled footprint is linear in context and the tiled one nearly flat**,
+  so the two diverge without limit — the bug was worst exactly where the
+  long-context story this repo is about lives.
+- **The tiled column is not quite flat, and the reason matters.** It holds at
+  14.3 MB through 8K and rises to 32.3 MB at 32K, because past ~16K the binding
+  term stops being the activation block and becomes **attention's KV tile**,
+  which grows with `kv_len` and which no row block touches. That is §7's decode
+  result arriving in prefill.
+
+**One limitation, stated rather than modelled.** A row block re-reads B from
+*SRAM*, not from DRAM. The model has always charged an AW operation's weight
+DRAM read exactly once and re-read B from SRAM per row tile, for every mode;
+that convention predates this field and §20 keeps it rather than changing it for
+the tiled case alone. If the weight matrix does not fit on chip — 29.4 MB for
+one LLaMA-3-8B FFN projection — a real machine re-reads it from DRAM per block
+too, and the TTFT costs above are optimistic by that amount.
+
+Full tables: `analysis/memory/tiling_report.md`.
+
+---
+
 ## TODO
 
 ### Model gaps
 
-- **Tile prefill in `_calculate_peak_sram` — the top item.** It holds the whole
-  activation matrix, so prefill capacity claims and its spill charge are both
-  unusable (§7). The only outright *bug* this work found. **§19 shrank it back
-  to one section**: §16(c) had claimed the same defect also corrupted the SRAM
-  *traffic* terms, but the activation term measures 255.7 B/cycle against a
-  256 B/cycle array, so it is right and tiling cannot change it. This is a
-  capacity bug and only a capacity bug.
 - **Measure the BQU.** Not measured yet — the original simulator does not model
   it at all. `bqu_metrics()` in `cycle_units.py` is a placeholder: BEA one pass
   per bit-plane, TSE one min/max pass (Value path only), assumed `bqu_width`
@@ -953,6 +1036,15 @@ Full tables: `analysis/memory/ports_report.md`.
   halves already disagree (§14's last bullet).
 
 ### Closed
+
+- ~~**Tile prefill in `_calculate_peak_sram` — the top item.**~~ Done — §20.
+  `hw.sram_m_tile` blocks the row loop, §7's prefill row exists, and the
+  frontier has a wide knee (64× less SRAM for 1.075× TTFT). Two things it
+  turned out *not* to be: §19 showed it never touched the SRAM traffic terms,
+  and only `LUT_WS` was ever untiled — the OS and FPE modes' footprints were
+  merely inconsistent with loop nests their own traffic terms already
+  described. **Still open underneath it**: weight *DRAM* re-reads per row
+  block, which the model does not charge in any mode.
 
 - ~~**No compute/memory overlap.**~~ Both bounds now exist (§17). `"serial"`
   remains the default because `"pipelined"` assumes buffering the model cannot
@@ -991,15 +1083,19 @@ tiebreaker if they ever disagree.
 | 5b — unstructured KV masks | *(three default-identical hooks)* | — | §15 | `40f9071` |
 | 7 — memory tech + SRAM bandwidth | `sram_bandwidth_gbps` | `0.0` = unlimited | §16 | `9b0b15c` |
 | 10 — compute/memory overlap | `overlap_model` | `"serial"` = no overlap | §17 | `4d593bc` |
-| 12 — per-port SRAM | `sram_port_model`, `accum_bandwidth_gbps` | `"lumped"`, `0.0` | §19 | *(next commit)* |
+| 12 — per-port SRAM | `sram_port_model`, `accum_bandwidth_gbps` | `"lumped"`, `0.0` | §19 | `f9b27f0` |
+| 6 — prefill row tiling | `sram_m_tile` | `0` = untiled | §20 | *(next commit)* |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones
 git reset --hard <sha>      # rewind to the end of that stage
 ```
 
-**Stage 6 (prefill tiling) is not done** — it is the top TODO item, and §16(c)
-is blocked on it.
+**Stage 6 (prefill tiling) landed out of order**, after Stages 10 and 12, which
+is why the table is not in numeric order. It was the top TODO item for the whole
+of §1–§18. §16(c) was thought to be blocked on it and was not — Stage 12
+unblocked that instead (§19), which is also what shrank Stage 6 to the capacity
+fix it always was.
 
 **Two premises died in the building**, recorded here rather than quietly dropped:
 
@@ -1031,4 +1127,4 @@ Run after *every* model change, not just the one being worked on.
    (55.39 / 70.67 / 131.82 ms).
 4. Every sweep's own pre-flight suite still passes: `prefill_run.py` (7),
    `pack_run.py` (9), `unstructured_run.py` (9), `selective_run.py` (5),
-   `bandwidth_run.py` (5), `ports_run.py` (7).
+   `bandwidth_run.py` (5), `ports_run.py` (7), `tiling_run.py` (8).

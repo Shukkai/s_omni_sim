@@ -267,6 +267,39 @@ class HardwareConfig:
     # flat bandwidth number makes look ~100x cheaper than it is.
     dram_burst_bytes: int = 0
 
+    # --- Prefill row tiling ---
+    # How many rows of A (the activation matrix) the schedule holds on chip at
+    # once.  0 = all `M` of them, which is what `_calculate_peak_sram` has
+    # always assumed and how every result predating this field was produced.
+    #
+    # That assumption is the repo's one outright *bug*.  A prefill GEMM has
+    # `M` = the whole sequence, so the claimed working set is O(seq x d_model)
+    # -- 59 MB at 2K context and 2.1 GB at 32K -- which no plausible SRAM
+    # fits.  Prefill therefore overflows at every capacity and its spill charge
+    # is a meaningless constant (SS7).  Real hardware tiles the sequence.
+    #
+    # **This is a capacity bug and only a capacity bug**, which SS19 is what
+    # settled: the SRAM *traffic* terms were suspected of the same defect, but
+    # the activation term measures 255.7 B/cycle against an array that consumes
+    # 256, so it is right and tiling cannot change it.
+    #
+    # What tiling costs, and where:
+    #
+    #   - `LUT_WS` pays.  Weight-stationary holds B across the whole `M`
+    #     stream, so blocking the rows re-loads the weight tile once per block
+    #     and re-pays the array's fill/drain once per block.  Both are charged.
+    #   - The output-stationary and FPE modes pay **nothing**, because they
+    #     were already tiled: their traffic terms re-read B once per
+    #     `array_m` (or `FPE_array_size`) row tile, which only makes sense if
+    #     one row tile of A is resident at a time.  For those modes the
+    #     footprint was simply inconsistent with the loop nest the traffic
+    #     model already described, and this field makes the two agree.
+    #
+    # A row block is a real loop nest -- produce a block of activations, run it
+    # through every column and K tile, retire it -- not a re-tiling of the
+    # kind `_apply_sram_capacity` declines to model.
+    sram_m_tile: int = 0
+
     # --- On-chip KV buffer ---
     # Bytes of KV cache held on chip *between decode steps*, in KB.
     #
@@ -1340,9 +1373,16 @@ class Simulator:
             k_tiles = math.ceil(k_eff / array_m)
             n_tiles = math.ceil(N / (array_n * self.NUM_RAC))
 
-            per_round = M + array_n + array_m + INPUT_CYCLES + OUTPUT_CYCLES
+            # Row blocking re-pays fill/drain once per block but streams the
+            # same `M` activations in total, so the exact form is
+            # `M + m_blocks * overhead` rather than `m_blocks * (mt +
+            # overhead)` -- the latter would charge for the padding rows of a
+            # final short block.  `m_blocks == 1` gives back `M + overhead`
+            # exactly, which is why the untiled default is bit-identical.
+            overhead = array_n + array_m + INPUT_CYCLES + OUTPUT_CYCLES
+            m_blocks = self._row_blocks(M)
             rounds = math.ceil(n_tiles * k_tiles / replication)
-            return batch_size * rounds * per_round * qbit
+            return batch_size * rounds * (M + m_blocks * overhead) * qbit
 
         elif mode == "FPE_OS":
             m_tiles = math.ceil(M / fpe_size)
@@ -1646,7 +1686,12 @@ class Simulator:
             k_tiles = math.ceil(k_eff / hw.array_m)
             n_tiles = math.ceil(N / (hw.array_n * self.NUM_RAC))
             a_read_bits = A_bits * n_tiles * qbit
-            b_read_bits = B_bits
+            # Weight-stationary keeps B resident across the whole `M` stream,
+            # so blocking the rows re-loads it once per block.  That is the
+            # honest cost of tiling and the reason the field is a knob rather
+            # than a correction: bigger blocks trade capacity for weight
+            # traffic.  The OS and FPE modes already charge B per row tile.
+            b_read_bits = B_bits * self._row_blocks(M)
             # Weight-stationary walks K in `k_tiles` passes and the bit-planes
             # in `qbit` more, and every pass but the last recirculates a full
             # 32-bit partial-sum matrix through the accumulator.  At prefill
@@ -1807,13 +1852,17 @@ class Simulator:
         accum_bits = hw.accumulate_bits
         qbit = hw.weight_bits if compute_mode == ComputeMode.AW else hw.kv_cache_bits
 
-        # A is fully resident in SRAM for one batch element
-        A_bytes = M * K * act_bits // 8
+        # Rows of A on chip at once.  `hw.sram_m_tile = 0` (the default) makes
+        # this the whole `M`, which is the original assumption -- and the one
+        # outright bug this model had, since a prefill GEMM's `M` is the whole
+        # sequence.  C is produced a row block at a time and follows it.
+        m_res = self._resident_rows(M)
+        A_bytes = m_res * K * act_bits // 8
 
         if mode in ("LUT_OS", "LUT_OS_V"):
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = K * col_tile * qbit // 8
-            C_tile = M * col_tile * accum_bits // 8
+            C_tile = m_res * col_tile * accum_bits // 8
             per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "LUT_WS":
@@ -1821,28 +1870,45 @@ class Simulator:
             row_tile = min(k_eff, hw.array_m) * self.MU
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = row_tile * col_tile * qbit // 8
-            C_tile = M * col_tile * accum_bits // 8
+            C_tile = m_res * col_tile * accum_bits // 8
             per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "FPE_OS":
             B_tile = K * min(N, hw.FPE_array_size) * 16 // 8   # FP16
-            C_tile = min(M, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
+            C_tile = min(m_res, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
             per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "TENDER":
             B_tile = K * min(N, hw.FPE_array_size) * qbit // 8
-            C_tile = min(M, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
+            C_tile = min(m_res, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
             per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "VPU":
             B_bytes = K * N * qbit // 8
-            C_bytes = M * N * accum_bits // 8
+            C_bytes = m_res * N * accum_bits // 8
             per_instance = A_bytes + B_bytes + C_bytes
 
         else:
             per_instance = A_bytes  # Fallback: at least A
 
         return per_instance * batch_resident
+
+    def _row_blocks(self, M: int) -> int:
+        """How many row blocks of A the schedule walks (1 = untiled).
+
+        `hw.sram_m_tile` is the number of A rows held on chip at once; 0 means
+        all of them, which is the default and reproduces every published
+        number.  See `HardwareConfig.sram_m_tile`.
+        """
+        mt = self.hw.sram_m_tile
+        if mt <= 0 or mt >= M:
+            return 1
+        return math.ceil(M / mt)
+
+    def _resident_rows(self, M: int) -> int:
+        """How many rows of A are on chip at once."""
+        mt = self.hw.sram_m_tile
+        return M if mt <= 0 else min(M, mt)
 
     def _column_tiles(self, N: int, mode: str) -> int:
         """Number of column tiles the operation loops over.
