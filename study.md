@@ -1314,7 +1314,7 @@ tiebreaker if they ever disagree.
 | 12 — per-port SRAM | `sram_port_model`, `accum_bandwidth_gbps` | `"lumped"`, `0.0` | §19 | `f9b27f0` |
 | 6 — prefill row tiling | `sram_m_tile` | `0` = untiled | §20 | `90dbeb5` |
 | 13 — FFN activation sparsity | *(three default-identical hooks)* | — | §21 | `57931d5` |
-| 14 — RTL buffer partition | `sram_buffer_model`, `model_scale_traffic`, 9 geometry fields | `"pool"`, `False`, `0` | §22 | *(next commit)* |
+| 14 — RTL buffer partition | `sram_buffer_model`, `model_scale_traffic`, 9 geometry fields | `"pool"`, `False`, `0` | §22 | `0a78f11` |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones
