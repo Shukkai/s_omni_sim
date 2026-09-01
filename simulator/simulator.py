@@ -145,6 +145,38 @@ class HardwareConfig:
     # (`analysis/memory/bandwidth_run.py`).
     sram_bandwidth_gbps: float = 0.0
 
+    # How `sram_bandwidth_gbps` is charged against the on-chip memories.
+    #
+    #   "lumped"  one number for everything: (sram_read + sram_write) / bw.
+    #             Every result predating this field was produced this way, so
+    #             it is the default.
+    #   "ported"  three independent memories, each moving bytes concurrently,
+    #             and the operation waits for the slowest:
+    #             max(activation, weight, accumulator).
+    #
+    # **"ported" is the structure OMNI_LUT.pdf Fig. 4 actually draws.**  The
+    # system diagram shows a *Unified Buffer*, a separate *Weight Buffer*, and
+    # a separate *Accumulator* block hanging off the PE array -- three
+    # memories, not one.  "lumped" pushes all three through a single port,
+    # which is why SS16(c) had to park prefill: it charged the accumulator's
+    # partial-sum recirculation against the activation port's bandwidth.
+    #
+    # Under "ported", `sram_bandwidth_gbps` is *per port* rather than
+    # aggregate.  That is the reading the geometry supports: the array
+    # consumes `array_m x MU x act_bits/8` = 256 B/cycle of activations, or
+    # 128 GB/s at 500 MHz, and 128 GB/s was always an activation-port number.
+    sram_port_model: str = "lumped"
+
+    # Accumulator bandwidth in GB/s, used only under `sram_port_model =
+    # "ported"`.  0 = unlimited, the default.
+    #
+    # Unlimited is the *physical* default here, not merely the inert one: the
+    # accumulator in Fig. 4 is a datapath block wired directly to the PE
+    # array's partial-sum outputs, not a client of the unified buffer, so its
+    # traffic does not cross an SRAM port at all.  Set a finite number only to
+    # ask what it would cost if it did.
+    accum_bandwidth_gbps: float = 0.0
+
     # How much an operation's memory time can hide behind another's compute.
     #
     #   "serial"     sum(max(compute, memory)) over operations -- no overlap at
@@ -315,6 +347,20 @@ class OperationMetrics:
     sram_read: int = 0
     sram_write: int = 0
 
+    # The same bytes, split by which on-chip memory moves them (Fig. 4:
+    # Unified Buffer / Weight Buffer / Accumulator).  These partition
+    # `sram_read` and `sram_write` exactly --
+    #   sram_read  == sram_read_a + sram_read_b + sram_acc_read
+    #   sram_write == sram_write_out + sram_acc_write
+    # -- so the lumps keep meaning what they always meant and no existing
+    # consumer moves.  All zero means "no split recorded" (non-GEMM/VPU ops),
+    # which `_sram_ports` reads as pure activation traffic.
+    sram_read_a: int = 0        # activation reads, Unified Buffer
+    sram_read_b: int = 0        # weight / KV reads, Weight Buffer
+    sram_acc_read: int = 0      # partial-sum reads, Accumulator
+    sram_acc_write: int = 0     # partial-sum writes, Accumulator
+    sram_write_out: int = 0     # final result writes, Unified Buffer
+
     # Energy (Joules)
     compute_energy: float = 0.0
     dram_read_energy: float = 0.0
@@ -363,6 +409,11 @@ def _aggregate_metrics(metrics_list: List[OperationMetrics]) -> OperationMetrics
         total.dram_write_eff += m.dram_write_eff
         total.sram_read += m.sram_read
         total.sram_write += m.sram_write
+        total.sram_read_a += m.sram_read_a
+        total.sram_read_b += m.sram_read_b
+        total.sram_acc_read += m.sram_acc_read
+        total.sram_acc_write += m.sram_acc_write
+        total.sram_write_out += m.sram_write_out
         total.compute_energy += m.compute_energy
         total.dram_read_energy += m.dram_read_energy
         total.dram_write_energy += m.dram_write_energy
@@ -998,6 +1049,11 @@ class Simulator:
         metrics.kv_resident_bytes = mem["kv_resident_bytes"]
         metrics.sram_read = mem["sram_read"]
         metrics.sram_write = mem["sram_write"]
+        metrics.sram_read_a = mem["sram_read_a"]
+        metrics.sram_read_b = mem["sram_read_b"]
+        metrics.sram_acc_read = mem["sram_acc_read"]
+        metrics.sram_acc_write = mem["sram_acc_write"]
+        metrics.sram_write_out = mem["sram_write_out"]
 
         # 3. Peak SRAM footprint, and the spill it forces if capacity is finite
         metrics.peak_sram_bytes = self._calculate_peak_sram(
@@ -1156,6 +1212,14 @@ class Simulator:
             dram_write=dram_write_bits // 8,
             sram_read=sram_read_bits // 8,
             sram_write=sram_write_bits // 8,
+            # Q is the activation operand; K and V are the B operand, and in
+            # flash they are re-streamed once per Q block.  Online softmax
+            # keeps the running accumulator in the array, so -- like every
+            # other output-stationary path here -- there is no accumulator
+            # recirculation to charge.
+            sram_read_a=Q_total_bits * num_kv_blocks // 8,
+            sram_read_b=(K_total_bits + V_total_bits) * num_q_blocks // 8,
+            sram_write_out=sram_write_bits // 8,
         )
 
         # Capacity check.  FlashAttention is already tiled to a fixed block, so
@@ -1414,17 +1478,51 @@ class Simulator:
         """
         return run_entries * head_dim * kv_bits // 8
 
+    def _sram_ports(self, m) -> Tuple[int, int, int]:
+        """Split one operation's SRAM bytes into (activation, weight, accum).
+
+        The activation port carries A-reads *and* the final result writes:
+        both live in the Unified Buffer, and one layer's result is the next
+        layer's A.  The weight port carries B-reads (weights, or KV in an AA
+        op).  The accumulator carries partial-sum recirculation only.
+
+        An operation that recorded no split at all -- every non-GEMM VPU op,
+        and `mode == "VPU"`, none of which have a tiled loop nest to split --
+        is pure activation traffic, so its whole lump goes to the activation
+        port.  That keeps "ported" from silently pricing those at zero.
+        """
+        a = m.sram_read_a
+        b = m.sram_read_b
+        acc = m.sram_acc_read + m.sram_acc_write
+        out = m.sram_write_out
+        if a == 0 and b == 0 and acc == 0 and out == 0:
+            return m.sram_read + m.sram_write, 0, 0
+        return a + out, b, acc
+
     def _sram_time(self, m) -> float:
         """Seconds one operation spends moving bytes to and from SRAM.
 
         0.0 when `sram_bandwidth_gbps` is 0 (unlimited), which makes every
         roofline below reduce exactly to `max(compute, dram)` -- the two-term
         form every published result was produced with.
+
+        Under `sram_port_model = "ported"` the three memories of Fig. 4 move
+        their bytes concurrently and the operation waits for the slowest, so
+        the lumped sum becomes a max over ports.  See `sram_port_model`.
         """
-        bw = self.hw.sram_bandwidth_gbps * 1e9
-        if bw <= 0:
-            return 0.0
-        return (m.sram_read + m.sram_write) / bw
+        hw = self.hw
+        bw = hw.sram_bandwidth_gbps * 1e9
+        if hw.sram_port_model != "ported":
+            if bw <= 0:
+                return 0.0
+            return (m.sram_read + m.sram_write) / bw
+
+        act, wgt, acc = self._sram_ports(m)
+        acc_bw = hw.accum_bandwidth_gbps * 1e9
+        t_act = act / bw if bw > 0 else 0.0
+        t_wgt = wgt / bw if bw > 0 else 0.0
+        t_acc = acc / acc_bw if acc_bw > 0 else 0.0
+        return max(t_act, t_wgt, t_acc)
 
     def _roofline_time_over(self, metrics, freq: float, dram_bw: float) -> float:
         """Roofline time for a group of operations, honouring `overlap_model`.
@@ -1524,36 +1622,58 @@ class Simulator:
             dram_write_bits = 0
 
         # ---- SRAM traffic (mode-dependent) ----
-        sram_read_bits = 0
-        sram_write_bits = 0
+        # Accumulated per *port* -- activation, weight, accumulator -- and the
+        # lumped `sram_read` / `sram_write` are their sums, so both views come
+        # out of one set of terms and cannot drift apart.  See
+        # `hw.sram_port_model` for why the split exists.
+        a_read_bits = 0        # activations, Unified Buffer
+        b_read_bits = 0        # weights / KV, Weight Buffer
+        acc_read_bits = 0      # partial sums in,  Accumulator
+        acc_write_bits = 0     # partial sums out, Accumulator
+        out_write_bits = 0     # final result, Unified Buffer
 
         if mode in ("LUT_OS", "LUT_OS_V"):
             m_tiles = math.ceil(M / hw.array_m)
             n_tiles = math.ceil(N / (hw.array_n * self.NUM_RAC))
-            sram_read_bits = A_bits * n_tiles * qbit + B_bits * m_tiles
-            sram_write_bits = C_accum_bits
+            a_read_bits = A_bits * n_tiles * qbit
+            b_read_bits = B_bits * m_tiles
+            # Output-stationary: the partial sums never leave the array, which
+            # is the entire point of the dataflow.  No accumulator traffic.
+            out_write_bits = C_accum_bits
 
         elif mode == "LUT_WS":
             k_eff = math.ceil(K / self.MU)
             k_tiles = math.ceil(k_eff / hw.array_m)
             n_tiles = math.ceil(N / (hw.array_n * self.NUM_RAC))
-            sram_read_bits = (A_bits * n_tiles * qbit
-                              + B_bits
-                              + C_accum_bits * (k_tiles - 1) * qbit)
-            sram_write_bits = C_accum_bits * k_tiles * qbit
+            a_read_bits = A_bits * n_tiles * qbit
+            b_read_bits = B_bits
+            # Weight-stationary walks K in `k_tiles` passes and the bit-planes
+            # in `qbit` more, and every pass but the last recirculates a full
+            # 32-bit partial-sum matrix through the accumulator.  At prefill
+            # shapes that is `k_tiles * qbit` = 128 round trips, and it
+            # dominates the lump ~4:1 over the activations -- which is exactly
+            # what parked prefill in SS16(c).
+            acc_read_bits = C_accum_bits * (k_tiles - 1) * qbit
+            out_write_bits = C_accum_bits
+            acc_write_bits = C_accum_bits * (k_tiles * qbit - 1)
 
         elif mode == "FPE_OS":
             m_tiles = math.ceil(M / hw.FPE_array_size)
             n_tiles = math.ceil(N / hw.FPE_array_size)
             B_bits_fpe = batch_size * K * N * 16   # FPE uses FP16 internally
-            sram_read_bits = A_bits * n_tiles + B_bits_fpe * m_tiles
-            sram_write_bits = C_accum_bits
+            a_read_bits = A_bits * n_tiles
+            b_read_bits = B_bits_fpe * m_tiles
+            out_write_bits = C_accum_bits
 
         elif mode == "TENDER":
             m_tiles = math.ceil(M / hw.FPE_array_size)
             n_tiles = math.ceil(N / hw.FPE_array_size)
-            sram_read_bits = A_bits * n_tiles + B_bits * m_tiles
-            sram_write_bits = C_accum_bits
+            a_read_bits = A_bits * n_tiles
+            b_read_bits = B_bits * m_tiles
+            out_write_bits = C_accum_bits
+
+        sram_read_bits = a_read_bits + b_read_bits + acc_read_bits
+        sram_write_bits = out_write_bits + acc_write_bits
 
         # ---- DRAM reads ----
         # Tracked as (bits, contiguous-run-bytes) so each component can be
@@ -1636,6 +1756,11 @@ class Simulator:
             "dram_write": dram_write_bits // 8,
             "sram_read":  sram_read_bits  // 8,
             "sram_write": sram_write_bits // 8,
+            "sram_read_a":    a_read_bits    // 8,
+            "sram_read_b":    b_read_bits    // 8,
+            "sram_acc_read":  acc_read_bits  // 8,
+            "sram_acc_write": acc_write_bits // 8,
+            "sram_write_out": out_write_bits // 8,
         }
 
     # ---- Peak SRAM calculation ----------------------------------------------

@@ -651,12 +651,17 @@ term `max(compute, DRAM, SRAM)` at all six sites through one shared
   geometry-implied 128 GB/s. This is trustworthy: `M=1` makes decode
   tiling-inert. **It settles the open question §14 left hanging.**
 - **Prefill's 4.35× is not a hardware result and must not be quoted as one.**
-  Prefill charges 113,670 GB of SRAM traffic against 3 GB of DRAM. That ratio is
-  the untiled-activation defect — the same one that makes `_calculate_peak_sram`
-  claim a 2.1 GB prefill working set (§7) — surfacing through a new term.
-  **Prefill stays parked until prefill tiling lands.**
+  Prefill charges 113,670 GB of SRAM traffic against 3 GB of DRAM.
 - **128 GB/s is itself an over-charge**: it is one *operand port*, while
   `sram_read` lumps A-reads, B-reads and C accumulator traffic together.
+
+> **Corrected by §19.** This section attributed the 4.35× to the
+> untiled-activation defect of §7 and parked prefill behind prefill tiling.
+> **That attribution was wrong.** Decomposing the lump by operand shows the
+> activation term is right to 0.1% and the *accumulator* is 73.3% of it —
+> a memory the paper's own Fig. 4 draws as a separate block. Prefill is
+> unparked at 1.16×, and it was never waiting on tiling. The second bullet
+> above was the correct instinct; §19 is what happens when it is measured.
 
 ### (d) Can P=8 packing actually be fed?
 
@@ -850,19 +855,73 @@ Full tables: `analysis/memory/rounds_report.md`, `analysis/memory/regime_report.
 
 ---
 
+## 19. Per-port SRAM — the accumulator was billed to the wrong memory
+
+§16(c) shipped `sram_bandwidth_gbps` inert because 128 GB/s took prefill TTFT
+to **4.35×**, and read that as the untiled-activation defect surfacing through
+a new term. The fix it named was prefill tiling. **Decomposing the lump by
+operand shows it was neither.**
+
+Prefill, batch 1, 32K context, by which memory moves the bytes:
+
+| port | bytes | B/cycle | share of lump |
+|---|---:|---:|---:|
+| activation (A read) | 28,038 GB | **255.7** | 23.0% |
+| weight (B read) | 6.9 GB | 0.1 | 0.0% |
+| **accumulator (partial sums)** | **89,473 GB** | **816.0** | **73.3%** |
+| activation (result write) | 4,535 GB | 41.4 | 3.7% |
+
+- **The activation traffic was never wrong.** The array consumes
+  `array_m × MU × act_bits/8` = **256 B/cycle**; the model charges **255.7**.
+  A 0.1% match to the port it is being compared against — and tiling A cannot
+  reduce a term that is already exactly the array's own consumption rate.
+- **The accumulator is 73.3% of the lump.** `LUT_WS` walks `K` in `k_tiles`
+  passes and the bit-planes in `qbit` more, recirculating a full 32-bit
+  partial-sum matrix on all but the last: `k_tiles × qbit` = **128 round trips**
+  per prefill GEMM.
+- **And those bytes never cross an SRAM port.** OMNI_LUT.pdf Fig. 4 draws three
+  memories — *Unified Buffer*, *Weight Buffer*, *Accumulator* — with the
+  accumulator wired to the PE array's partial-sum outputs. `"lumped"` made it a
+  client of the unified buffer, which is the entire 4.35×.
+
+`hw.sram_port_model` (default `"lumped"`, inert) bills the three concurrently
+and takes the max. TTFT at the geometry-implied bandwidth, per port:
+
+| per-port BW | TTFT lumped | TTFT ported | TPOT ported |
+|---|---:|---:|---:|
+| unlimited | 219.3 s | 219.3 s | 127.49 ms |
+| **128 GB/s** | **953.5 s (4.35×)** | **254.5 s (1.16×)** | 133.79 ms (1.049×) |
+| 256 GB/s | 476.8 s (2.17×) | 219.3 s (1.00×) | 127.49 ms (1.000×) |
+| 512 GB/s | 255.6 s (1.17×) | 219.3 s (1.00×) | 127.49 ms (1.000×) |
+
+- **Prefill is unparked.** 1.16× at 128 GB/s per port is a bandwidth result, and
+  the whole SRAM term is now usable in both phases rather than one.
+- **A max over a partition is at most the sum of its parts**, so `"ported"` can
+  never price above `"lumped"` at equal bandwidth — asserted in pre-flight, not
+  hoped for.
+- **Decode does not move at all, and could not have.** `LUT_OS_V` is
+  output-stationary, so partial sums stay in the array and the accumulator row
+  is exactly **0 bytes**. The K/V *weight* port carries 87.3% of decode's lump —
+  which is §3's "decode waits on weights" arriving from the memory side.
+- **The accumulator's own constraint is real and stays stated**: 816 B/cycle
+  needs ~**408 GB/s**. That is a design requirement on that block, and nothing
+  about it belongs in the unified buffer's budget.
+
+Full tables: `analysis/memory/ports_report.md`.
+
+---
+
 ## TODO
 
 ### Model gaps
 
 - **Tile prefill in `_calculate_peak_sram` — the top item.** It holds the whole
   activation matrix, so prefill capacity claims and its spill charge are both
-  unusable (§7). The only outright *bug* this work found, and §16(c) showed it is
-  **worse than a capacity problem**: the SRAM *traffic* terms are written against
-  the same untiled A, so prefill charges 113,670 GB and a 4.35x TTFT the moment a
-  bandwidth term exists. It now blocks a second study, not just its own.
-- **Per-port SRAM accounting.** §16(c) bills a lumped `sram_read` — A-reads,
-  B-reads and C accumulator traffic together — against one operand port's
-  bandwidth, which over-charges even where the traffic is right.
+  unusable (§7). The only outright *bug* this work found. **§19 shrank it back
+  to one section**: §16(c) had claimed the same defect also corrupted the SRAM
+  *traffic* terms, but the activation term measures 255.7 B/cycle against a
+  256 B/cycle array, so it is right and tiling cannot change it. This is a
+  capacity bug and only a capacity bug.
 - **Measure the BQU.** Not measured yet — the original simulator does not model
   it at all. `bqu_metrics()` in `cycle_units.py` is a placeholder: BEA one pass
   per bit-plane, TSE one min/max pass (Value path only), assumed `bqu_width`
@@ -932,6 +991,7 @@ tiebreaker if they ever disagree.
 | 5b — unstructured KV masks | *(three default-identical hooks)* | — | §15 | `40f9071` |
 | 7 — memory tech + SRAM bandwidth | `sram_bandwidth_gbps` | `0.0` = unlimited | §16 | `9b0b15c` |
 | 10 — compute/memory overlap | `overlap_model` | `"serial"` = no overlap | §17 | `4d593bc` |
+| 12 — per-port SRAM | `sram_port_model`, `accum_bandwidth_gbps` | `"lumped"`, `0.0` | §19 | *(next commit)* |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones
@@ -971,4 +1031,4 @@ Run after *every* model change, not just the one being worked on.
    (55.39 / 70.67 / 131.82 ms).
 4. Every sweep's own pre-flight suite still passes: `prefill_run.py` (7),
    `pack_run.py` (9), `unstructured_run.py` (9), `selective_run.py` (5),
-   `bandwidth_run.py` (5).
+   `bandwidth_run.py` (5), `ports_run.py` (7).
