@@ -4,16 +4,23 @@ carried tables only.
 
 Each panel is drawn from the CSV its sweep already writes, so the figures cannot
 drift from the reports -- re-run the sweep, re-run this, and both move together.
-Five figures, one per claim that a table states less clearly than a picture:
+Nine figures, one per claim that a table states less clearly than a picture:
 
     overlap.png        the serial/pipelined bracket, and where it is widest
     kv_batch.png       KV technique speedup against batch -- the fan-out
     packing.png        OS-V packing saturating at P=8
     unstructured.png   the layout/axis antisymmetry
     memory_tech.png    the burst cliff moving with the memory technology
+    ports.png          which memory moves the bytes, and the 4.35x it explains
+    tiling.png         the capacity/latency frontier prefill was hiding
+    sparsity.png       activation sparsity, and the batch that spends it
+    buffers.png        the RTL's four SRAMs against the model's one pool
+
+The last four read `ports.csv`, `tiling.csv`, `buffers.csv` and
+`../act_sparsity/sparsity.csv`.
 
 Usage:
-    python plot_memory.py                # all five, into this directory
+    python plot_memory.py                # all nine, into this directory
     python plot_memory.py --only overlap
     python plot_memory.py --outdir figs
 """
@@ -49,6 +56,7 @@ ACCENT = '#C97B3C'
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _pack_dir = os.path.abspath(os.path.join(_here, '..', 'array_packing'))
+_spar_dir = os.path.abspath(os.path.join(_here, '..', 'act_sparsity'))
 
 
 def load(path):
@@ -375,12 +383,270 @@ def fig_memory_tech(outdir):
     save(fig, outdir, 'memory_tech')
 
 
+# ============================================================================
+# 6. Per-port SRAM (§19)
+# ============================================================================
+
+def fig_ports(outdir):
+    all_rows = load(os.path.join(_here, 'ports.csv'))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+
+    # (a) where the bytes go, by port -- the accumulator dominating prefill
+    ax = axes[0]
+    a = [r for r in all_rows if r['section'] == 'A']
+    ports = ['activation (A read)', 'weight (B read)',
+             'accumulator (partial sums)', 'activation (result write)']
+    labels = ['A read', 'B read', 'accumulator', 'result write']
+    colors = [AW, GREY, AA, DARK]
+    width = 0.36
+    x = np.arange(2)
+    bottom = np.zeros(2)
+    for port, lbl, col in zip(ports, labels, colors):
+        vals = []
+        for phase in ('prefill', 'decode'):
+            m = [r for r in a if r['phase'] == phase and r['port'] == port]
+            vals.append(fnum(m[0], 'share') * 100 if m else 0.0)
+        vals = np.array(vals)
+        ax.bar(x, vals, width * 1.6, bottom=bottom, color=col, label=lbl,
+               edgecolor='white', lw=0.6)
+        for xi, (v, b) in enumerate(zip(vals, bottom)):
+            if v > 6:
+                ax.annotate(f'{v:.0f}%', (xi, b + v / 2), ha='center',
+                            va='center', fontsize=9,
+                            color='white' if col != GREY else 'black')
+        bottom += vals
+    ax.set_xticks(x)
+    ax.set_xticklabels(['prefill', 'decode'])
+    ax.set_ylabel('share of the lumped SRAM traffic')
+    ax.set_ylim(0, 108)
+    ax.set_title('(a) The lump is mostly the accumulator')
+    ax.legend(frameon=False, fontsize=8, ncol=2, loc='upper center')
+    ax.grid(axis='y', ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    # (b) lumped vs ported TTFT
+    ax = axes[1]
+    b = sorted(((fnum(r, 'sram_bw'), fnum(r, 'ttft_lumped'),
+                 fnum(r, 'ttft_ported'))
+                for r in all_rows if r['section'] == 'B'),
+               key=lambda t: (t[0] == 0, t[0]))
+    ref = [t for t in b if t[0] == 0][0][1]
+    finite = [t for t in b if t[0] > 0]
+    xs = [t[0] for t in finite]
+    ax.plot(xs, [t[1] / ref for t in finite], 'o-', lw=2, color=AA,
+            label='lumped (one port)')
+    ax.plot(xs, [t[2] / ref for t in finite], 's-', lw=2, color=AW,
+            label='ported (three memories)')
+    ax.axhline(1.0, ls='--', lw=1, color=GREY)
+    ax.set_xscale('log', base=2)
+    ax.set_xticks(xs)
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax.set_xlabel('per-port SRAM bandwidth (GB/s)')
+    ax.set_ylabel('TTFT vs unlimited')
+    ax.annotate('4.35x -> 1.16x\nprefill unparked', (128, 3.1), fontsize=9,
+                color=DARK)
+    ax.set_title('(b) What billing the right memory is worth')
+    ax.legend(frameon=False)
+    ax.grid(ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    fig.suptitle('Per-port SRAM: the accumulator was billed to the wrong memory',
+                 fontsize=13, y=1.02)
+    save(fig, outdir, 'ports')
+
+
+# ============================================================================
+# 7. Prefill row tiling (§20)
+# ============================================================================
+
+def fig_tiling(outdir):
+    all_rows = load(os.path.join(_here, 'tiling.csv'))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+    MB = 1024.0 * 1024.0
+
+    # (a) the frontier: footprint against TTFT
+    ax = axes[0]
+    a = [r for r in all_rows if r['section'] == 'A']
+    untiled = [r for r in a if int(r['m_tile']) == 0][0]
+    ref_t = fnum(untiled, 'ttft_s')
+    pts = sorted(((int(r['m_tile']), fnum(r, 'prefill_peak') / MB,
+                   fnum(r, 'ttft_s') / ref_t)
+                  for r in a if int(r['m_tile']) > 0), key=lambda t: t[0])
+    ax.plot([p[1] for p in pts], [p[2] for p in pts], 'o-', lw=2, color=AW)
+    for mt, peak, tt in pts:
+        if mt in (512, 32, 8):
+            ax.annotate(f'{mt}', (peak, tt), xytext=(6, 5),
+                        textcoords='offset points', fontsize=9, color=DARK)
+    ax.plot([fnum(untiled, 'prefill_peak') / MB], [1.0], '*', ms=14, color=AA)
+    ax.annotate('untiled\n2.16 GB',
+                (fnum(untiled, 'prefill_peak') / MB, 1.0),
+                xytext=(-30, 16), textcoords='offset points', fontsize=9,
+                color=AA)
+    ax.set_xscale('log', base=2)
+    ax.set_yscale('log', base=2)
+    ax.set_xlabel('prefill working set (MB, log)')
+    ax.set_ylabel('TTFT vs untiled (log)')
+    ax.set_title('(a) A frontier, labelled by row block')
+    ax.grid(which='both', ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    # (b) the table §7 could not publish
+    ax = axes[1]
+    b = sorted(((fnum(r, 'capacity_kb'), int(r['m_tile']),
+                 fnum(r, 'ttft_s') / ref_t)
+                for r in all_rows
+                if r['section'] == 'B' and r.get('m_tile') not in ('', None)))
+    caps = [t[0] / 1024 for t in b]
+    bars = ax.bar(range(len(b)), [t[2] for t in b], 0.6, color=AW)
+    for i, (bar, t) in enumerate(zip(bars, b)):
+        ax.annotate(f'{int(t[1])} rows',
+                    (bar.get_x() + bar.get_width() / 2, t[2]),
+                    xytext=(0, 3), textcoords='offset points',
+                    ha='center', fontsize=9)
+    ax.axhline(1.0, ls='--', lw=1, color=GREY)
+    ax.set_xticks(range(len(b)))
+    ax.set_xticklabels([f'{c:.0f} MB' for c in caps])
+    ax.set_xlabel('SRAM capacity')
+    ax.set_ylabel('TTFT vs untiled')
+    ax.set_title('(b) Largest block that fits, and what it costs')
+    ax.grid(axis='y', ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    fig.suptitle('Prefill row tiling: capacity and latency trade smoothly',
+                 fontsize=13, y=1.02)
+    save(fig, outdir, 'tiling')
+
+
+# ============================================================================
+# 8. FFN activation sparsity (§21)
+# ============================================================================
+
+def fig_sparsity(outdir):
+    all_rows = load(os.path.join(_spar_dir, 'sparsity.csv'))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+
+    # (a) speedup against density, batch 1
+    ax = axes[0]
+    a = sorted(((fnum(r, 'density'), fnum(r, 'tpot_s'))
+                for r in all_rows if r['section'] == 'A'), reverse=True)
+    dense = [t[1] for t in a if t[0] == 1.0][0]
+    ax.plot([t[0] * 100 for t in a], [dense / t[1] for t in a], 'o-', lw=2,
+            color=AW)
+    ax.axhline(1.0, ls='--', lw=1, color=GREY)
+    ax.annotate('16x the DRAM bandwidth\nbuys 1.10x (§16b)', (5.6, 1.10),
+                fontsize=9, color=DARK)
+    ax.set_xscale('log', base=2)
+    ax.set_xticks([t[0] * 100 for t in a])
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax.set_xlabel('FFN hidden units active per token (%)')
+    ax.set_ylabel('decode TPOT speedup, batch 1')
+    ax.set_title('(a) It works, and saturates against attention')
+    ax.grid(ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    # (b) batch spends it
+    ax = axes[1]
+    d = sorted(((int(r['batch']), fnum(r, 'tpot_dense'),
+                 fnum(r, 'tpot_shared'), fnum(r, 'tpot_pertoken'),
+                 fnum(r, 'union_density'))
+                for r in all_rows if r['section'] == 'D'))
+    xs = [t[0] for t in d]
+    ax.plot(xs, [t[1] / t[2] for t in d], 's--', lw=2, color=GREY,
+            label='shared mask (bound)')
+    ax.plot(xs, [t[1] / t[3] for t in d], 'o-', lw=2, color=AW,
+            label='per-token (real)')
+    ax.axhline(1.0, ls='--', lw=1, color=GREY)
+    ax.set_xscale('log', base=2)
+    ax.set_xticks(xs)
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax.set_xlabel('batch')
+    ax.set_ylabel('decode TPOT speedup at 10% density')
+    ax.annotate('the union $1-(1-d)^M$\nplus compute-bound decode',
+                (2.1, 1.35), fontsize=9, color=DARK)
+    ax.set_title('(b) Batch spends what sparsity buys')
+    ax.legend(frameon=False)
+    ax.grid(ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    fig.suptitle('FFN activation sparsity: the first lever that moves decode',
+                 fontsize=13, y=1.02)
+    save(fig, outdir, 'sparsity')
+
+
+# ============================================================================
+# 9. The RTL buffer partition (§22)
+# ============================================================================
+
+def fig_buffers(outdir):
+    all_rows = load(os.path.join(_here, 'buffers.csv'))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+    KBf = 1024.0
+
+    # (a) the partition, and the two identities
+    ax = axes[0]
+    a = [r for r in all_rows if r['section'] == 'A']
+    order = ['input', 'scale', 'weight', 'output']
+    caps, words = [], []
+    for name in order:
+        m = [r for r in a if r['buffer'] == name][0]
+        caps.append(fnum(m, 'bytes') / KBf)
+        words.append(int(fnum(m, 'width_bits')) // 8)
+    bars = ax.bar(range(len(order)), caps, 0.6,
+                  color=[AW, ACCENT, AA, DARK])
+    for b, c, w in zip(bars, caps, words):
+        ax.annotate(f'{c:,.0f} KB\n{w} B/cyc',
+                    (b.get_x() + b.get_width() / 2, c),
+                    xytext=(0, 3), textcoords='offset points',
+                    ha='center', fontsize=9)
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels(order)
+    ax.set_ylabel('capacity (KB)')
+    ax.set_ylim(0, max(caps) * 1.28)
+    ax.set_title('(a) Four fixed SRAMs, 3.00 MB, no trading')
+    ax.grid(axis='y', ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    # (b) where the part runs out
+    ax = axes[1]
+    c = sorted(((int(r['context']), fnum(r, 'tpot_s'), r['decode_overflow'])
+                for r in all_rows if r['section'] == 'C'))
+    wt_kb = caps[order.index('weight')]
+    kv = [ctx * 128 * 4 / 8 / KBf for ctx, _, _ in c]
+    bars = ax.bar(range(len(c)), [k / wt_kb for k in kv], 0.6,
+                  color=[AA if t[2] else AW for t in c])
+    ax.axhline(1.0, ls='--', lw=1.4, color=DARK)
+    ax.annotate('weight buffer (2,048 KB)', (-0.4, 1.04), fontsize=9,
+                color=DARK)
+    for b, t in zip(bars, c):
+        if t[2]:
+            ax.annotate(t[2].replace(',', ' + '),
+                        (b.get_x() + b.get_width() / 2, b.get_height()),
+                        xytext=(0, 3), textcoords='offset points',
+                        ha='center', fontsize=9, color=AA)
+    ax.set_xticks(range(len(c)))
+    ax.set_xticklabels([f'{t[0]:,}' for t in c])
+    ax.set_xlabel('context')
+    ax.set_ylabel('one K cache / weight buffer')
+    ax.set_ylim(0, 1.35)
+    ax.set_title('(b) 32K is exactly where the part runs out')
+    ax.grid(axis='y', ls=':', color=GREY, lw=0.6)
+    ax.set_axisbelow(True)
+
+    fig.suptitle("The RTL's four buffers against the model's one pool",
+                 fontsize=13, y=1.02)
+    save(fig, outdir, 'buffers')
+
+
 FIGURES = {
     'overlap': fig_overlap,
     'kv_batch': fig_kv_batch,
     'packing': fig_packing,
     'unstructured': fig_unstructured,
     'memory_tech': fig_memory_tech,
+    'ports': fig_ports,
+    'tiling': fig_tiling,
+    'sparsity': fig_sparsity,
+    'buffers': fig_buffers,
 }
 
 

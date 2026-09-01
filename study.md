@@ -8,6 +8,9 @@ survive both.
 - Model: LLaMA-3-8B — 32 layers, GQA 32/8, d_model 4096, d_ffn 14336.
 - Hardware: Omni-LUT-KV4 — 32x4 LUT array, W4A16KV4, `AW=AA=OMNI`,
   500 MHz, 51.2 GB/s (which is exactly `DDR5-6400` — see §16).
+- On-chip memory: **unlimited and undifferentiated** in §1–§21. The RTL's
+  actual four SRAMs — 256 KB input, 256 KB scale, 2 MB weight, 512 KB output —
+  are a preset (`simulator/buffer_tech.py`) that only §22 switches on.
 - Workload: batch 1, 256 output tokens, standard attention (no FlashAttention,
   so `qk_matmul` and `attn_v_matmul` stay separate stages), except where a
   section sweeps batch.
@@ -21,14 +24,19 @@ survive both.
 | **The memory model** | §6–§9 | what was the byte model missing, and what did fixing it change? |
 | **Re-measured** | §10–§13 | the KV techniques against the corrected model, and why they fail alike |
 | **What actually moves it** | §14–§16 | array packing, mask structure, and the memory part itself |
-| **The framing itself** | §17 | what the no-overlap roofline costs every number above |
+| **The framing itself** | §17–§18 | what the no-overlap roofline and the OS-V round count cost every number above |
 | **The memory model, corrected** | §19–§20 | which memory moves the bytes, and the one outright bug |
 | **Off the KV axis** | §21 | activation sparsity — the first lever that moves decode |
 | **Against the RTL** | §22 | what the four real SRAMs change, and what they confirm |
 
+**If you read one thing.** §21 is the only technique in this document that
+moves decode materially (**1.911×** at batch 1), and §21(e) is why: it is the
+first result here that establishes what decode is bound by *by intervention*
+rather than by reading a roofline `max()`.
+
 **Method for §6 onward.** Every model change is a `HardwareConfig` field whose
 *disabled* default reproduces the previous numbers exactly, checked by
-`analysis/regression/baseline.py` (36 configs x workloads, 22,488 values,
+`analysis/regression/baseline.py` (36 configs x workloads, 23,064 values,
 compared leaf by leaf). Nothing in §1–§5 moves unless asked. Every stage and its
 revert point is in **Appendix A**; the checks run after each one are in
 **Appendix B**.
@@ -43,7 +51,11 @@ them all with:
 ```
 for f in analysis/memory/*_run.py analysis/array_packing/pack_run.py \
          analysis/act_sparsity/sparsity_run.py; do python "$f"; done
+python analysis/memory/plot_memory.py          # the nine figures
 ```
+
+The figures are drawn from the CSVs the sweeps write, so they cannot drift from
+the tables — re-run the sweep, re-run the plotter, and both move together.
 
 ---
 
@@ -130,6 +142,10 @@ Decode is DRAM-bound, so raw cycles are not latency:
   memory improves.
 - Consequence: any cycle-only speedup claim on decode is inflated by up to 6.8x.
   Report cycles and roofline time together, or not at all.
+- **This section states the gap; §21(e) proves it.** Everything here is a
+  roofline `max()` — an accounting claim about which term won. §21 removes 60%
+  of decode's bytes at nearly fixed cycles and gets 2.52× at 2K, which is the
+  same statement made causally.
 
 ---
 
@@ -861,6 +877,8 @@ Full tables: `analysis/memory/rounds_report.md`, `analysis/memory/regime_report.
 
 ## 19. Per-port SRAM — the accumulator was billed to the wrong memory
 
+![Per-port SRAM](analysis/memory/ports.png)
+
 §16(c) shipped `sram_bandwidth_gbps` inert because 128 GB/s took prefill TTFT
 to **4.35×**, and read that as the untiled-activation defect surfacing through
 a new term. The fix it named was prefill tiling. **Decomposing the lump by
@@ -916,6 +934,8 @@ Full tables: `analysis/memory/ports_report.md`.
 ---
 
 ## 20. Prefill row tiling — the one outright bug
+
+![Prefill row tiling](analysis/memory/tiling.png)
 
 `_calculate_peak_sram` held the whole activation matrix, `A_bytes = M x K x
 act_bits/8` with `M` the entire prefill sequence. So prefill's claimed working
@@ -1006,6 +1026,8 @@ Full tables: `analysis/memory/tiling_report.md`.
 ---
 
 ## 21. FFN activation sparsity — the first lever that moves decode
+
+![FFN activation sparsity](analysis/memory/sparsity.png)
 
 Every technique in §4–§15 aims at the KV cache, and §13 recorded why they fail
 alike: decode on this array is compute-bound, so removing bytes buys little.
@@ -1103,11 +1125,47 @@ operation's tokens, `1 - (1-d)^M`; `share_mask` brackets that:
   skipped. A shared mask would buy 1.862× — the sparsity is fully available,
   and the workload is what refuses it.
 
+### (e) It settles what decode is bound by
+
+§3 and §18 both said decode is memory-bound at low batch, and both read it off
+a roofline `max()` — an accounting statement about which term won. §21 is an
+**intervention**: it removes ~60% of decode's DRAM bytes while barely touching
+cycles, and asks whether the phase responds.
+
+| context, batch 1 | cycles cut | **TPOT cut** |
+|---|---:|---:|
+| 2K | 1.268× | **2.521×** |
+| 8K | 1.084× | **1.911×** |
+| 32K | 1.023× | 1.350× |
+
+- **A compute-bound phase cannot answer a 1.27× cycle reduction with a 2.52×
+  latency reduction.** This is the first result in the document that
+  establishes what decode waits on causally rather than by construction.
+- It agrees with the accounting exactly. Decode compute against DRAM, per token
+  at batch 1: **0.15** at 2K, 0.23 at 4K, 0.38 at 8K, 0.64 at 16K, **1.04** at
+  32K — memory-bound until 32K, where it crosses. The intervention's payoff
+  falls along the same curve.
+- **And it is weights, not KV.** At 2K that is 7.67 ms of compute against
+  51.12 ms of DRAM — the ~85% idle §3 reported — and §21's lever is the only
+  one in this document pointed at it. This is why §4–§16's KV techniques all
+  failed and this one did not: they were aimed at the wrong bytes.
+- **At batch 32 it inverts, and that is a check rather than a caveat.**
+  Compute/DRAM is 2.51–3.23 across every context, and the same lever buys
+  1.003×. §16(b)'s "16× the bandwidth buys 1.10×" is a **batch-32** measurement,
+  so it never contradicted this — the two describe opposite regimes of §18's map.
+- **§19 and §22 close off the alternatives.** Decode is not SRAM-bandwidth-bound
+  (1.004–1.049× at the RTL's real port widths) and not capacity-bound below 32K.
+  So "decode is memory-bound" now has a precise form: ***DRAM*-bound, on
+  *weights*, at low batch, below 32K** — and every other reading has been
+  measured and excluded.
+
 Full tables: `analysis/act_sparsity/sparsity_report.md`.
 
 ---
 
 ## 22. The RTL's four buffers, against the model's one pool
+
+![RTL buffer partition](analysis/memory/buffers.png)
 
 Everything above models on-chip memory as **one pool** any operand may draw
 from. §19 split its *bandwidth* three ways and left its *capacity* undivided.
