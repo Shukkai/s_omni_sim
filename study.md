@@ -24,6 +24,7 @@ survive both.
 | **The framing itself** | §17 | what the no-overlap roofline costs every number above |
 | **The memory model, corrected** | §19–§20 | which memory moves the bytes, and the one outright bug |
 | **Off the KV axis** | §21 | activation sparsity — the first lever that moves decode |
+| **Against the RTL** | §22 | what the four real SRAMs change, and what they confirm |
 
 **Method for §6 onward.** Every model change is a `HardwareConfig` field whose
 *disabled* default reproduces the previous numbers exactly, checked by
@@ -1106,6 +1107,105 @@ Full tables: `analysis/act_sparsity/sparsity_report.md`.
 
 ---
 
+## 22. The RTL's four buffers, against the model's one pool
+
+Everything above models on-chip memory as **one pool** any operand may draw
+from. §19 split its *bandwidth* three ways and left its *capacity* undivided.
+The Omni-LUT system block diagram does neither — four physically separate
+SRAMs, fixed sizes, fixed word widths, no trading:
+
+| buffer | geometry | capacity | word |
+|---|---|---:|---:|
+| input | 1024×2048 b | 256 KB | 256 B |
+| scale | 1024×2048 b | 256 KB | 256 B |
+| weight | 1024×2048 b ×8 | 2,048 KB | 256 B |
+| output | 1024×4096 b | 512 KB | 512 B |
+| | | **3,072 KB** | |
+
+`simulator/buffer_tech.py` holds it with its derivation;
+`hw.sram_buffer_model = "partitioned"` makes it bind. Depth 1024 is corroborated
+independently by the DRAM address map in the same note, whose address field is
+`[9:0]`.
+
+### (a) It confirms §19 outright
+
+- **input word** `2048 b / act_bits 16` = 128 elements = `array_m × MU` ✓
+- **output word** `4096 b / accum_bits 32` = 128 elements = `array_n × NUM_RAC` ✓
+
+**The input buffer is built exactly one cycle of activation operand wide.** §19
+measured the activation port at 255.7 B/cycle against a predicted 256 and
+concluded that 128 GB/s had always been an *activation-port* number rather than
+an aggregate. It had. Both identities are asserted in pre-flight, not admired.
+
+### (b) Three things a pool could not express
+
+- **Input and output are separate memories at different widths** — 256 B/cycle
+  (128 GB/s) and 512 B/cycle (256 GB/s). §19's "unified" port both wrongly
+  summed them *and* understated the output side by 2×.
+- **The scale buffer has no counterpart in the model.** 256 KB — as large as the
+  input buffer, 8.3% of the chip — carrying an operand the RTL gives its own
+  load command (`CMD_scale_size`) and DRAM type code (`2'd1`), and which every
+  number published before `hw.model_scale_traffic` priced at **zero bytes**.
+- **Capacity cannot be traded**, so an operation can fit in 3 MB of total SRAM
+  and still not run.
+
+### (c) What adopting the real part costs
+
+| row block | TTFT | vs pool | TPOT | vs pool | prefill overflow |
+|---|---:|---:|---:|---:|---|
+| untiled | 53.2 s | 1.83× | 69.54 ms | 1.004× | input, output |
+| 128 rows | 54.5 s | 1.87× | 69.54 ms | 1.004× | input |
+| **32 rows** | **64.3 s** | **2.21×** | 69.54 ms | 1.004× | input |
+| 8 rows | 170.3 s | 5.85× | 69.54 ms | 1.004× | — |
+
+- **The machine *is* `sram_m_tile = 32`.** The input buffer holds
+  `256 KB / (4096 × 2 B)` = exactly 32 activation rows — `array_m`. **§20
+  nominated 512 rows as the operating point; that describes a buffer that was
+  never built**, and the real block costs 2.21× rather than 1.075×.
+- **Decode barely moves (1.004×)**, which is §19's split arriving from the
+  hardware side rather than from a measurement: decode is `M=1`, tiling-inert,
+  and its traffic is weight-port traffic served by 8 banks at 2,048 B/cycle.
+- **The input overflow does not clear at 32 rows, and that is the surprise.** It
+  is not the FFN — 32 × 4,096 × 2 B is 256 KB, exactly the buffer. It is
+  **attention**: `attn_v`'s A operand is a block of score *rows*,
+  `m_tile × kv_len × act_bits/8`, which is 512 KB at 8K and grows with context.
+  Under a pool it borrowed silently from the other 2.75 MB. **One `sram_m_tile`
+  cannot serve both the FFN and attention** — a scheduling requirement no
+  section had derived.
+
+### (d) Where the part runs out
+
+| context | one K cache | vs weight buffer | decode overflow |
+|---|---:|---:|---|
+| 2,048 | 128 KB | 0.06× | — |
+| 8,192 | 512 KB | 0.25× | — |
+| 16,384 | 1,024 KB | 0.50× | — |
+| **32,768** | **2,048 KB** | **1.00×** | **scale, weight** |
+
+- **32K is exactly where this part runs out, and the arithmetic is exact:**
+  `32768 × 128 × 4 b` = 2,048 KB, and the weight buffer is 2,048 KB. K alone
+  fills it; K+V needs twice the chip. **§11's on-chip KV residency tops out near
+  16K on this part.**
+- §7 said the KV tile becomes binding past ~16K. It was right for a reason it
+  could not see: it read that off a pool, and the real boundary is a buffer wall
+  at exactly 2 MB.
+- **The `scale` overflow is model-derived and wants RTL confirmation.**
+  Per-token Value scales at `qbit + 1` FP16 each are 320 KB at 32K against a
+  256 KB buffer. The *layout* is inferred from OMNI_LUT.pdf §IV-B (see
+  `_scale_operand_bits`), not read from the RTL — **a question to ask, not a
+  defect found.**
+
+**One RTL number not modelled.** The note's own LSU measurement, 492 → 927 ns
+(**1.88×**), says the load path is *not* hidden behind compute. That is evidence
+for §17's `"serial"` default and against the `"pipelined"` bound being reachable
+— which the 256 KB input buffer independently supports, since it holds one row
+tile and has no room for the second one double-buffering needs. It is one
+micro-benchmark, so it is recorded rather than turned into a latency term.
+
+Full tables: `analysis/memory/buffers_report.md`.
+
+---
+
 ## TODO
 
 ### Model gaps
@@ -1120,6 +1220,19 @@ Full tables: `analysis/act_sparsity/sparsity_report.md`.
   the measured BQU is much slower.
 
 ### Open questions
+
+- **Confirm the scale operand's layout.** §22(d) predicts the 256 KB scale
+  buffer overflows at 32K on the Value path, but `_scale_operand_bits` *derives*
+  the size (`K × (qbit + 1) × act_bits`) from OMNI_LUT.pdf §IV-B rather than
+  reading it from the RTL. If Values share one α across a token group, or the
+  zero point is folded, the term shrinks and the overflow goes away. **This is
+  the one place the model now makes a falsifiable claim about the hardware.**
+- **A per-operand row block.** §22(c) shows one `sram_m_tile` cannot serve both
+  the FFN (32 rows fits exactly) and attention (whose A operand grows with
+  `kv_len`). The field is global; the schedule needs it per operation.
+- **The LSU / DMA path.** The RTL measures 1.88× from adding the LSU and the
+  model has no term for it at all. Not enough data to build one from, but it is
+  the largest unmodelled *hardware* cost now that the buffers are in.
 
 - **Charge the mask.** §21 excludes selection cost, as §4–§15 do, but the
   exclusion is heavier here: Deja Vu's predictor is a real matmul per layer and
@@ -1201,6 +1314,7 @@ tiebreaker if they ever disagree.
 | 12 — per-port SRAM | `sram_port_model`, `accum_bandwidth_gbps` | `"lumped"`, `0.0` | §19 | `f9b27f0` |
 | 6 — prefill row tiling | `sram_m_tile` | `0` = untiled | §20 | `90dbeb5` |
 | 13 — FFN activation sparsity | *(three default-identical hooks)* | — | §21 | `57931d5` |
+| 14 — RTL buffer partition | `sram_buffer_model`, `model_scale_traffic`, 9 geometry fields | `"pool"`, `False`, `0` | §22 | *(next commit)* |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones
@@ -1244,4 +1358,4 @@ Run after *every* model change, not just the one being worked on.
 4. Every sweep's own pre-flight suite still passes: `prefill_run.py` (7),
    `pack_run.py` (9), `unstructured_run.py` (9), `selective_run.py` (5),
    `bandwidth_run.py` (5), `ports_run.py` (7), `tiling_run.py` (8),
-   `sparsity_run.py` (8).
+   `sparsity_run.py` (8), `buffers_run.py` (9).

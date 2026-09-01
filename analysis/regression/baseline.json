@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "8430260329c29a711d0cb4c687d6b117e57d261bbe3efd784886d7eac9cc145a",
+  "full_sha256": "7845fe3d4d87e435920d7b08f9d090fab5b095331b834eb9817f11f3c5db7534",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -14,22 +14,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -815,7 +826,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "808d7f791b88f5f65a96a441ed13e306e94a42f82746648b8d0706d5b8689e06",
+  "full_sha256": "f3a515dc7ec6fd7cb1488335e2efc801939ffdb8c8a816681cd298a64257a65b",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -829,22 +840,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -1702,7 +1724,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "05f1774698bce813968fe2ad18222aa6cdc9e48b353c08f0752b9065e7504f0b",
+  "full_sha256": "2dd908d239ac867cfd0a7de903a7ca07f30ba46cdd9aeb33805c5491f027c332",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1716,22 +1738,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -2589,7 +2622,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "ba8de69b15e4992c2dada0848ed60ae2931aae1d10544db1f4a9365d822dde63",
+  "full_sha256": "a7e68a3be015a3ed3d113997c6ad15725c5f2359a60befd9f020894bad888050",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2603,22 +2636,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -3476,7 +3520,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "07826fc40fd754744cc4f6c8d2a0277e9c138f98140ee929cd252e0d7c3cb070",
+  "full_sha256": "78a8dee02ca808a0d42c64012fede5fe6de3b21b0e56282034fb04124936c759",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3490,22 +3534,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -4363,7 +4418,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "a3a930f2f8d6529fd579dddad5b57e375b8886a2709b08f675ba75d411240243",
+  "full_sha256": "fe1113af76f2b673065d7bfc22a7047326723cdbe96f5c90f5b320e9d564b4e2",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -4377,22 +4432,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -5178,7 +5244,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "5eef5270b277ba5440ead7c0efbf23c0933fdc23bda188b0687e42092042b559",
+  "full_sha256": "2f120d36ba10b64bbe20681c0dc905f98af3f055abd82a2a7ce58ead166e533a",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5192,22 +5258,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -5993,7 +6070,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "8ae4451210af59cffba0cd2529cbf9f5def09b8f851723ba7cc99fbb62d0f333",
+  "full_sha256": "5331e17cf5fbcb9ca1b18b5216337a53371f2534864646001693e293627bc7b3",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6007,22 +6084,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -6880,7 +6968,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "7da520c014331bb89aaf7c14e9d80e33dc60078998aa9d0216e90498faa87a0b",
+  "full_sha256": "071be9e0f7929cef28d49c759d11c07af1b1a603cada24d54d71838231984cbb",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6894,22 +6982,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -7767,7 +7866,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "235c0fbc63aea61d3f87c8bcc56502e30dafb35ee831202497d0323ee265e687",
+  "full_sha256": "915bef26316c691cdc65324375817b92163b65e5b68ebc17197b2013c0256e13",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7781,22 +7880,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -8654,7 +8764,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "3f182bb183f7fca8241b20788ead9a5c4f701e81244a1de27c29eb7bc5dee855",
+  "full_sha256": "518d8eb597b6ca6018ff7217fe235e4d73e6df69b826480c903981b5870b4a73",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8668,22 +8778,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -9541,7 +9662,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "c20ec1b0997e934af44f52f72e7d730708527b4726898472f4f6d1f91b303811",
+  "full_sha256": "982f1c555d0619b3845e9a3ddd8cb87c10bec156ea74bb5538a930a08da4ccca",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -9555,22 +9676,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -10356,7 +10488,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "bfc627f43abd9057540e178f010f681d0d72aa00a209f35a5b6db6525be2db3d",
+  "full_sha256": "254fd1c68fcd05af040c51fecaf86e69ae0772e2b4c1af8a5e0961bfe5efe387",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10370,22 +10502,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -11171,7 +11314,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "9146fd1717d25d64bad53b032876e157ed83967cf50210fc3c52c04bc5d5b5cd",
+  "full_sha256": "6e805c3119cfab779bb7944f330962ad433c5337fe9566ed88834f29faea28b5",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11185,22 +11328,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -12058,7 +12212,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "a163f0b7b173db7ade04d1c97229266f5e8900e73a27266a3ab62d1753802cb6",
+  "full_sha256": "9b90b1beb505a7247656523e7288f04302a1945678b85d5874a8480e2bc3c931",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12072,22 +12226,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -12945,7 +13110,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "dd27198fc12e890fb90ecaf632b5b3c78ae4ac32391ba6a74fcd645b3f4dd74a",
+  "full_sha256": "f67163a80e8337969f5ba08c398bd9d0540368d753e00ea75439578e941ef58f",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12959,22 +13124,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -13832,7 +14008,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "d668e59c454f5d2b603866cc10716a65f0a8b9e2ca6598d756ea52cde668d43a",
+  "full_sha256": "ca7b2fc22f299a30b8df0cde29ca81b367141ad48aed26a780c173b03f8b6742",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -13846,22 +14022,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -14719,7 +14906,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "8b38399becb0d52342d3eb9b5215d03fd3d14e090f5c49e52eb18eefa48e18f1",
+  "full_sha256": "c0c536e6eee3a26280e75758b03cb64ce02d3741931428eddab517d1cbe8556f",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14733,22 +14920,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -15534,7 +15732,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "ec4cba843930194aef0174e64a19a23a7136456816ecf1fdd8a8927b7e536a8d",
+  "full_sha256": "9453b1df23f50e33abc804923ab8761cbf70d97b476abac0e2386b13d9adf3e5",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15548,22 +15746,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -16349,7 +16558,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "3440199b2fd16c378ca5ca6bee7d666926225ecaa6b21c8084375aad48ae7e36",
+  "full_sha256": "60817ef917121f67a0f1d6e90e1c4b1f92621096124aee798e2bdcc2e83fcc0f",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16363,22 +16572,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -17236,7 +17456,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "2e722efeaa35e22a728b3478c89d606636233e76379f0cac083597cd74539129",
+  "full_sha256": "bf93f7d3ed33bf22669cae77255a6fb4a758f1e2979f956239d6de1b1e858689",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17250,22 +17470,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -18123,7 +18354,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "874c452d89336be60fb3e6300d57a036253cba7ca48ccca55a1c1f10fee57fd0",
+  "full_sha256": "d8d1c80cd35d345377e2b0598c1001da237021372663d2c391110d325f1c0777",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18137,22 +18368,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -19010,7 +19252,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "ec2d7e6656d7d28d2e7e931b74c37ae4be4aef3497becea2c249c287cde1996d",
+  "full_sha256": "c6028b7e325846ab8c08281eca7d5e077e214b1f7fa12796db65920d6dbd24f7",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19024,22 +19266,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -19897,7 +20150,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "23c5aca865ab6f816a3c68d5301bae51adf23688fa730692eefc6fc426508345",
+  "full_sha256": "7b71da94da04322c982bd488db9acc651e9025409ce53b2a5ce22b08bef499cc",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19911,22 +20164,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -20712,7 +20976,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "43c19580fbd0cd1ee41f5dc7934a276d4343f71dcdef0c9b1b9194e4f1598bf0",
+  "full_sha256": "3cdb1108f2e14e1efac5a5b4ad36c7166b5b2bf0650914c595caafa108a244cf",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20726,22 +20990,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -21527,7 +21802,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "8bbc4dfa5d0e451332770fe526ecb2be2c5edba45929ff7b6979fea9eee38bd9",
+  "full_sha256": "d4756e49ea98c3dfa3ba56abde69cabfd0150a6f13b458431c67b38f70743f83",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21541,22 +21816,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -22414,7 +22700,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "38ec106913cd00a0c3d8a1a4ede9fc3a33d6e19307a7b0027a18c2df03e5a261",
+  "full_sha256": "54110f60ad53e2a694f5e3cfa7cc71c686d30ffd9f5bf2af3b80b509433c02a1",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -22428,22 +22714,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -23301,7 +23598,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "5dfeb4af5b513b4f18cc0713f1df3f20134dcf839ed814d01aaad4bd782596bc",
+  "full_sha256": "6d0dd7303dd4cd72c95cf47121427dbb99b11748463a43e41849e3359c5b9b0d",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23315,22 +23612,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -24188,7 +24496,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "9943b7e08f090486f29f249f9d8b2853615804528ec280e4ffd553208d37e1c0",
+  "full_sha256": "f187d0252608f9278d91e3b611708ab28c1495e5d61ed5f9bb72640262703020",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24202,22 +24510,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -25075,7 +25394,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "e88c2c7368cde976cd53c2de38c7efef60c9b63231d3db391a5d7e2fd382df70",
+  "full_sha256": "856e7b61fedd55fa475cd8f7da66366a38c5fb846c4d571443a439ab4beba8cf",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -25089,22 +25408,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": false,
    "vpu_width": 128,
-   "weight_bits": 4
+   "weight_bits": 4,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -25890,7 +26220,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "560f10542c12080a68a67161a91b395ddad5e115c78536ee39e87248c1aae633",
+  "full_sha256": "543225ec9838f73e6c89f5ab3052f90e17c8190802a472de28c5d7530ad101a2",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -25904,22 +26234,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": true,
    "vpu_width": 128,
-   "weight_bits": 8
+   "weight_bits": 8,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -26705,7 +27046,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "eed617707460fee9f3813d5dbdc23d55b718c230bb7034354dd698617113eb59",
+  "full_sha256": "7adb0ff9f56f6b9804191d8ad1d685db2ea7000354a516cf719596a2ef6377d0",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -26719,22 +27060,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": true,
    "vpu_width": 128,
-   "weight_bits": 8
+   "weight_bits": 8,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -27592,7 +27944,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "d719f07fec267ee562a812752f72cc69179db6add06ec3660fc95d5ef28b0dbf",
+  "full_sha256": "5e1aa7471268df470dbc1f82b42e6368c17a952078ba4824301dbb0b8ef2e474",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27606,22 +27958,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": true,
    "vpu_width": 128,
-   "weight_bits": 8
+   "weight_bits": 8,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -28479,7 +28842,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "88cd49dd4477966b0bca5d96769926eb57489804664f087d89f1fe211c19bdd6",
+  "full_sha256": "bfd64b9566826ca020940a97f295ed3ae4ee9c8617819e005f0dbf2827719896",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -28493,22 +28856,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": true,
    "vpu_width": 128,
-   "weight_bits": 8
+   "weight_bits": 8,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -29366,7 +29740,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "e6b54d2303e94f7a4cc281d96d9d1eba11377482e8fceb138d7a8198526d258d",
+  "full_sha256": "1ea908ba6a3142b09e8e3064a4398edad9708b91a5f3a6fa1f94d08ea60cc46a",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29380,22 +29754,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": true,
    "vpu_width": 128,
-   "weight_bits": 8
+   "weight_bits": 8,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {
@@ -30253,7 +30638,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "ccd85b8655b1305e8351f9cbcac2516d591023c624a60173123a00cb92d3ae03",
+  "full_sha256": "711bce1cac32ffa446b2b85f4e1993a2fa2f460e2b289a246d04df0c9349a1c0",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -30267,22 +30652,33 @@
    "dram_bandwidth_gbps": 51.2,
    "dram_burst_bytes": 0,
    "freq_mhz": 500,
+   "input_buffer_bytes": 0,
+   "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
    "kv_sram_kb": 0,
+   "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
+   "output_buffer_bytes": 0,
+   "output_buffer_word_bytes": 0,
    "overlap_model": "serial",
    "prefill_kv_dram_read": false,
    "replication": 1,
+   "scale_buffer_bytes": 0,
+   "scale_buffer_word_bytes": 0,
    "score_sram_kb": 0,
    "sram_bandwidth_gbps": 0.0,
    "sram_batch_model": "sequential",
+   "sram_buffer_model": "pool",
    "sram_capacity_kb": 0,
    "sram_m_tile": 0,
    "sram_port_model": "lumped",
    "tender_m1_opt": true,
    "vpu_width": 128,
-   "weight_bits": 8
+   "weight_bits": 8,
+   "weight_buffer_banks": 1,
+   "weight_buffer_bytes": 0,
+   "weight_buffer_word_bytes": 0
   },
   "results": {
    "decode": {

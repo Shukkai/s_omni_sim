@@ -267,6 +267,55 @@ class HardwareConfig:
     # flat bandwidth number makes look ~100x cheaper than it is.
     dram_burst_bytes: int = 0
 
+    # --- On-chip buffer partition (the RTL's four SRAMs) ---
+    #
+    #   "pool"         one undifferentiated `sram_capacity_kb`, and `sram_read`
+    #                  split at most three ways by `sram_port_model`.  Every
+    #                  result predating this field was produced this way, so it
+    #                  is the default.
+    #   "partitioned"  four separate memories with fixed sizes and fixed word
+    #                  widths, exactly as the Omni-LUT system block diagram
+    #                  builds them: input, scale, weight (x banks), output.
+    #                  Capacity binds per buffer and cannot be traded, and each
+    #                  port moves one word per cycle.
+    #
+    # `simulator/buffer_tech.py` holds the geometry with its derivation, and
+    # `with_buffer_config(hw, 'OMNI_LUT_RTL')` sets every field below at once.
+    # Setting them piecemeal is allowed but is how a study ends up describing a
+    # part that does not exist -- the same argument `memory_tech.py` makes.
+    #
+    # **The word widths are the array geometry**: the input word is
+    # `array_m x MU x act_bits/8` = 256 B, which is one cycle of activation
+    # operand, and the output word is `array_n x NUM_RAC x accum_bits/8`
+    # = 512 B, which is one column tile of accumulators.  That is what §19
+    # inferred from a measurement and what the RTL states outright.
+    sram_buffer_model: str = "pool"
+
+    # Per-buffer capacity in bytes and word width in bytes.  0 = unlimited /
+    # unmodelled, which is what "pool" uses and what every published number
+    # assumes.  Under "partitioned" a 0 leaves that buffer unconstrained rather
+    # than making it infinitely slow, so a partial configuration degrades to
+    # the old behaviour instead of to nonsense.
+    input_buffer_bytes: int = 0
+    input_buffer_word_bytes: int = 0
+    scale_buffer_bytes: int = 0
+    scale_buffer_word_bytes: int = 0
+    weight_buffer_bytes: int = 0
+    weight_buffer_word_bytes: int = 0
+    weight_buffer_banks: int = 1
+    output_buffer_bytes: int = 0
+    output_buffer_word_bytes: int = 0
+
+    # Charge for the BCQ scaling factors and zero points.
+    #
+    # False reproduces every published number, which charged **zero bytes** for
+    # them despite the RTL giving them a 256 KB SRAM, their own load command
+    # (`CMD_scale_size`, `CMD_scale_base_addr`) and their own DRAM type code.
+    # They are a first-class operand and were simply absent from the model.
+    #
+    # See `_scale_operand_bits` for the size and its derivation.
+    model_scale_traffic: bool = False
+
     # --- Prefill row tiling ---
     # How many rows of A (the activation matrix) the schedule holds on chip at
     # once.  0 = all `M` of them, which is what `_calculate_peak_sram` has
@@ -393,6 +442,7 @@ class OperationMetrics:
     sram_acc_read: int = 0      # partial-sum reads, Accumulator
     sram_acc_write: int = 0     # partial-sum writes, Accumulator
     sram_write_out: int = 0     # final result writes, Unified Buffer
+    sram_read_scale: int = 0    # BCQ scale / zero-point reads, Scale Buffer
 
     # Energy (Joules)
     compute_energy: float = 0.0
@@ -410,6 +460,11 @@ class OperationMetrics:
 
     # Capacity enforcement (only meaningful when hw.sram_capacity_kb > 0)
     sram_overflow: bool = False      # working set exceeded capacity
+    # Which of the RTL's four buffers overflowed, as a comma-joined string.
+    # Empty under `sram_buffer_model = "pool"`, where there is only one pool
+    # and `sram_overflow` already says everything.
+    sram_overflow_buffers: str = ""
+
     sram_refetch_bytes: int = 0      # extra DRAM reads charged by the spill policy
                                      # (already included in dram_read)
 
@@ -447,6 +502,11 @@ def _aggregate_metrics(metrics_list: List[OperationMetrics]) -> OperationMetrics
         total.sram_acc_read += m.sram_acc_read
         total.sram_acc_write += m.sram_acc_write
         total.sram_write_out += m.sram_write_out
+        total.sram_read_scale += m.sram_read_scale
+        if m.sram_overflow_buffers:
+            seen = set(filter(None, total.sram_overflow_buffers.split(',')))
+            seen.update(m.sram_overflow_buffers.split(','))
+            total.sram_overflow_buffers = ','.join(sorted(seen))
         total.compute_energy += m.compute_energy
         total.dram_read_energy += m.dram_read_energy
         total.dram_write_energy += m.dram_write_energy
@@ -1097,6 +1157,7 @@ class Simulator:
         metrics.sram_acc_read = mem["sram_acc_read"]
         metrics.sram_acc_write = mem["sram_acc_write"]
         metrics.sram_write_out = mem["sram_write_out"]
+        metrics.sram_read_scale = mem["sram_read_scale"]
 
         # 3. Peak SRAM footprint, and the spill it forces if capacity is finite
         metrics.peak_sram_bytes = self._calculate_peak_sram(
@@ -1109,6 +1170,17 @@ class Simulator:
                 metrics.peak_sram_bytes,
             )
         )
+        if hw.sram_buffer_model == "partitioned":
+            # Each of the RTL's four memories binds on its own.  This is the
+            # thing a pool cannot express: an operation can fit in 3 MB of
+            # total SRAM and still not run, because the 3 MB is 256/256/2048/512
+            # and the operand that does not fit has nowhere else to go.
+            over, refetch = self._apply_buffer_capacity(
+                M, K, N, compute_mode, resolved_mode, batch_size, sram_batch)
+            metrics.sram_overflow_buffers = ','.join(sorted(over))
+            metrics.sram_overflow = metrics.sram_overflow or bool(over)
+            metrics.sram_refetch_bytes = max(metrics.sram_refetch_bytes,
+                                             refetch)
         # Re-fetch traffic is real DRAM traffic: fold it in before energy and
         # roofline see the operation, not after.  A spilled operand is re-read
         # as a contiguous block, so it costs the same logically and effectively.
@@ -1531,10 +1603,11 @@ class Simulator:
     def _sram_ports(self, m) -> Tuple[int, int, int]:
         """Split one operation's SRAM bytes into (activation, weight, accum).
 
-        The activation port carries A-reads *and* the final result writes:
-        both live in the Unified Buffer, and one layer's result is the next
-        layer's A.  The weight port carries B-reads (weights, or KV in an AA
-        op).  The accumulator carries partial-sum recirculation only.
+        The three-way split of §19, kept because `sram_port_model = "ported"`
+        is defined in terms of it.  The activation port carries A-reads *and*
+        the final result writes -- which the RTL says is wrong (they are two
+        separate memories at different widths), and `_sram_buffer_ports` is
+        the four-way form that fixes it.
 
         An operation that recorded no split at all -- every non-GEMM VPU op,
         and `mode == "VPU"`, none of which have a tiled loop nest to split --
@@ -1549,6 +1622,59 @@ class Simulator:
             return m.sram_read + m.sram_write, 0, 0
         return a + out, b, acc
 
+    def _sram_buffer_ports(self, m) -> dict:
+        """Bytes per RTL buffer: input, scale, weight, output.
+
+        The four-memory form.  It differs from `_sram_ports` in two ways, both
+        of which the block diagram settles:
+
+          * **input and output are separate SRAMs**, so A-reads and result
+            writes do not contend, and the output buffer's word is twice as
+            wide (512 B against 256 B);
+          * **scale is its own memory**, carrying an operand `_sram_ports` has
+            no bucket for at all.
+
+        Accumulator recirculation has no buffer of its own in the diagram --
+        it stays inside the Omni-LUT block -- so it is folded onto the output
+        buffer, which is the only sink partial sums can reach.  That is the
+        conservative reading: §19's default treats it as free.
+        """
+        a = m.sram_read_a
+        b = m.sram_read_b
+        out = m.sram_write_out
+        scale = m.sram_read_scale
+        acc = m.sram_acc_read + m.sram_acc_write
+        if a == 0 and b == 0 and out == 0 and scale == 0 and acc == 0:
+            # No split recorded (non-GEMM VPU ops): pure activation traffic.
+            return {'input': m.sram_read + m.sram_write, 'scale': 0,
+                    'weight': 0, 'output': 0}
+        return {'input': a, 'scale': scale, 'weight': b, 'output': out + acc}
+
+    def _buffer_port_time(self, m) -> float:
+        """Seconds under the four-memory model: max over ports.
+
+        Each buffer moves one word per cycle, so its bandwidth is
+        `word_bytes x freq`.  A word width of 0 means that buffer is
+        unconstrained, which is how a partial configuration degrades to the
+        pool model rather than to a divide-by-zero.
+        """
+        hw = self.hw
+        freq = hw.freq_mhz * 1e6
+        if freq <= 0:
+            return 0.0
+        widths = {
+            'input': hw.input_buffer_word_bytes,
+            'scale': hw.scale_buffer_word_bytes,
+            'weight': hw.weight_buffer_word_bytes * max(1, hw.weight_buffer_banks),
+            'output': hw.output_buffer_word_bytes,
+        }
+        worst = 0.0
+        for port, byts in self._sram_buffer_ports(m).items():
+            w = widths[port]
+            if w > 0 and byts > 0:
+                worst = max(worst, byts / (w * freq))
+        return worst
+
     def _sram_time(self, m) -> float:
         """Seconds one operation spends moving bytes to and from SRAM.
 
@@ -1561,6 +1687,11 @@ class Simulator:
         the lumped sum becomes a max over ports.  See `sram_port_model`.
         """
         hw = self.hw
+        if hw.sram_buffer_model == "partitioned":
+            # The RTL's four memories, each one word per cycle.  This subsumes
+            # `sram_port_model`, which is the three-way approximation of it.
+            return self._buffer_port_time(m)
+
         bw = hw.sram_bandwidth_gbps * 1e9
         if hw.sram_port_model != "ported":
             if bw <= 0:
@@ -1781,7 +1912,21 @@ class Simulator:
             b_read_bits = B_bits * m_tiles
             out_write_bits = C_accum_bits
 
-        sram_read_bits = a_read_bits + b_read_bits + acc_read_bits
+        # BCQ scaling factors and zero points.  A first-class operand with its
+        # own SRAM, its own load command and its own DRAM type code in the RTL,
+        # and absent from every number published before `model_scale_traffic`
+        # existed.  It is re-read from SRAM on the same schedule as B -- the
+        # scales belong to B's rows, so they are needed whenever B is -- which
+        # is why the multiplier is taken from `b_read_bits` rather than
+        # re-derived per mode.
+        scale_read_bits = 0
+        if hw.model_scale_traffic:
+            scale_bits = self._scale_operand_bits(K, batch_size, qbit)
+            b_reuse = (b_read_bits / B_bits) if B_bits > 0 else 1.0
+            scale_read_bits = int(scale_bits * b_reuse)
+
+        sram_read_bits = (a_read_bits + b_read_bits + acc_read_bits
+                          + scale_read_bits)
         sram_write_bits = out_write_bits + acc_write_bits
 
         # ---- DRAM reads ----
@@ -1847,6 +1992,12 @@ class Simulator:
                 self._aw_weight_covering_bytes(op_type, B_bits // 8),
             ))
 
+        # The scales come from DRAM too, once per operation and contiguous --
+        # the RTL loads them with their own command and base address.
+        if hw.model_scale_traffic:
+            _sb = self._scale_operand_bits(K, batch_size, qbit)
+            read_parts.append((_sb, _sb // 8, 0))
+
         # Attn·V reads attention scores (A operand) back from DRAM, contiguous.
         # `K` is kv_len here, so it is the same width the QK write tested.
         if op_type == OperationType.ATTN_V_MATMUL and not self._score_staged(K):
@@ -1876,16 +2027,23 @@ class Simulator:
             "sram_acc_read":  acc_read_bits  // 8,
             "sram_acc_write": acc_write_bits // 8,
             "sram_write_out": out_write_bits // 8,
+            "sram_read_scale": scale_read_bits // 8,
         }
 
     # ---- Peak SRAM calculation ----------------------------------------------
 
-    def _calculate_peak_sram(
+    def _operand_footprints(
         self, M: int, K: int, N: int,
         compute_mode: ComputeMode, mode: str,
         batch_size: int, sram_batch: int = 1,
-    ) -> int:
-        """Estimate peak SRAM footprint (bytes) for one operation.
+    ) -> dict:
+        """Peak SRAM footprint (bytes) for one operation, per RTL buffer.
+
+        Returns `{input, weight, output, scale}` -- the four memories of the
+        block diagram.  `_calculate_peak_sram` sums them, which is what it
+        always computed; the split exists so `sram_buffer_model =
+        "partitioned"` can bind each against its own fixed capacity, which a
+        single pool cannot express.
 
         This is the minimum SRAM capacity required to hold the working set
         of one tile/round of computation simultaneously:
@@ -1933,7 +2091,6 @@ class Simulator:
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = K * col_tile * qbit // 8
             C_tile = m_res * col_tile * accum_bits // 8
-            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "LUT_WS":
             k_eff = math.ceil(K / self.MU)
@@ -1941,27 +2098,69 @@ class Simulator:
             col_tile = min(N, hw.array_n * self.NUM_RAC)
             B_tile = row_tile * col_tile * qbit // 8
             C_tile = m_res * col_tile * accum_bits // 8
-            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "FPE_OS":
             B_tile = K * min(N, hw.FPE_array_size) * 16 // 8   # FP16
             C_tile = min(m_res, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
-            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "TENDER":
             B_tile = K * min(N, hw.FPE_array_size) * qbit // 8
             C_tile = min(m_res, hw.FPE_array_size) * min(N, hw.FPE_array_size) * accum_bits // 8
-            per_instance = A_bytes + B_tile + C_tile
 
         elif mode == "VPU":
-            B_bytes = K * N * qbit // 8
-            C_bytes = m_res * N * accum_bits // 8
-            per_instance = A_bytes + B_bytes + C_bytes
+            B_tile = K * N * qbit // 8
+            C_tile = m_res * N * accum_bits // 8
 
         else:
-            per_instance = A_bytes  # Fallback: at least A
+            B_tile = C_tile = 0   # Fallback: at least A
 
-        return per_instance * batch_resident
+        return {
+            'input': A_bytes * batch_resident,
+            'weight': B_tile * batch_resident,
+            'output': C_tile * batch_resident,
+            'scale': (self._scale_operand_bits(K, batch_resident, qbit) // 8
+                      if hw.model_scale_traffic else 0),
+        }
+
+    def _calculate_peak_sram(
+        self, M: int, K: int, N: int,
+        compute_mode: ComputeMode, mode: str,
+        batch_size: int, sram_batch: int = 1,
+    ) -> int:
+        """Total peak SRAM footprint (bytes) for one operation.
+
+        The sum of `_operand_footprints`, which is exactly what this function
+        computed before that split existed -- the scale term is the only
+        addition and it is zero unless `hw.model_scale_traffic` is set.
+        """
+        return sum(self._operand_footprints(
+            M, K, N, compute_mode, mode, batch_size, sram_batch).values())
+
+    def _scale_operand_bits(self, K: int, batch_size: int, qbit: int) -> int:
+        """Bits of BCQ scaling factors and zero points for the B operand.
+
+        **Derived, not read off the RTL.**  BCQ writes `B = sum_i alpha_i B_i`
+        over `qbit` bit-planes, so one scaled row needs `qbit` alphas plus a
+        zero point.  OMNI_LUT.pdf §IV-B puts the scaling **row-wise on B** in
+        the paper's A x W formulation, and all three cases agree with that
+        reading:
+
+          * weights   row-wise, per the prior work it cites;
+          * Keys      per-channel, which in `Q K^T` is row-wise on `K^T`;
+          * Values    per-token, which in `Attn x V` is row-wise on `V`.
+
+        So the count is per row of B -- that is, per `K` -- at `act_bits` each:
+
+            K x (qbit + 1) x act_bits
+
+        For an FC1 weight (K = 4096, qbit = 4) that is 40 KB against a 28 MB
+        weight matrix: 0.14%, real but not load-bearing.  For a 32K Value cache
+        (K = kv_len) it is **320 KB**, which is larger than the RTL's 256 KB
+        scale buffer -- see `analysis/memory/buffers_run.py`, which reports it
+        rather than asserting it, because the scale *layout* is inferred here
+        and only the RTL can confirm it.
+        """
+        return batch_size * K * (qbit + 1) * self.hw.act_bits
 
     def _row_blocks(self, M: int) -> int:
         """How many row blocks of A the schedule walks (1 = untiled).
@@ -2035,6 +2234,48 @@ class Simulator:
         return True, A_bytes * (n_tiles - 1)
 
     # ---- Energy calculation -------------------------------------------------
+
+    def _apply_buffer_capacity(
+        self, M: int, K: int, N: int,
+        compute_mode: ComputeMode, mode: str,
+        batch_size: int, sram_batch: int,
+    ) -> Tuple[List[str], int]:
+        """Bind each RTL buffer against its own capacity.
+
+        Returns `(overflowing buffer names, extra DRAM read bytes)`.
+
+        The spill policy is v1's, unchanged and for the same reason: only the
+        **input** buffer holds an operand that a schedule could plausibly
+        re-read rather than re-tile, so only an input overflow is charged, at
+        A re-read once per column tile.  A weight, scale or output overflow is
+        *flagged and charged nothing* -- the fix for those is a smaller tile or
+        a different loop nest, which changes the cycle count too and is out of
+        scope here exactly as it was in `_apply_sram_capacity`.
+
+        **The flag is the load-bearing output, not the byte count.**  On this
+        part the interesting overflows are structural: a 32K Key cache is
+        2,048 KB against a 2,048 KB weight buffer, and the scale operand for a
+        32K Value cache is larger than the 256 KB scale buffer.  Neither is
+        rescued by re-reading anything.
+        """
+        hw = self.hw
+        caps = {
+            'input': hw.input_buffer_bytes,
+            'scale': hw.scale_buffer_bytes,
+            'weight': hw.weight_buffer_bytes,
+            'output': hw.output_buffer_bytes,
+        }
+        fps = self._operand_footprints(
+            M, K, N, compute_mode, mode, batch_size, sram_batch=sram_batch)
+
+        over = [name for name, need in fps.items()
+                if caps.get(name, 0) > 0 and need > caps[name]]
+        if 'input' not in over:
+            return over, 0
+
+        A_bytes = batch_size * M * K * hw.act_bits // 8
+        n_tiles = self._column_tiles(N, mode)
+        return over, A_bytes * (n_tiles - 1)
 
     def _calculate_compute_energy(
         self, M: int, K: int, N: int,
