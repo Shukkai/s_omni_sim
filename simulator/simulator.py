@@ -940,8 +940,14 @@ class Simulator:
             layer_ops.append((OperationType.GATE, ComputeMode.AW, gate_m))
 
         # 4b. FC1 — each active expert has its own weights (d_model → d_ffn)
+        # `d_ffn_1` / `d_ffn_2` are the hidden units each matrix actually
+        # touches.  Both are `model.d_ffn` unless `_ffn_active_neurons` is
+        # overridden, so the dense model is unchanged.  They can differ: a mask
+        # derived from FC1's own output cannot skip FC1.
+        d_ffn_1 = self._ffn_active_neurons(model, OperationType.FC1, is_decode)
+        d_ffn_2 = self._ffn_active_neurons(model, OperationType.FC2, is_decode)
         fc1_m = self._simulate_matmul(
-            OperationType.FC1, ComputeMode.AW, shape=(proj_m, d, d_ffn),
+            OperationType.FC1, ComputeMode.AW, shape=(proj_m, d, d_ffn_1),
             batch_size=1, is_decode=is_decode,
             seq_len=seq_len, kv_len=kv_len,
         )
@@ -950,7 +956,7 @@ class Simulator:
 
         # 4c. FC2 — each active expert has its own weights (d_ffn → d_model)
         fc2_m = self._simulate_matmul(
-            OperationType.FC2, ComputeMode.AW, shape=(proj_m, d_ffn, d),
+            OperationType.FC2, ComputeMode.AW, shape=(proj_m, d_ffn_2, d),
             batch_size=1, is_decode=is_decode,
             seq_len=seq_len, kv_len=kv_len,
         )
@@ -1014,11 +1020,15 @@ class Simulator:
         
         # 7. SiLU activation (after gate projection in SwiGLU)
         # Applied to d_ffn elements
-        silu = self._simulate_silu(num_tokens=num_tokens, d_ffn=d_ffn)
+        # Both element-wise stages run over what FC1 actually produced, not
+        # over the nominal hidden dimension: units that were never computed
+        # have nothing to activate or gate.
+        silu = self._simulate_silu(num_tokens=num_tokens, d_ffn=d_ffn_1)
         layer_non_gemm_ops.append(silu)
         
         # 8. Gated multiplication (gate * up in SwiGLU)
-        gated_mul = self._simulate_gated_mul(num_tokens=num_tokens, d_ffn=d_ffn)
+        gated_mul = self._simulate_gated_mul(num_tokens=num_tokens,
+                                             d_ffn=d_ffn_1)
         layer_non_gemm_ops.append(gated_mul)
         
         # 9. Residual add after FFN (x + ffn_output)
@@ -1621,6 +1631,60 @@ class Simulator:
         """
         return 0
 
+    # ---- FFN activation sparsity hooks --------------------------------------
+    #
+    # Three hooks, all default-identical, mirroring the KV mask hooks above.
+    # The base model returns "dense, contiguous, no clamp" from all three, so
+    # nothing moves unless a subclass overrides them --
+    # `analysis/act_sparsity/act_sparsity.py` is the one that does.
+    #
+    # Why the FFN and why hooks rather than a `HardwareConfig` field: activation
+    # sparsity is a property of the *model and its inputs*, not of the machine.
+    # A gated FFN drives most of its hidden units to near-zero for any given
+    # token, and skipping unit `j` skips column `j` of FC1 and row `j` of FC2 --
+    # weights, not activations, are what stops being fetched.  That aims at
+    # SS3's finding that decode idles ~85% waiting on *weights*.
+
+    def _ffn_active_neurons(self, model, op_type: 'OperationType',
+                            is_decode: bool) -> int:
+        """How many FFN hidden units this operation actually touches.
+
+        Defaults to all of them, which is every result predating this hook.
+
+        Per operation rather than per layer, because *where the mask comes
+        from* decides which matrices can use it.  Thresholding the FFN input
+        (TEAL) or predicting from it (Deja Vu) masks FC1 and FC2 alike;
+        thresholding FC1's own output (CATS) cannot skip the work that
+        produced it, so FC1 stays dense and only FC2 is sparse.
+        """
+        return model.d_ffn
+
+    def _aw_weight_run_bytes(self, op_type: 'OperationType',
+                             logical_bytes: int) -> int:
+        """Contiguous run length of an AW operation's weight read, in bytes.
+
+        Defaults to the whole read -- one contiguous block, which is what the
+        model has always assumed and what a dense weight matrix actually is.
+
+        This is the FFN's version of the question SS15 asked about KV: a mask
+        only collects its byte saving if the retained bytes are contiguous
+        enough to fill a burst.  The answer differs, and the reason it differs
+        is the point -- see `analysis/act_sparsity/`.
+        """
+        return logical_bytes
+
+    def _aw_weight_covering_bytes(self, op_type: 'OperationType',
+                                  logical_bytes: int) -> int:
+        """Bytes of the contiguous region a scattered weight read sits inside.
+
+        0 = no covering region known, which disables the clamp in
+        `_dram_effective_bytes` and is the default.  A reader that gathers
+        scattered weights can always give up and stream the dense matrix
+        instead, so it never pays more than that; only a sub-burst mask can
+        reach the clamp.
+        """
+        return 0
+
     def _calculate_memory_access(
         self, M: int, K: int, N: int,
         compute_mode: ComputeMode, op_type: OperationType,
@@ -1774,8 +1838,14 @@ class Simulator:
                                                        kv_bits)))
 
         elif compute_mode == ComputeMode.AW:
-            # AW operations: weights loaded from DRAM -- one contiguous block
-            read_parts.append((B_bits, B_bits // 8, 0))
+            # AW operations: weights loaded from DRAM.  Dense and contiguous by
+            # default; the hooks let an activation-sparsity study say how
+            # fragmented a masked read really is.
+            read_parts.append((
+                B_bits,
+                self._aw_weight_run_bytes(op_type, B_bits // 8),
+                self._aw_weight_covering_bytes(op_type, B_bits // 8),
+            ))
 
         # Attn·V reads attention scores (A operand) back from DRAM, contiguous.
         # `K` is kv_len here, so it is the same width the QK write tested.

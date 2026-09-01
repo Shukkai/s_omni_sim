@@ -22,6 +22,8 @@ survive both.
 | **Re-measured** | §10–§13 | the KV techniques against the corrected model, and why they fail alike |
 | **What actually moves it** | §14–§16 | array packing, mask structure, and the memory part itself |
 | **The framing itself** | §17 | what the no-overlap roofline costs every number above |
+| **The memory model, corrected** | §19–§20 | which memory moves the bytes, and the one outright bug |
+| **Off the KV axis** | §21 | activation sparsity — the first lever that moves decode |
 
 **Method for §6 onward.** Every model change is a `HardwareConfig` field whose
 *disabled* default reproduces the previous numbers exactly, checked by
@@ -38,7 +40,8 @@ its output, so a fresh checkout has the scripts but not the reports. Rebuild
 them all with:
 
 ```
-for f in analysis/memory/*_run.py analysis/array_packing/pack_run.py; do python "$f"; done
+for f in analysis/memory/*_run.py analysis/array_packing/pack_run.py \
+         analysis/act_sparsity/sparsity_run.py; do python "$f"; done
 ```
 
 ---
@@ -1001,6 +1004,108 @@ Full tables: `analysis/memory/tiling_report.md`.
 
 ---
 
+## 21. FFN activation sparsity — the first lever that moves decode
+
+Every technique in §4–§15 aims at the KV cache, and §13 recorded why they fail
+alike: decode on this array is compute-bound, so removing bytes buys little.
+But §3 said something no section followed up — **decode idles ~85% waiting on
+weights**, not on KV — and fc1+fc2 are the largest weight tensors in the model.
+
+A gated FFN drives most of its hidden units to near-zero for any given token.
+Skipping unit `j` skips column `j` of FC1 and row `j` of FC2, so **weights**
+stop being fetched. TEAL, CATS and Deja Vu all produce such a mask. Three
+default-identical hooks carry it (`_ffn_active_neurons`, `_aw_weight_run_bytes`,
+`_aw_weight_covering_bytes`); the model is in `analysis/act_sparsity/`.
+Selection cost is excluded, as for every technique in §4–§15.
+
+### (a) What it buys, batch 1
+
+| density | TPOT | speedup | decode DRAM | decode cycles |
+|---|---:|---:|---:|---:|
+| 100% | 69.30 ms | 1.000× | 8.46 GB | 31.4 M |
+| 50% | 50.95 ms | 1.360× | 5.64 GB | 29.9 M |
+| 25% | 41.77 ms | 1.659× | 4.23 GB | 29.2 M |
+| **10%** | **36.27 ms** | **1.911×** | 3.38 GB | 29.0 M |
+| 5% | 34.43 ms | 2.013× | 3.10 GB | 28.9 M |
+
+- **1.911× is the largest single-technique decode speedup in this document**,
+  against §16(b)'s 1.10× for a 16× bandwidth increase and §13's verdict on the
+  KV family.
+- **Cycles barely move.** The FFN is a small share of decode *cycles* (§1) and a
+  large share of decode *bytes*. **This is a bandwidth technique that works on
+  an accelerator where §13 concluded bandwidth techniques do not** — because it
+  is the only one aimed at weights rather than KV.
+- **It saturates against attention.** 10% → 5% density buys only
+  1.911× → 2.013×; once the FFN weights stop dominating, attention's own DRAM
+  and compute are the floor.
+
+### (b) The layout question from §15, with the opposite answer
+
+10% density, DDR5-6400, varying how many consecutive units share a decision:
+
+| neuron group | run (neuron-major) | kept | run (model-major) | kept |
+|---|---:|---:|---:|---:|
+| 1 | 2,048 B | **100.0%** | 0.5 B | 0.0% |
+| 4 | 8,192 B | 100.0% | 2.0 B | 0.0% |
+| 16 | 32,768 B | 100.0% | 8.0 B | 22.2% |
+| 64 | 131,072 B | 100.0% | 32.0 B | 88.9% |
+
+- **Neuron-major is burst-aligned at group 1.** One unit's weights are
+  `d_model × weight_bits/8` = 2,048 B — 32 whole bursts — so a fully
+  *unstructured* mask collects everything. §15's result for KV was the exact
+  opposite.
+- **Model-major reproduces §15's cliff precisely**, including its shape: 8 B of
+  a 64 B burst keeps 22.2%, 32 B keeps 88.9%.
+- **The difference is who chooses the layout, and it is the whole point.** §15's
+  requirement was that retained KV channels be contiguous and compacted, which
+  an append-only cache written *online* cannot promise. A weight matrix is laid
+  out once, *offline*, by the compiler. **The same structural obligation is
+  unmeetable in one case and free in the other** — that, not the sparsity
+  pattern, is what separates them.
+
+### (c) Where the mask comes from is worth 1.46×
+
+| mask source | sparse matrices | TPOT | speedup |
+|---|---|---:|---:|
+| FFN input (TEAL, Deja Vu) | FC1 + FC2 | 36.27 ms | 1.911× |
+| FC1 output (CATS) | FC2 only | 52.78 ms | 1.313× |
+
+- **FC1 is more than half the win.** You cannot skip the work that produced the
+  thing you threshold, so an output-derived mask reaches only FC2.
+- The trade is an algorithm question, not a hardware one — and Deja Vu's
+  predictor matmul is not charged here.
+
+### (d) Batch destroys it, and §18 says why
+
+10% density. Per-token masks make the fetched weight set the **union** over the
+operation's tokens, `1 - (1-d)^M`; `share_mask` brackets that:
+
+| batch | union density | shared-mask bound | per-token (real) |
+|---:|---:|---:|---:|
+| 1 | 10.0% | 1.911× | **1.911×** |
+| 2 | 19.0% | 1.797× | 1.665× |
+| 4 | 34.4% | 1.505× | 1.324× |
+| 8 | 57.0% | 1.291× | 1.121× |
+| 32 | 96.6% | 1.082× | **1.003×** |
+
+- **Two mechanisms compound, and the bracket separates them.** The union
+  explains most of the collapse; the remainder is that **decode is already
+  compute-bound at batch 32** — exactly §18's regime map — where a technique
+  that removes bytes cannot help regardless. §13's recurring pattern, arriving
+  for a non-KV technique.
+- **Activation sparsity is the mirror image of KV eviction.** §8 showed a KV
+  budget *buys* batch; activation sparsity is *spent* by batch. They are
+  complementary rather than competing, and a latency-oriented batch-1 serving
+  stack is exactly where this one pays.
+- **Prefill collects exactly nothing**: `1 - (1-0.1)^8192` is 1.0 to hundreds of
+  digits, so every weight column is needed by some token and none can be
+  skipped. A shared mask would buy 1.862× — the sparsity is fully available,
+  and the workload is what refuses it.
+
+Full tables: `analysis/act_sparsity/sparsity_report.md`.
+
+---
+
 ## TODO
 
 ### Model gaps
@@ -1015,6 +1120,16 @@ Full tables: `analysis/memory/tiling_report.md`.
   the measured BQU is much slower.
 
 ### Open questions
+
+- **Charge the mask.** §21 excludes selection cost, as §4–§15 do, but the
+  exclusion is heavier here: Deja Vu's predictor is a real matmul per layer and
+  CATS' threshold is a real VPU pass over `d_ffn`. §21(c) already shows the two
+  differ by 1.46× *before* either is charged, so the ranking between them is
+  the thing most likely to move.
+- **Weight DRAM re-reads under row blocking.** §20 charges a row block for
+  re-reading B from SRAM but not from DRAM, in any mode — the model has always
+  assumed an AW weight read happens once. A 29.4 MB FFN weight matrix does not
+  stay resident, so §20's TTFT costs are optimistic by whatever that re-read is.
 
 - **Mixed-precision KV.** `qbit` is modelled as static and
   `analysis/bit_width/` sweeps only fixed widths, so per-token / per-channel
@@ -1084,7 +1199,8 @@ tiebreaker if they ever disagree.
 | 7 — memory tech + SRAM bandwidth | `sram_bandwidth_gbps` | `0.0` = unlimited | §16 | `9b0b15c` |
 | 10 — compute/memory overlap | `overlap_model` | `"serial"` = no overlap | §17 | `4d593bc` |
 | 12 — per-port SRAM | `sram_port_model`, `accum_bandwidth_gbps` | `"lumped"`, `0.0` | §19 | `f9b27f0` |
-| 6 — prefill row tiling | `sram_m_tile` | `0` = untiled | §20 | *(next commit)* |
+| 6 — prefill row tiling | `sram_m_tile` | `0` = untiled | §20 | `90dbeb5` |
+| 13 — FFN activation sparsity | *(three default-identical hooks)* | — | §21 | *(next commit)* |
 
 ```
 git revert <sha>            # undo one stage, keep the later ones
@@ -1127,4 +1243,5 @@ Run after *every* model change, not just the one being worked on.
    (55.39 / 70.67 / 131.82 ms).
 4. Every sweep's own pre-flight suite still passes: `prefill_run.py` (7),
    `pack_run.py` (9), `unstructured_run.py` (9), `selective_run.py` (5),
-   `bandwidth_run.py` (5), `ports_run.py` (7), `tiling_run.py` (8).
+   `bandwidth_run.py` (5), `ports_run.py` (7), `tiling_run.py` (8),
+   `sparsity_run.py` (8).
