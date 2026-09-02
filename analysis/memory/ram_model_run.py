@@ -98,6 +98,25 @@ class BufferProbe(UnitAwareSimulator):
 # rather than a sweep, so it only changes when the hardware does.
 # ---------------------------------------------------------------------------
 
+#: The simulator's internal op names are identifiers; a reference sheet should
+#: say what the operation *is*.  Widths are LLaMA-3-8B.
+OP_LABEL = {
+    'q_proj': 'Q projection',
+    'k_proj': 'K projection',
+    'v_proj': 'V projection',
+    'o_proj': 'output projection',
+    'fc1': 'FFN expand (4,096 \u2192 14,336)',
+    'fc2': 'FFN contract (14,336 \u2192 4,096)',
+    'qk_matmul': 'attention Q\u00b7K\u1d40',
+    'attn_v_matmul': 'attention scores\u00b7V',
+    'gate': 'MoE router',
+}
+
+
+def op_label(name):
+    return OP_LABEL.get(name, name)
+
+
 DENSE = []          # [('section', title, subtitle) | ('table', caption, hdr, rows)]
 
 #: The short version, for people who read the tables by looking things up.
@@ -108,15 +127,21 @@ FINDINGS = [
     "at 32K; prefill leads compute by 2.8–3.3×. Two machines, two different "
     "optimisations.",
 
-    "**The 256 KB input buffer is the binding design decision, and fc2 sets "
-    "it.** fc2's A operand is `m_tile × d_ffn × 2 B` and `d_ffn` is 3.5× "
-    "`d_model`, so the block is **9 rows**, not `array_m`'s 32.",
+    "**The 256 KB input buffer decides how many tokens are processed at "
+    "once, and the FFN's second matrix is what limits it.** The buffer holds "
+    "`rows x input width x 2 B`. Every projection and the FFN *expand* take a "
+    "4,096-wide input, so one row is 8 KB and **32 rows** fit — exactly the "
+    "array's height, clearly what it was sized for. But the FFN *contract* "
+    "takes a **14,336**-wide input, so one row is 28 KB and only **9** fit. "
+    "The block is one global setting, so the tightest operation wins: "
+    "**9, not 32.**",
 
-    "**That block is where prefill's time goes.** At 9 rows the array re-pays "
-    "`array_n + array_m` startup cycles per block, so **fill/drain is 70–74% "
-    "of prefill's serial cycles** — a term that is under 2% untiled. It costs "
-    "~5.3× prefill compute. A larger input buffer is worth more than a faster "
-    "anything.",
+    "**Those 9 rows are where prefill's time goes.** A systolic array pays a "
+    "fixed start-up cost to fill and drain, and at 9 rows it is spread over 9 "
+    "rows instead of 32 — so **fill/drain becomes 70–74% of prefill cycles**, "
+    "against under 2% when the whole sequence streams at once. It costs ~5.3\u00d7 "
+    "prefill compute. **A bigger input buffer is worth more here than a "
+    "faster anything.**",
 
     "**No on-chip port exceeds 37% of its width.** The same tiling that "
     "inflates cycles ~5× leaves the operand bytes unchanged, so every port's "
@@ -128,9 +153,10 @@ FINDINGS = [
     "and do not fit in 3 MB. **It is weights, not KV, until 32K.**",
 
     "**32K is where the part runs out, and three walls arrive together**: "
-    "`attn_v` needs 225% of the input buffer, 125% of the scale buffer, and "
-    "its KV tile is 2,048 KB against a 2,048 KB weight buffer. Only the "
-    "input one shrinks with a smaller block.",
+    "attention's scores-times-V step needs 225% of the input buffer and 125% "
+    "of the scale buffer, and one 32K Key cache is 2,048 KB against a "
+    "2,048 KB weight buffer. Only the input one shrinks with a smaller "
+    "block.",
 
     "**The geometry confirms the array model.** The input word is 256 B = "
     "`array_m × MU × act_bits/8` and the output word is 512 B = "
@@ -165,6 +191,8 @@ def write_dense(path, setup):
     for item in DENSE:
         if item[0] == 'section':
             out += ["---", "", f"## {item[1]}", ""]
+            if item[2]:
+                out += [f"*{item[2]}*", ""]
             continue
         _kind, caption, headers, trows, aligns = item
         if caption:
@@ -438,7 +466,7 @@ def main():
                 rows.append({'section': 'E', 'context': c, 'phase': tag,
                              'buffer': buf, 'need': need, 'set_by': op,
                              'fits': fits})
-                trows.append([f"{c:,}", buf, op,
+                trows.append([f"{c:,}", buf, op_label(op),
                               f"{need / KB:,.0f} KB",
                               f"{caps[buf] / KB:,.0f} KB",
                               f"{need / caps[buf]:.0%}",

@@ -10,16 +10,18 @@
 ## Findings
 
 - **Prefill is compute-bound and decode is DRAM-bound, at every context.** Decode spends 6.8× longer on DRAM than compute at 2K, narrowing to 1.1× at 32K; prefill leads compute by 2.8–3.3×. Two machines, two different optimisations.
-- **The 256 KB input buffer is the binding design decision, and fc2 sets it.** fc2's A operand is `m_tile × d_ffn × 2 B` and `d_ffn` is 3.5× `d_model`, so the block is **9 rows**, not `array_m`'s 32.
-- **That block is where prefill's time goes.** At 9 rows the array re-pays `array_n + array_m` startup cycles per block, so **fill/drain is 70–74% of prefill's serial cycles** — a term that is under 2% untiled. It costs ~5.3× prefill compute. A larger input buffer is worth more than a faster anything.
+- **The 256 KB input buffer decides how many tokens are processed at once, and the FFN's second matrix is what limits it.** The buffer holds `rows x input width x 2 B`. Every projection and the FFN *expand* take a 4,096-wide input, so one row is 8 KB and **32 rows** fit — exactly the array's height, clearly what it was sized for. But the FFN *contract* takes a **14,336**-wide input, so one row is 28 KB and only **9** fit. The block is one global setting, so the tightest operation wins: **9, not 32.**
+- **Those 9 rows are where prefill's time goes.** A systolic array pays a fixed start-up cost to fill and drain, and at 9 rows it is spread over 9 rows instead of 32 — so **fill/drain becomes 70–74% of prefill cycles**, against under 2% when the whole sequence streams at once. It costs ~5.3× prefill compute. **A bigger input buffer is worth more here than a faster anything.**
 - **No on-chip port exceeds 37% of its width.** The same tiling that inflates cycles ~5× leaves the operand bytes unchanged, so every port's utilisation falls with it. The 8 weight banks are there for capacity, not bandwidth.
 - **Decode moves per token almost exactly what prefill moves in total** (2.65 GB vs 2.65 GB at 2K) — 2.58 GB of weights are re-read every step and do not fit in 3 MB. **It is weights, not KV, until 32K.**
-- **32K is where the part runs out, and three walls arrive together**: `attn_v` needs 225% of the input buffer, 125% of the scale buffer, and its KV tile is 2,048 KB against a 2,048 KB weight buffer. Only the input one shrinks with a smaller block.
+- **32K is where the part runs out, and three walls arrive together**: attention's scores-times-V step needs 225% of the input buffer and 125% of the scale buffer, and one 32K Key cache is 2,048 KB against a 2,048 KB weight buffer. Only the input one shrinks with a smaller block.
 - **The geometry confirms the array model.** The input word is 256 B = `array_m × MU × act_bits/8` and the output word is 512 B = `array_n × NUM_RAC × accum_bits/8` — one cycle of activation operand, one column tile of accumulators.
 
 ---
 
 ## A. The configuration
+
+*On-chip geometry from the block diagram, off-chip from the technology preset. Port bandwidth is one word per cycle.*
 
 | memory | geometry | capacity | access | bandwidth |
 | --- | --- | ---: | ---: | ---: |
@@ -34,6 +36,8 @@
 
 ## B. DRAM traffic, dense
 
+*Effective bytes — what the controller actually moves after burst rounding. Prefill is the whole phase; decode is per token.*
+
 | context | phase | read | write | total | time @51.2 GB/s |
 | --- | --- | ---: | ---: | ---: | ---: |
 | 2,048 | prefill | 2.58 GB | 0.07 GB | 2.65 GB | 51.8 ms |
@@ -46,6 +50,8 @@
 ---
 
 ## C. Cycles, dense
+
+*Where the array actually spends time, by unit of Fig. 4. Prefill is the whole phase; decode is per token. BQU excluded — it is a placeholder, not a measurement.*
 
 **prefill — share of serial cycles**
 
@@ -67,6 +73,8 @@
 
 ## D. On-chip traffic by port, dense
 
+*Bytes per port, and the rate they imply against that port's width. A port at 100% is the bottleneck.*
+
 **prefill — B/cycle (% of port width)**
 
 | context | input 256 B | scale 256 B | weight 2,048 B | output 512 B |
@@ -87,43 +95,47 @@
 
 ## E. Peak footprint against capacity, dense
 
+*The largest working set each buffer is asked to hold, and which operation asks for it.*
+
 **prefill — m_tile = 9**
 
 | context | buffer | set by | needs | has | used |  |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| 2,048 | input | fc2 | 252 KB | 256 KB | 98% | fits |
-| 2,048 | scale | fc2 | 140 KB | 256 KB | 55% | fits |
-| 2,048 | weight | q_proj | 8 KB | 2,048 KB | 0% | fits |
-| 2,048 | output | q_proj | 4 KB | 512 KB | 1% | fits |
-| 8,192 | input | fc2 | 252 KB | 256 KB | 98% | fits |
-| 8,192 | scale | fc2 | 140 KB | 256 KB | 55% | fits |
-| 8,192 | weight | q_proj | 8 KB | 2,048 KB | 0% | fits |
-| 8,192 | output | q_proj | 4 KB | 512 KB | 1% | fits |
-| 32,768 | input | attn_v_matmul | 576 KB | 256 KB | 225% | **OVER** |
-| 32,768 | scale | attn_v_matmul | 320 KB | 256 KB | 125% | **OVER** |
-| 32,768 | weight | q_proj | 8 KB | 2,048 KB | 0% | fits |
-| 32,768 | output | q_proj | 4 KB | 512 KB | 1% | fits |
+| 2,048 | input | FFN contract (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
+| 2,048 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 2,048 | weight | Q projection | 8 KB | 2,048 KB | 0% | fits |
+| 2,048 | output | Q projection | 4 KB | 512 KB | 1% | fits |
+| 8,192 | input | FFN contract (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
+| 8,192 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 8,192 | weight | Q projection | 8 KB | 2,048 KB | 0% | fits |
+| 8,192 | output | Q projection | 4 KB | 512 KB | 1% | fits |
+| 32,768 | input | attention scores·V | 576 KB | 256 KB | 225% | **OVER** |
+| 32,768 | scale | attention scores·V | 320 KB | 256 KB | 125% | **OVER** |
+| 32,768 | weight | Q projection | 8 KB | 2,048 KB | 0% | fits |
+| 32,768 | output | Q projection | 4 KB | 512 KB | 1% | fits |
 
 **decode — m_tile = 9**
 
 | context | buffer | set by | needs | has | used |  |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| 2,048 | input | fc2 | 28 KB | 256 KB | 11% | fits |
-| 2,048 | scale | fc2 | 140 KB | 256 KB | 55% | fits |
-| 2,048 | weight | fc2 | 896 KB | 2,048 KB | 44% | fits |
-| 2,048 | output | q_proj | 0 KB | 512 KB | 0% | fits |
-| 8,192 | input | fc2 | 28 KB | 256 KB | 11% | fits |
-| 8,192 | scale | fc2 | 140 KB | 256 KB | 55% | fits |
-| 8,192 | weight | fc2 | 896 KB | 2,048 KB | 44% | fits |
-| 8,192 | output | q_proj | 0 KB | 512 KB | 0% | fits |
-| 32,768 | input | attn_v_matmul | 64 KB | 256 KB | 25% | fits |
-| 32,768 | scale | attn_v_matmul | 320 KB | 256 KB | 125% | **OVER** |
-| 32,768 | weight | attn_v_matmul | 2,048 KB | 2,048 KB | 100% | **OVER** |
-| 32,768 | output | q_proj | 0 KB | 512 KB | 0% | fits |
+| 2,048 | input | FFN contract (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
+| 2,048 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 2,048 | weight | FFN contract (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
+| 2,048 | output | Q projection | 0 KB | 512 KB | 0% | fits |
+| 8,192 | input | FFN contract (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
+| 8,192 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 8,192 | weight | FFN contract (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
+| 8,192 | output | Q projection | 0 KB | 512 KB | 0% | fits |
+| 32,768 | input | attention scores·V | 64 KB | 256 KB | 25% | fits |
+| 32,768 | scale | attention scores·V | 320 KB | 256 KB | 125% | **OVER** |
+| 32,768 | weight | attention scores·V | 2,048 KB | 2,048 KB | 100% | **OVER** |
+| 32,768 | output | Q projection | 0 KB | 512 KB | 0% | fits |
 
 ---
 
 ## F. What binds, dense
+
+*The three roofline terms per phase. The largest is the phase's limit under the serial model.*
 
 | context | phase | compute | DRAM | SRAM | bound by | over 2nd |
 | --- | --- | ---: | ---: | ---: | --- | ---: |
