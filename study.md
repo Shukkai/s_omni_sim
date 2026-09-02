@@ -1216,20 +1216,34 @@ an aggregate. It had. Both identities are asserted in pre-flight, not admired.
 | **32 rows** | **64.3 s** | **2.21×** | 69.54 ms | 1.004× | input |
 | 8 rows | 170.3 s | 5.85× | 69.54 ms | 1.004× | — |
 
-- **The machine *is* `sram_m_tile = 32`.** The input buffer holds
-  `256 KB / (4096 × 2 B)` = exactly 32 activation rows — `array_m`. **§20
+- **The input buffer is sized to exactly `array_m` rows**: `256 KB /
+  (4096 × 2 B)` = 32 activation rows of a `d_model`-wide operand. **§20
   nominated 512 rows as the operating point; that describes a buffer that was
-  never built**, and the real block costs 2.21× rather than 1.075×.
+  never built**, and a 32-row block costs 2.21× rather than 1.075×. But 32 is
+  the block for *one* operand shape, not for the model — see the next bullet,
+  where the largest globally workable block turns out to be **9**.
 - **Decode barely moves (1.004×)**, which is §19's split arriving from the
   hardware side rather than from a measurement: decode is `M=1`, tiling-inert,
   and its traffic is weight-port traffic served by 8 banks at 2,048 B/cycle.
-- **The input overflow does not clear at 32 rows, and that is the surprise.** It
-  is not the FFN — 32 × 4,096 × 2 B is 256 KB, exactly the buffer. It is
-  **attention**: `attn_v`'s A operand is a block of score *rows*,
-  `m_tile × kv_len × act_bits/8`, which is 512 KB at 8K and grows with context.
-  Under a pool it borrowed silently from the other 2.75 MB. **One `sram_m_tile`
-  cannot serve both the FFN and attention** — a scheduling requirement no
-  section had derived.
+- **The input overflow does not clear at 32 rows, and what binds is not what
+  the buffer was sized for.** The A operand is `m_tile × K × act_bits/8`, so the
+  row block a 256 KB buffer allows depends entirely on that operation's `K`:
+
+  | operand | its `K` | rows that fit |
+  |---|---:|---:|
+  | q/k/v/o_proj, fc1 | `d_model` 4,096 | **32** = `array_m` |
+  | **fc2** | `d_ffn` 14,336 | **9** |
+  | `attn_v` | `kv_len` 2K / 8K / 16K / 32K | 64 / 16 / 8 / 4 |
+
+  **The buffer is sized to exactly `array_m` rows of a `d_model`-wide
+  activation** — which serves the projections and fc1, and is plainly
+  deliberate. But **the FFN's own second matrix is 3.5× wider in `K`**, so fc2
+  gets 9 rows, and it is fc2 that binds at 2K and 8K. Attention takes over only
+  past 16K, where `kv_len` exceeds `d_ffn`. Measured: `fc2:input` overflows at
+  32 rows for *every* context, and the largest block that fits anywhere is **9**.
+- **So one `sram_m_tile` cannot serve the model**, and the conflict is *inside
+  the FFN* before it is ever between the FFN and attention. Under a pool it was
+  invisible: fc2's 896 KB borrowed silently from the other 2.75 MB.
 
 ### (d) Where the part runs out
 
@@ -1252,6 +1266,10 @@ an aggregate. It had. Both identities are asserted in pre-flight, not admired.
   256 KB buffer. The *layout* is inferred from OMNI_LUT.pdf §IV-B (see
   `_scale_operand_bits`), not read from the RTL — **a question to ask, not a
   defect found.**
+- **If it is real, no row block escapes it.** The scale footprint scales with
+  `K`, not with `m_tile`, so `attn_v:scale` overflows at *every* block from 32
+  rows down to 2 at 32K. Tiling is the lever for the input buffer and is no
+  lever at all here.
 
 **One RTL number not modelled.** The note's own LSU measurement, 492 → 927 ns
 (**1.88×**), says the load path is *not* hidden behind compute. That is evidence
@@ -1285,9 +1303,10 @@ Full tables: `analysis/memory/buffers_report.md`.
   reading it from the RTL. If Values share one α across a token group, or the
   zero point is folded, the term shrinks and the overflow goes away. **This is
   the one place the model now makes a falsifiable claim about the hardware.**
-- **A per-operand row block.** §22(c) shows one `sram_m_tile` cannot serve both
-  the FFN (32 rows fits exactly) and attention (whose A operand grows with
-  `kv_len`). The field is global; the schedule needs it per operation.
+- **A per-operand row block.** §22(c) shows the allowed block is
+  `input_buffer / (K × act_bits/8)`, so it differs per operation: 32 rows for
+  fc1 and the projections, **9 for fc2**, and 64 down to 4 for `attn_v` as
+  context grows. The field is global; the schedule needs it per operation.
 - **The LSU / DMA path.** The RTL measures 1.88× from adding the LSU and the
   model has no term for it at all. Not enough data to build one from, but it is
   the largest unmodelled *hardware* cost now that the buffers are in.

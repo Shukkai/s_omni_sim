@@ -154,7 +154,20 @@ def preflight():
         f"the 32K KV tile should not fit the weight buffer, " \
         f"got {big['decode_overflow']}"
 
-    print("pre-flight: 9 checks passed")
+    # 10. The input buffer allows a different row block per operation, and
+    #     `array_m` is right for exactly one of them.  This pins the fact that
+    #     an earlier draft of section 22 got wrong: fc2, not attention, is what
+    #     binds below 16K, because its `K` is `d_ffn` rather than `d_model`.
+    d_model, d_ffn = 4096, 14336
+    rows_dmodel = cfg.input.bytes // (d_model * stock.act_bits // 8)
+    rows_dffn = cfg.input.bytes // (d_ffn * stock.act_bits // 8)
+    assert rows_dmodel == stock.array_m, "d_model block should be array_m"
+    assert rows_dffn == 9, f"d_ffn block should be 9 rows, got {rows_dffn}"
+    ov = measure(rtl_hw(m_tile=32), context=2048)['prefill_overflow']
+    assert 'input' in ov, \
+        f"fc2 should overflow the input buffer at 32 rows even at 2K, got {ov}"
+
+    print("pre-flight: 10 checks passed")
 
 
 # ============================================================================
@@ -199,9 +212,10 @@ def sweep(report_path):
         f"that describes a buffer that was never built.",
         "**Two structural overflows fall straight out of the sizes.** A 32K "
         "Key cache at 4 bits is 2,048 KB, which is the weight buffer exactly, "
-        "so K alone fills it and K+V needs twice the part. And prefill's input "
-        "buffer binds on *attention* rows, not FFN rows — which no section had "
-        "noticed, because a pool let them borrow.",
+        "so K alone fills it and K+V needs twice the part. And the input "
+        "buffer is sized for a `d_model`-wide operand, so **fc2 — whose `K` is "
+        "`d_ffn` — gets 9 rows where fc1 gets 32**, and binds first at every "
+        "context below 16K.",
         f"**Total cost of modelling the real part: TTFT "
         f"{pool['ttft_s']:,.1f} s → {rtl32['ttft_s']:,.1f} s "
         f"({rtl32['ttft_s'] / pool['ttft_s']:.2f}×), TPOT "
@@ -266,15 +280,18 @@ def sweep(report_path):
         "arriving from the hardware side rather than from a measurement: "
         "decode is `M=1` and tiling-inert, and its traffic is weight-port "
         "traffic served by 8 banks at 2,048 B/cycle.\n\n"
-        "**The `input` overflow does not clear at 32 rows, and that is the "
-        "surprise.** It is not the FFN — 32 × 4,096 × 2 B is 256 KB, exactly "
-        "the buffer. It is **attention**: `attn_v`'s A operand is a block of "
-        "score *rows*, `m_tile × kv_len × act_bits/8`, which is 512 KB at 8K "
-        "context and grows with the sequence. Under a pool this borrowed "
-        "silently from the other 2.75 MB. Under the partition the row block "
-        "has to shrink with context for attention while 32 is right for the "
-        "FFN — **one `sram_m_tile` cannot serve both**, which is a scheduling "
-        "requirement no section had derived.")
+        "**The `input` overflow does not clear at 32 rows, and what binds is "
+        "not what the buffer was sized for.** The A operand is "
+        "`m_tile × K × act_bits/8`, so the block a 256 KB buffer allows "
+        "depends on that operation's `K`: **32 rows** for the projections and "
+        "fc1 (`d_model` 4,096, exactly `array_m` — plainly deliberate), but "
+        "only **9** for **fc2**, whose `K` is `d_ffn` = 14,336, and 64 down to "
+        "4 for `attn_v` as `kv_len` grows. **fc2 binds at 2K and 8K**; "
+        "attention takes over only past 16K, where `kv_len` exceeds `d_ffn`. "
+        "So one `sram_m_tile` cannot serve the model, and the conflict is "
+        "*inside the FFN* before it is ever between the FFN and attention — "
+        "invisible under a pool, where fc2's 896 KB borrowed silently from the "
+        "other 2.75 MB.")
 
     # ---- C ------------------------------------------------------------------
     rep.section(
