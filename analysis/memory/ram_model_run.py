@@ -113,6 +113,26 @@ OP_LABEL = {
 }
 
 
+#: One line per section: how to read that table.  Short on purpose -- the
+#: longer description stays in the report, this is the key you glance at.
+READS_AS = {
+    'A': "the parts list \u2014 what exists and how fast each one is.",
+    'B': "off-chip bytes actually moved. Prefill = whole phase, "
+         "decode = **per token**.",
+    'C': "where cycles go, by unit. Columns are % of that phase's cycles.",
+    'D': "on-chip bytes per port, as B/cycle and % of that port's width. "
+         "100% = that port is the bottleneck.",
+    'E': "the largest working set each buffer must hold, and which operation "
+         "demands it. `OVER` = does not fit.",
+    'F': "the three roofline terms side by side. Largest wins; "
+         "\u201cover 2nd\u201d is the margin.",
+}
+
+ORIENT = ("**B and D are bytes, C is time, E is capacity, F reconciles them.** "
+          "Read F first to see what is limiting, then jump to whichever of "
+          "B/C/D explains it.")
+
+
 def op_label(name):
     return OP_LABEL.get(name, name)
 
@@ -158,6 +178,14 @@ FINDINGS = [
     "2,048 KB weight buffer. Only the input one shrinks with a smaller "
     "block.",
 
+    "**The array shape is tuned to `head_dim`, and it is right for the block "
+    "the buffer was sized for.** A 32x4 array gives exactly 128 columns "
+    "against attention's `head_dim` of 128. Reshaping to 16x8 would be 1.16x "
+    "faster *at this 9-row block*, but 32x4 wins at every block from 32 rows "
+    "upward \u2014 and 32 rows is what a 256 KB input buffer holds. "
+    "**The array and the buffer agree; the FFN contract is what breaks the "
+    "pairing.** (`analysis/memory/tileshape_report.md`)",
+
     "**The geometry confirms the array model.** The input word is 256 B = "
     "`array_m × MU × act_bits/8` and the output word is 512 B = "
     "`array_n × NUM_RAC × accum_bits/8` — one cycle of activation operand, "
@@ -187,11 +215,14 @@ def write_dense(path, setup):
     for line in setup:
         out.append(f"- {line}")
     out += ["", "---", "", "## Findings", ""] + [f"- {b}" for b in FINDINGS]
-    out.append("")
+    out += ["", "---", "", "## Reading the tables", "", ORIENT, ""]
     for item in DENSE:
         if item[0] == 'section':
             out += ["---", "", f"## {item[1]}", ""]
-            if item[2]:
+            key = READS_AS.get(item[1][:1])
+            if key:
+                out += [f"**Reads as** \u2014 {key}", ""]
+            elif item[2]:
                 out += [f"*{item[2]}*", ""]
             continue
         _kind, caption, headers, trows, aligns = item

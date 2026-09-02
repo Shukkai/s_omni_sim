@@ -15,13 +15,20 @@
 - **No on-chip port exceeds 37% of its width.** The same tiling that inflates cycles ~5× leaves the operand bytes unchanged, so every port's utilisation falls with it. The 8 weight banks are there for capacity, not bandwidth.
 - **Decode moves per token almost exactly what prefill moves in total** (2.65 GB vs 2.65 GB at 2K) — 2.58 GB of weights are re-read every step and do not fit in 3 MB. **It is weights, not KV, until 32K.**
 - **32K is where the part runs out, and three walls arrive together**: attention's scores-times-V step needs 225% of the input buffer and 125% of the scale buffer, and one 32K Key cache is 2,048 KB against a 2,048 KB weight buffer. Only the input one shrinks with a smaller block.
+- **The array shape is tuned to `head_dim`, and it is right for the block the buffer was sized for.** A 32x4 array gives exactly 128 columns against attention's `head_dim` of 128. Reshaping to 16x8 would be 1.16x faster *at this 9-row block*, but 32x4 wins at every block from 32 rows upward — and 32 rows is what a 256 KB input buffer holds. **The array and the buffer agree; the FFN contract is what breaks the pairing.** (`analysis/memory/tileshape_report.md`)
 - **The geometry confirms the array model.** The input word is 256 B = `array_m × MU × act_bits/8` and the output word is 512 B = `array_n × NUM_RAC × accum_bits/8` — one cycle of activation operand, one column tile of accumulators.
+
+---
+
+## Reading the tables
+
+**B and D are bytes, C is time, E is capacity, F reconciles them.** Read F first to see what is limiting, then jump to whichever of B/C/D explains it.
 
 ---
 
 ## A. The configuration
 
-*On-chip geometry from the block diagram, off-chip from the technology preset. Port bandwidth is one word per cycle.*
+**Reads as** — the parts list — what exists and how fast each one is.
 
 | memory | geometry | capacity | access | bandwidth |
 | --- | --- | ---: | ---: | ---: |
@@ -36,7 +43,7 @@
 
 ## B. DRAM traffic, dense
 
-*Effective bytes — what the controller actually moves after burst rounding. Prefill is the whole phase; decode is per token.*
+**Reads as** — off-chip bytes actually moved. Prefill = whole phase, decode = **per token**.
 
 | context | phase | read | write | total | time @51.2 GB/s |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -51,7 +58,7 @@
 
 ## C. Cycles, dense
 
-*Where the array actually spends time, by unit of Fig. 4. Prefill is the whole phase; decode is per token. BQU excluded — it is a placeholder, not a measurement.*
+**Reads as** — where cycles go, by unit. Columns are % of that phase's cycles.
 
 **prefill — share of serial cycles**
 
@@ -73,7 +80,7 @@
 
 ## D. On-chip traffic by port, dense
 
-*Bytes per port, and the rate they imply against that port's width. A port at 100% is the bottleneck.*
+**Reads as** — on-chip bytes per port, as B/cycle and % of that port's width. 100% = that port is the bottleneck.
 
 **prefill — B/cycle (% of port width)**
 
@@ -95,7 +102,7 @@
 
 ## E. Peak footprint against capacity, dense
 
-*The largest working set each buffer is asked to hold, and which operation asks for it.*
+**Reads as** — the largest working set each buffer must hold, and which operation demands it. `OVER` = does not fit.
 
 **prefill — m_tile = 9**
 
@@ -135,7 +142,7 @@
 
 ## F. What binds, dense
 
-*The three roofline terms per phase. The largest is the phase's limit under the serial model.*
+**Reads as** — the three roofline terms side by side. Largest wins; “over 2nd” is the margin.
 
 | context | phase | compute | DRAM | SRAM | bound by | over 2nd |
 | --- | --- | ---: | ---: | ---: | --- | ---: |
