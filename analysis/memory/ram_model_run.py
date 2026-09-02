@@ -40,6 +40,9 @@ from memory_tech import (                                            # noqa: E40
 )
 from model_configs import get_model_config                           # noqa: E402
 from report import Report                                            # noqa: E402
+from cycle_units import (                                            # noqa: E402
+    UnitAwareSimulator, compute_unit_cycle_breakdown,
+)
 
 MODEL = 'LLaMA-3-8B'
 TECH = 'DDR5-6400'
@@ -53,16 +56,22 @@ MB = KB * KB
 GB = 1e9
 
 
-class BufferProbe(Simulator):
+class BufferProbe(UnitAwareSimulator):
     """Records each operation's per-buffer footprint, so the report can say
     *which* operation sets each buffer's peak rather than only how big it is.
 
+    Built on `UnitAwareSimulator` so the same run also carries the per-unit
+    cycle attribution -- bytes and cycles for one configuration, from one
+    simulation, which is the point of a baseline sheet.
+
     Analysis-only: it overrides nothing the simulator computes, it just keeps
-    the footprint `_simulate_matmul` already asks for.
+    the footprint `_simulate_matmul` already asks for.  `model_bqu=False`
+    because the BQU is a placeholder (`study.md` TODO) and a reference sheet
+    should not carry unmeasured numbers.
     """
 
     def __init__(self, hw):
-        super().__init__(hw)
+        super().__init__(hw, model_bqu=False)
         self.peaks = {}     # buffer -> (bytes, op label)
 
     def _simulate_matmul(self, op_type, compute_mode, shape, **kw):
@@ -101,7 +110,8 @@ def run(context, batch=1):
     freq = hw.freq_mhz * 1e6
     steps = max(1, w.output_tokens - 1)
     out = {'context': context, 'batch': batch,
-           'ttft_s': ttft, 'tpot_s': tpot, 'peaks': sim.peaks}
+           'ttft_s': ttft, 'tpot_s': tpot, 'peaks': sim.peaks,
+           'units': compute_unit_cycle_breakdown(sim, r, w)}
     for tag, ph, div in (('prefill', r.prefill, 1), ('decode', r.decode, steps)):
         t = ph.get_total_metrics()
         out[tag] = {
@@ -228,8 +238,57 @@ def main():
         "reason KV reduction disappoints at batch 1 and §21's weight lever "
         "does not.")
 
-    # ---- C: SRAM traffic by port ---------------------------------------
-    rep.section("C. On-chip traffic by port, dense",
+    # ---- C: cycles ------------------------------------------------------
+    rep.section("C. Cycles, dense",
+                "Where the array actually spends time, by unit of Fig. 4. "
+                "Prefill is the whole phase; decode is per token. BQU "
+                "excluded — it is a placeholder, not a measurement.")
+    UNITS = [('pe_array_compute', 'PE array — compute'),
+             ('pe_array_fill_drain', 'PE array — fill/drain'),
+             ('lgu', 'LGU'),
+             ('input_load', 'operand issue'),
+             ('accumulator', 'accumulator'),
+             ('vpu', 'VPU (softmax, norms, SiLU)')]
+    for tag, key in (('prefill', 'prefill'), ('decode', 'decode_per_token')):
+        trows = []
+        for c in CONTEXTS:
+            u = runs[c]['units'][key]
+            serial = sum(v['cycles'] for v in u.values()
+                         if not v['overlapped'])
+            cells = [f"{c:,}", f"{serial / 1e6:,.1f} M"]
+            for unit, _label in UNITS:
+                pct = 100.0 * u.get(unit, {}).get('cycles', 0.0) / serial \
+                    if serial else 0.0
+                rows.append({'section': 'C', 'context': c, 'phase': tag,
+                             'unit': unit,
+                             'cycles': u.get(unit, {}).get('cycles', 0.0),
+                             'pct_of_serial': pct})
+                cells.append(f"{pct:.1f}%")
+            trows.append(cells)
+        rep.table(["context", "cycles"] + [l for _u, l in UNITS], trows,
+                  aligns="lr" + "r" * len(UNITS),
+                  caption=f"{tag} — share of serial cycles")
+    rep.note(
+        "**Prefill's fill/drain share is the row block, and it is the cost "
+        "nobody would predict from the buffer size alone.** At a 9-row block "
+        "the array re-pays `array_n + array_m` startup cycles for every block "
+        "of every column-and-K tile, against only 9 rows of useful streaming "
+        "— so the overhead that is under 2% untiled (§2) becomes the "
+        "dominant term. **This is the mechanism behind the 5.3× prefill "
+        "penalty in section F**, and behind the idle ports in section D.\n\n"
+        "**Decode is the opposite and always was**: `attn_v` dominates, "
+        "fill/drain stays small because `M = 1` makes the block irrelevant, "
+        "and the VPU share is softmax. Nothing here moves with the buffer "
+        "partition.\n\n"
+        "*Reconciling with §3*: that section reports 38.15 M decode cycles at "
+        "32K where this sheet reports 38.02 M. The sheet generates 3 tokens "
+        "and §3 generates 256, and per-token cycles grow with `kv_len` as the "
+        "cache fills — so §3 is an average over a longer generation, not a "
+        "different model. Both match the stock simulator for their own "
+        "workload.*")
+
+    # ---- D: SRAM traffic by port ---------------------------------------
+    rep.section("D. On-chip traffic by port, dense",
                 "Bytes per port, and the rate they imply against that port's "
                 "width. A port at 100% is the bottleneck.")
     widths = {'input': cfg.input.word_bytes, 'scale': cfg.scale.word_bytes,
@@ -242,7 +301,7 @@ def main():
             cells = [f"{c:,}"]
             for buf in ('input', 'scale', 'weight', 'output'):
                 rate = p[buf] / p['cycles'] if p['cycles'] else 0.0
-                rows.append({'section': 'C', 'context': c, 'phase': tag,
+                rows.append({'section': 'D', 'context': c, 'phase': tag,
                              'port': buf, 'bytes': p[buf],
                              'bytes_per_cycle': rate})
                 cells.append(f"{rate:,.1f} ({rate / widths[buf]:.0%})")
@@ -265,7 +324,7 @@ def main():
         "bank holds 256 KB.")
 
     # ---- D: capacity ----------------------------------------------------
-    rep.section("D. Peak footprint against capacity, dense",
+    rep.section("E. Peak footprint against capacity, dense",
                 "The largest working set each buffer is asked to hold, and "
                 "which operation asks for it.")
     caps = {'input': cfg.input.bytes, 'scale': cfg.scale.bytes,
@@ -276,7 +335,7 @@ def main():
             for buf in ('input', 'scale', 'weight', 'output'):
                 need, op = runs[c]['peaks'].get((tag, buf), (0, '—'))
                 fits = need <= caps[buf]
-                rows.append({'section': 'D', 'context': c, 'phase': tag,
+                rows.append({'section': 'E', 'context': c, 'phase': tag,
                              'buffer': buf, 'need': need, 'set_by': op,
                              'fits': fits})
                 trows.append([f"{c:,}", buf, op,
@@ -301,7 +360,7 @@ def main():
         "with `m_tile`, so no tiling escapes them.")
 
     # ---- E: what binds --------------------------------------------------
-    rep.section("E. What binds, dense",
+    rep.section("F. What binds, dense",
                 "The three roofline terms per phase. The largest is the "
                 "phase's limit under the serial model.")
     trows = []
@@ -316,7 +375,7 @@ def main():
             worst = max(terms, key=terms.get)
             headroom = order[0] / order[1] if order[1] > 0 else float('inf')
             unit = 1e3
-            rows.append({'section': 'E', 'context': c, 'phase': tag,
+            rows.append({'section': 'F', 'context': c, 'phase': tag,
                          'compute_s': p['compute_s'], 'dram_s': p['dram_s'],
                          'sram_s': sram_s, 'bound': worst,
                          'over_second': headroom})
