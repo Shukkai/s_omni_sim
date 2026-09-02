@@ -9,18 +9,27 @@
 
 ## The claim
 
-> **KV-reduction papers are scored in bytes. On this hardware bytes are usually
-> not the critical path — so most published wins do not transfer. What moves
-> decode is the array, the memory layout, and the batch you run at.**
+> **Last time: KV bytes are not the critical path, and inside the memory-bound
+> triangle the lever is *weight* bytes — worth 6.80×. We identified it and did
+> not pull it.**
+>
+> **This time we pulled it. FFN activation sparsity: 1.911× decode TPOT at
+> batch 1** — the largest single-technique decode win in the project, and the
+> first that survives contact with the regime map. Along the way the byte model
+> had two defects, and the whole thing has now been checked against the RTL.
 
 | technique | cycles | bytes | decode TPOT | verdict |
 |---|:--:|:--:|---:|---|
+| **FFN activation sparsity** | ~none | **weights, linear** | **1.911× b1 · 1.003× b32** | **NEW — build it, at batch 1** |
 | **Array packing** P=8 | **32× on stage** | — | **1.755× b1 · 3.118× b32** | **build it** |
 | **Bit-width** (KV4→KV3) | linear | linear | unswept | **only axis that cuts both** |
 | **Eviction** (H2O, SnapKV) | linear | linear | 1.45× b1 · **15.96× b32** | works — at batch |
 | Select-without-evict (Quest) | linear | linear | 12.85× b32 | **byte-identical to eviction** |
 | KV residency (on-chip buffer) | none | −36.8% | 1.06× | energy only |
 | **Channel pruning** (ThinK) | **null** | **null** | **1.000×** | **dead** — unless HBM |
+
+**The two techniques that work are complementary, not competing.** Activation
+sparsity owns batch 1; packing and eviction own batch 32. Nothing owns both.
 
 ---
 
@@ -246,12 +255,119 @@ Real hardware double-buffers. `"serial"` and `"pipelined"` **bracket the truth.*
 - Shipped inert as `hw.os_rounds_model`; the baseline moved zero value keys.
 
 
+## 10. NEW — we pulled the weight-bytes lever
+
+Every technique in sections 3–7 aims at the **KV cache**. Section 1's own lever
+table said the batch-1 target was **weight bytes, 6.80×** — and nothing aimed
+there. A gated FFN drives most hidden units near zero per token; skipping unit
+`j` skips column `j` of FC1 and row `j` of FC2, so **weights** stop being
+fetched. (TEAL / CATS / Deja Vu.)
+
+![FFN activation sparsity](analysis/memory/sparsity.png)
+
+| density | TPOT | speedup | decode DRAM | decode cycles |
+|---|---:|---:|---:|---:|
+| 100% | 69.30 ms | 1.000× | 8.46 GB | 31.4 M |
+| **10%** | **36.27 ms** | **1.911×** | 3.38 GB | 29.0 M |
+| 5% | 34.43 ms | 2.013× | 3.10 GB | 28.9 M |
+
+- **1.911× against 16× the DRAM bandwidth buying 1.10×.** It is a *bandwidth*
+  technique that works on hardware where section 5 concluded bandwidth
+  techniques do not — because it is the only one aimed at weights, not KV.
+- **The layout question of section 6, with the opposite answer.** One unit's
+  weights are `d_model × weight_bits/8` = **2,048 B — 32 whole bursts**, so a
+  fully *unstructured* mask keeps **100%** of its saving. ThinK kept 0%.
+  **The difference is who chooses the layout**: a weight layout is fixed
+  offline by the compiler, a KV layout is dictated online by an append-only
+  cache. Same obligation, unmeetable in one case and free in the other.
+- **Where the mask comes from is worth 1.46×.** Input-derived (TEAL, Deja Vu)
+  reaches FC1 and FC2 → 1.911×. Output-derived (CATS) cannot skip the work that
+  produced its own threshold → 1.313×.
+- **Batch spends it: 1.911× → 1.003× at batch 32.** Per-token masks make the
+  fetched weight set the *union* over the batch, `1 - (1-d)^M`, and decode is
+  already compute-bound there. **Prefill collects exactly nothing.**
+- **So it is the mirror image of eviction.** Section 5 showed a KV budget *buys*
+  batch; this is *spent* by batch. Run both.
+
+## 11. And it proves what decode is bound by
+
+Sections 1 and 2 said decode is memory-bound at low batch by reading a roofline
+`max()` — an accounting statement about which term won. Section 10 is an
+**intervention**: remove ~60% of decode's DRAM bytes, hold cycles nearly fixed.
+
+| context, batch 1 | cycles cut | **TPOT cut** |
+|---|---:|---:|
+| 2K | 1.268× | **2.521×** |
+| 8K | 1.084× | **1.911×** |
+| 32K | 1.023× | 1.350× |
+
+- **A compute-bound phase cannot answer a 1.27× cycle cut with a 2.52× latency
+  cut.** First causal evidence in the project.
+- It tracks the accounting exactly (compute/DRAM at batch 1: 0.15 → 1.04 from
+  2K to 32K) and **inverts at batch 32** (2.51–3.23, same lever buys 1.003×).
+- **The precise form**, with SRAM bandwidth and capacity now measured and
+  excluded: ***DRAM*-bound, on *weights*, at low batch, below 32K.**
+
+## 12. Two defects in the byte model, found and fixed
+
+**(a) The accumulator was billed to the wrong memory.** Charging the
+geometry-implied 128 GB/s took prefill TTFT to 4.35×, which we had blamed on
+untiled activations and parked. Decomposing the lump by operand:
+
+![Per-port SRAM](analysis/memory/ports.png)
+
+- Activations measure **255.7 B/cycle against an array that consumes 256** —
+  right all along.
+- **73.3% of the lump was accumulator recirculation** — partial sums cycled
+  `k_tiles × qbit` = 128 times per prefill GEMM — billed against the
+  *activation* port. Fig. 4 wires the accumulator outside the unified buffer.
+- **Prefill TTFT 4.35× → 1.16×.** Unparked.
+
+**(b) Prefill held the whole activation matrix** — a 2.16 GB claimed working
+set, so prefill overflowed at every capacity and had no capacity table at all.
+Row blocking gives a real frontier, and says **prefill, not decode, sets the
+SRAM budget**.
+
+## 13. The model, checked against the RTL
+
+![RTL buffer partition](analysis/memory/buffers.png)
+
+Four fixed SRAMs — 256 KB input, 256 KB scale, 2 MB weight, 512 KB output —
+not the one flexible pool we had modelled.
+
+**It confirmed the sharpest thing we had inferred.** The input buffer word is
+**256 B = `array_m × MU × act_bits/8`**: the buffer is built exactly one cycle
+of activation operand wide. We had *measured* 255.7 and argued from that 0.1%
+gap that 128 GB/s was an activation-port number. It is.
+
+**And it broke four assumptions the pool had hidden:**
+
+- **The row block is per-operand, and `array_m` is right for only one.**
+  32 rows for the projections and fc1 (`d_model`), but **9 for fc2** (`d_ffn`
+  is 3.5× wider), and 64 → 4 for `attn_v` as context grows. **Largest globally
+  workable block is 9.** The conflict is *inside the FFN*.
+- **32K is exactly the wall.** `32768 × 128 × 4 b` = **2,048 KB**; the weight
+  buffer is **2,048 KB**. K alone fills it, K+V needs twice the chip — so
+  on-chip KV residency tops out near **16K**.
+- **A 256 KB scale buffer we charged zero bytes for** — 8.3% of the chip, its
+  own load command and DRAM type code.
+- **Input and output are separate memories at different widths** (256 vs
+  512 B/cycle), so our "unified port" both summed them and understated output 2×.
+
+**One falsifiable prediction.** Derived per-token Value scales are 320 KB at 32K
+against a 256 KB buffer — and no row block escapes it, since the scale footprint
+scales with `K`, not `m_tile`. **The layout is inferred from the paper, not read
+from the RTL.** If Values share an α across a token group, it disappears.
+
 ## What to do
 
+- **Ship activation sparsity for batch-1 serving.** 1.911× at 10% density, the
+  largest decode win we have, and it needs a **neuron-major weight layout** —
+  a build-time decision, free if made and unrecoverable if not.
 - **Know which regime you are in first.** Inside the memory-bound triangle
-  (low batch, short context) the lever is weight bytes — worth **6.80×**.
-  Outside it, array occupancy — worth **3.12×**. Nothing else comes close in
-  either.
+  (low batch, short context) the lever is weight bytes — worth **6.80×**, and
+  section 10 now collects 1.911× of it. Outside it, array occupancy — worth
+  **3.12×**. Nothing else comes close in either.
 - **Stop aiming KV techniques at batch 1.** Removing *all* KV traffic there buys
   **1.01–1.07×**. That is the whole literature's ceiling, and it is where most
   of our own measuring happened.
@@ -262,4 +378,10 @@ Real hardware double-buffers. `"serial"` and `"pipelined"` **bracket the truth.*
 - **Pick the KV layout before the pruning algorithm.** It silently decides which
   pruning literature is deployable at all.
 
-*Full derivations, model-change record and open gaps: `study.md`.*
+- **Size the row block per operand, not globally.** One `sram_m_tile` cannot
+  serve fc1 (32 rows), fc2 (9) and `attn_v` (4 at 32K) at once.
+- **Confirm the scale-buffer layout.** It is the one place the model now makes a
+  falsifiable claim about the hardware, and it decides whether 32K is reachable.
+
+*Full derivations, model-change record and open gaps: `study.md`
+(sections 19–22 are this week).*
