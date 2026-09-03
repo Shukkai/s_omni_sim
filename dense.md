@@ -37,6 +37,7 @@
 - off-chip bytes actually moved, split by operand kind.
 - **AW** = weights and the KV cache written by the projections. **AA** = the KV cache read back by attention, plus its scales.
 - **prefill = the whole phase; decode = one token.**
+- decode's AW write is **32 KB/token** — the new KV entry — which is 0.000 at this precision, not zero.
 
 | context | phase | AW read | AW write | AA read | AA write | total GB | AA share | time @51.2 GB/s |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |

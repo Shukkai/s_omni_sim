@@ -123,7 +123,9 @@ READS_AS = {
     'B': ["off-chip bytes actually moved, split by operand kind.",
           "**AW** = weights and the KV cache written by the projections. "
           "**AA** = the KV cache read back by attention, plus its scales.",
-          "**prefill = the whole phase; decode = one token.**"],
+          "**prefill = the whole phase; decode = one token.**",
+          "decode's AW write is **32 KB/token** — the new KV entry — which is "
+          "0.000 at this precision, not zero."],
     'C': ["where cycles go, by unit. Columns are % of that phase's cycles.",
           "**prefill is the whole phase and decode is one token** — that, not "
           "efficiency, is the ~7,000× gap in the cycle column. Divide prefill "
