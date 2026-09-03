@@ -15,7 +15,9 @@
 
 ## A. The configuration
 
-**Reads as** — the parts list — what exists and how fast each one is.
+**Reads as**
+
+- the parts list — what exists and how fast each one is.
 
 | memory | geometry | capacity | access | bandwidth |
 | --- | --- | ---: | ---: | ---: |
@@ -30,7 +32,11 @@
 
 ## B. DRAM traffic, dense
 
-**Reads as** — off-chip bytes actually moved. Prefill = whole phase, decode = **per token**. The two totals match by construction, not by accident — both carry the same ~2.6 GB of weights, plus the KV that prefill **writes** once and decode **reads back** every step. **One decode token costs what a whole prefill costs.**
+**Reads as**
+
+- off-chip bytes actually moved.
+- **prefill = the whole phase; decode = one token.**
+- the two totals match by construction: the same ~2.6 GB of weights, plus the KV that prefill **writes** once and decode **reads back** every step. **One decode token costs what a whole prefill costs.**
 
 | context | phase | read | write | total | time @51.2 GB/s |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -45,7 +51,11 @@
 
 ## C. Cycles, dense
 
-**Reads as** — where cycles go, by unit. Columns are % of that phase's cycles.
+**Reads as**
+
+- where cycles go, by unit. Columns are % of that phase's cycles.
+- **prefill is the whole phase and decode is one token** — that, not efficiency, is the ~7,000× gap in the cycle column. Divide prefill by the context and the two are within 2× of each other: 7.5 M vs 4.0 M per token at 2K, 9.8 vs 10.8 at 8K, 19.2 vs 38.0 at 32K.
+- **cycles are not latency.** Nothing is hidden from this table, but decode is DRAM-bound, so most of its wall-clock is spent waiting rather than cycling — that cost appears in **F** and **G**, not here.
 
 **prefill — share of serial cycles**
 
@@ -67,7 +77,10 @@
 
 ## D. On-chip traffic by port, dense
 
-**Reads as** — on-chip bytes per port, as B/cycle and % of that port's width. 100% = that port is the bottleneck.
+**Reads as**
+
+- on-chip bytes per port, as B/cycle and % of that port's width.
+- 100% = that port is the bottleneck.
 
 **prefill — B/cycle (% of port width)**
 
@@ -89,7 +102,10 @@
 
 ## E. Peak footprint against capacity, dense
 
-**Reads as** — the largest working set each buffer must hold, and which operation demands it. `OVER` = does not fit.
+**Reads as**
+
+- the largest working set each buffer must hold, and which operation demands it.
+- `OVER` = does not fit.
 
 **prefill — m_tile = 9**
 
@@ -129,7 +145,10 @@
 
 ## F. What binds, dense
 
-**Reads as** — the three roofline terms side by side. Largest wins; “over 2nd” is the margin.
+**Reads as**
+
+- the three roofline terms side by side.
+- largest wins; “over 2nd” is the margin over the runner-up.
 
 | context | phase | compute | DRAM | SRAM | bound by | over 2nd |
 | --- | --- | ---: | ---: | ---: | --- | ---: |
@@ -144,7 +163,10 @@
 
 ## G. Per-stage profile, dense
 
-**Reads as** — per stage: what it costs to compute, what it costs to fetch, and how much of the fetch its own compute fails to hide.
+**Reads as**
+
+- per stage: what it costs to compute, what it costs to fetch, and how much of the fetch its own compute fails to hide.
+- “RAM wait” is bandwidth stall, **not** cache-miss latency — this model has no latency term.
 
 **prefill — context 8,192, top stages by time**
 
@@ -176,7 +198,10 @@
 
 ## H. Quantisation and load, dense
 
-**Reads as** — the units that are not GEMM stages — quantisation, table generation, operand load. **BQU rows are a placeholder.**
+**Reads as**
+
+- the units that are not GEMM stages — quantisation, table generation, operand load.
+- **the BQU rows are a placeholder, not a measurement.**
 
 **context 8,192**
 
@@ -192,7 +217,10 @@
 
 ## I. Key cache bit allocation, dense
 
-**Reads as** — what the Key cache's bit allocation costs. Value is held at the low width throughout, as the paper specifies.
+**Reads as**
+
+- what the Key cache's bit allocation costs.
+- Value is held at the low width throughout, as the paper specifies.
 
 **decode per token, context 8,192**
 

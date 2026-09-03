@@ -119,26 +119,40 @@ OP_LABEL = {
 #: One line per section: how to read that table.  Short on purpose -- the
 #: longer description stays in the report, this is the key you glance at.
 READS_AS = {
-    'A': "the parts list \u2014 what exists and how fast each one is.",
-    'B': "off-chip bytes actually moved. Prefill = whole phase, "
-         "decode = **per token**. The two totals match by construction, not "
-         "by accident \u2014 both carry the same ~2.6 GB of weights, plus the "
-         "KV that prefill **writes** once and decode **reads back** every "
-         "step. **One decode token costs what a whole prefill costs.**",
-    'C': "where cycles go, by unit. Columns are % of that phase's cycles.",
-    'D': "on-chip bytes per port, as B/cycle and % of that port's width. "
-         "100% = that port is the bottleneck.",
-    'E': "the largest working set each buffer must hold, and which operation "
-         "demands it. `OVER` = does not fit.",
-    'F': "the three roofline terms side by side. Largest wins; "
-         "\u201cover 2nd\u201d is the margin.",
-    'G': "per stage: what it costs to compute, what it costs to fetch, and "
-         "how much of the fetch its own compute fails to hide.",
-    'H': "the units that are not GEMM stages \u2014 quantisation, table "
-         "generation, operand load. **BQU rows are a placeholder.**",
-    'I': "what the Key cache's bit allocation costs. Value is held at the low "
-         "width throughout, as the paper specifies.",
+    'A': ["the parts list — what exists and how fast each one is."],
+    'B': ["off-chip bytes actually moved.",
+          "**prefill = the whole phase; decode = one token.**",
+          "the two totals match by construction: the same ~2.6 GB of weights, "
+          "plus the KV that prefill **writes** once and decode **reads back** "
+          "every step. **One decode token costs what a whole prefill costs.**"],
+    'C': ["where cycles go, by unit. Columns are % of that phase's cycles.",
+          "**prefill is the whole phase and decode is one token** — that, not "
+          "efficiency, is the ~7,000× gap in the cycle column. Divide prefill "
+          "by the context and the two are within 2× of each other: 7.5 M vs "
+          "4.0 M per token at 2K, 9.8 vs 10.8 at 8K, 19.2 vs 38.0 at 32K.",
+          "**cycles are not latency.** Nothing is hidden from this table, but "
+          "decode is DRAM-bound, so most of its wall-clock is spent waiting "
+          "rather than cycling — that cost appears in **F** and **G**, not "
+          "here."],
+    'D': ["on-chip bytes per port, as B/cycle and % of that port's width.",
+          "100% = that port is the bottleneck."],
+    'E': ["the largest working set each buffer must hold, and which operation "
+          "demands it.",
+          "`OVER` = does not fit."],
+    'F': ["the three roofline terms side by side.",
+          "largest wins; “over 2nd” is the margin over the runner-up."],
+    'G': ["per stage: what it costs to compute, what it costs to fetch, and "
+          "how much of the fetch its own compute fails to hide.",
+          "“RAM wait” is bandwidth stall, **not** cache-miss latency — this "
+          "model has no latency term."],
+    'H': ["the units that are not GEMM stages — quantisation, table "
+          "generation, operand load.",
+          "**the BQU rows are a placeholder, not a measurement.**"],
+    'I': ["what the Key cache's bit allocation costs.",
+          "Value is held at the low width throughout, as the paper "
+          "specifies."],
 }
+
 
 ORIENT = ("**B and D are bytes, C is time, E is capacity, F reconciles them.** "
           "Read F first to see what is limiting, then jump to whichever of "
@@ -271,7 +285,9 @@ def write_dense(path, setup):
             out += ["---", "", f"## {item[1]}", ""]
             key = READS_AS.get(item[1][:1])
             if key:
-                out += [f"**Reads as** \u2014 {key}", ""]
+                out += ["**Reads as**", ""]
+                out += [f"- {k}" for k in key]
+                out.append("")
             elif item[2]:
                 out += [f"*{item[2]}*", ""]
             continue
