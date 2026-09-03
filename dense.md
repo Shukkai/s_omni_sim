@@ -107,8 +107,13 @@
     - **Nothing is close to saturated.** The busiest cell anywhere is 36%, so no port limits this machine at the built configuration.
     - **Prefill's input port idles at 19%** — not because activations are cheap, but because the 9-row block inflates cycles ~5× while the operand bytes do not move. **The buffer that forces the block is the same buffer whose port then goes idle.**
     - **Prefill's busiest port is the output**, at 31–36%: weight-stationary recirculates a 32-bit partial-sum matrix `k_tiles × qbit` times per GEMM.
-    - **Decode's traffic is almost all on the weight port** — the per-token weight re-read. It falls 36% → 9% with context as attention grows relative to the FFN.
+    - **Decode's traffic is almost all on the weight port** — the per-token weight re-read.
     - **Decode's output port is ~1%**, and structurally so: `LUT_OS_V` is output-stationary, so partial sums never leave the array.
+- **Why decode's percentages *fall* as context grows** — the rate is bytes ÷ cycles, and the denominator grows much faster:
+    - **bytes ×2.43** from 2K to 32K (2.819 → 6.845 GB). The weight read is a constant 2.5 GB a token; only the KV part grows.
+    - **cycles ×9.57** (3.83 → 36.67 M). Attention is 80–92% of decode cycles and scales with `kv_len`.
+    - **so the rate ×0.25** — 735 → 187 B/cycle.
+    - Put plainly: **at long context the array has far more arithmetic to do per byte fetched**, so the ports relax. It is the same fact as decode turning compute-bound at 32K in **F**, measured from the on-chip side.
 
 **prefill — B/cycle (% of port width)**
 
