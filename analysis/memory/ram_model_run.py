@@ -121,7 +121,10 @@ OP_LABEL = {
 READS_AS = {
     'A': "the parts list \u2014 what exists and how fast each one is.",
     'B': "off-chip bytes actually moved. Prefill = whole phase, "
-         "decode = **per token**.",
+         "decode = **per token**. The two totals match by construction, not "
+         "by accident \u2014 both carry the same ~2.6 GB of weights, plus the "
+         "KV that prefill **writes** once and decode **reads back** every "
+         "step. **One decode token costs what a whole prefill costs.**",
     'C': "where cycles go, by unit. Columns are % of that phase's cycles.",
     'D': "on-chip bytes per port, as B/cycle and % of that port's width. "
          "100% = that port is the bottleneck.",

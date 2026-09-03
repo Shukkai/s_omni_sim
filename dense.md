@@ -30,7 +30,7 @@
 
 ## B. DRAM traffic, dense
 
-**Reads as** — off-chip bytes actually moved. Prefill = whole phase, decode = **per token**.
+**Reads as** — off-chip bytes actually moved. Prefill = whole phase, decode = **per token**. The two totals match by construction, not by accident — both carry the same ~2.6 GB of weights, plus the KV that prefill **writes** once and decode **reads back** every step. **One decode token costs what a whole prefill costs.**
 
 | context | phase | read | write | total | time @51.2 GB/s |
 | --- | --- | ---: | ---: | ---: | ---: |
