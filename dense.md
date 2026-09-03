@@ -34,18 +34,18 @@
 
 **Reads as**
 
-- off-chip bytes actually moved.
+- off-chip bytes actually moved, split by operand kind.
+- **AW** = weights and the KV cache written by the projections. **AA** = the KV cache read back by attention, plus its scales.
 - **prefill = the whole phase; decode = one token.**
-- the two totals match by construction: the same ~2.6 GB of weights, plus the KV that prefill **writes** once and decode **reads back** every step. **One decode token costs what a whole prefill costs.**
 
-| context | phase | read | write | total | time @51.2 GB/s |
-| --- | --- | ---: | ---: | ---: | ---: |
-| 2,048 | prefill | 2.57 GB | 0.07 GB | 2.63 GB | 51.4 ms |
-| 2,048 | decode | 2.63 GB | 0.00 GB | 2.63 GB | 51.4 ms |
-| 8,192 | prefill | 2.58 GB | 0.27 GB | 2.85 GB | 55.7 ms |
-| 8,192 | decode | 2.85 GB | 0.00 GB | 2.85 GB | 55.7 ms |
-| 32,768 | prefill | 2.65 GB | 1.07 GB | 3.72 GB | 72.6 ms |
-| 32,768 | decode | 3.72 GB | 0.00 GB | 3.72 GB | 72.6 ms |
+| context | phase | AW read | AW write | AA read | AA write | total GB | AA share | time @51.2 GB/s |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2,048 | prefill | 2.561 | 0.067 | 0.006 | 0.000 | 2.634 | 0.2% | 51.4 ms |
+| 2,048 | decode | 2.561 | 0.000 | 0.073 | 0.000 | 2.634 | 2.8% | 51.4 ms |
+| 8,192 | prefill | 2.561 | 0.268 | 0.021 | 0.000 | 2.851 | 0.7% | 55.7 ms |
+| 8,192 | decode | 2.561 | 0.000 | 0.290 | 0.000 | 2.851 | 10.2% | 55.7 ms |
+| 32,768 | prefill | 2.561 | 1.074 | 0.084 | 0.000 | 3.719 | 2.3% | 72.6 ms |
+| 32,768 | decode | 2.561 | 0.000 | 1.158 | 0.000 | 3.719 | 31.1% | 72.6 ms |
 
 ---
 

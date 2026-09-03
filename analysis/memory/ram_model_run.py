@@ -120,11 +120,10 @@ OP_LABEL = {
 #: longer description stays in the report, this is the key you glance at.
 READS_AS = {
     'A': ["the parts list — what exists and how fast each one is."],
-    'B': ["off-chip bytes actually moved.",
-          "**prefill = the whole phase; decode = one token.**",
-          "the two totals match by construction: the same ~2.6 GB of weights, "
-          "plus the KV that prefill **writes** once and decode **reads back** "
-          "every step. **One decode token costs what a whole prefill costs.**"],
+    'B': ["off-chip bytes actually moved, split by operand kind.",
+          "**AW** = weights and the KV cache written by the projections. "
+          "**AA** = the KV cache read back by attention, plus its scales.",
+          "**prefill = the whole phase; decode = one token.**"],
     'C': ["where cycles go, by unit. Columns are % of that phase's cycles.",
           "**prefill is the whole phase and decode is one token** — that, not "
           "efficiency, is the ~7,000× gap in the cycle column. Divide prefill "
@@ -337,7 +336,12 @@ def run(context, batch=1):
            'stages': compute_stage_cycle_breakdown(sim, r, w)}
     for tag, ph, div in (('prefill', r.prefill, 1), ('decode', r.decode, steps)):
         t = ph.get_total_metrics()
+        aw, aa = ph.get_aw_total(), ph.get_aa_total()
         out[tag] = {
+            'aw_read': aw.dram_read_eff / div,
+            'aw_write': aw.dram_write_eff / div,
+            'aa_read': aa.dram_read_eff / div,
+            'aa_write': aa.dram_write_eff / div,
             'cycles': t.cycles / div,
             'compute_s': t.cycles / freq / div,
             'dram_read': t.dram_read_eff / div,
@@ -448,16 +452,23 @@ def main():
         for tag in ('prefill', 'decode'):
             p = d[tag]
             tot = p['dram_read'] + p['dram_write']
+            aa = p['aa_read'] + p['aa_write']
             rows.append({'section': 'B', 'context': c, 'phase': tag,
                          'dram_read': p['dram_read'],
-                         'dram_write': p['dram_write'], 'dram_s': p['dram_s']})
+                         'dram_write': p['dram_write'], 'dram_s': p['dram_s'],
+                         'aw_read': p['aw_read'], 'aw_write': p['aw_write'],
+                         'aa_read': p['aa_read'], 'aa_write': p['aa_write']})
             trows.append([f"{c:,}", tag,
-                          f"{p['dram_read'] / GB:,.2f} GB",
-                          f"{p['dram_write'] / GB:,.2f} GB",
-                          f"{tot / GB:,.2f} GB",
+                          f"{p['aw_read'] / GB:,.3f}",
+                          f"{p['aw_write'] / GB:,.3f}",
+                          f"{p['aa_read'] / GB:,.3f}",
+                          f"{p['aa_write'] / GB:,.3f}",
+                          f"{tot / GB:,.3f}",
+                          f"{100 * aa / tot if tot else 0:,.1f}%",
                           f"{1e3 * p['dram_s']:,.1f} ms"])
-    emit_table(rep, ["context", "phase", "read", "write", "total", "time @51.2 GB/s"],
-              trows, aligns="llrrrr")
+    emit_table(rep, ["context", "phase", "AW read", "AW write", "AA read",
+                     "AA write", "total GB", "AA share", "time @51.2 GB/s"],
+               trows, aligns="llrrrrrrr")
     rep.note(
         "**Decode moves per token almost exactly what prefill moves in "
         "total** — 2.65 GB against 2.65 GB at 2K — because the weights are "
