@@ -88,8 +88,16 @@ class BufferProbe(UnitAwareSimulator):
         phase = 'decode' if kw.get('is_decode') else 'prefill'
         for buf, need in fps.items():
             key = (phase, buf)
-            if need > self.peaks.get(key, (0, ''))[0]:
-                self.peaks[key] = (need, op_type.value)
+            cur, ops = self.peaks.get(key, (0, set()))
+            if need > cur:
+                self.peaks[key] = (need, {op_type.value})
+            elif need == cur:
+                # A tie is the interesting case: `B_tile` and `C_tile` are
+                # clamped by the array geometry rather than by the operation,
+                # so every op with `N >= array_n * NUM_RAC` demands exactly the
+                # same bytes.  Naming one of them would invent a winner.
+                ops.add(op_type.value)
+                self.peaks[key] = (cur, ops)
         return m
 
 
@@ -191,9 +199,19 @@ READS_AS = {
             "arithmetic to do per byte fetched**, so the ports relax. It is "
             "the same fact as decode turning compute-bound at 32K in **F**, "
             "measured from the on-chip side."])],
-    'E': ["the largest working set each buffer must hold, and which operation "
-          "demands it.",
-          "`OVER` = does not fit."],
+    'E': ["the largest working set each buffer must hold, and which "
+          "operation demands it.",
+          "`OVER` = does not fit.",
+          ("**\"tie — all N ops\" is not a cop-out**, it is the answer:",
+           ["**input** and **scale** scale with the operation's `K`, so they "
+            "have a real winner — the FFN contract (`K` = `d_ffn` 14,336) "
+            "below 16K context, attention's scores·V (`K` = `kv_len`) above.",
+            "**weight** and **output** are clamped by the *array*, not the "
+            "operation: `B_tile` is `128 × min(N, 128) × qbit/8` = **8 KB** "
+            "for every op with `N ≥ 128`, and `C_tile` is "
+            "`m_tile × 128 × 4 B` = **4 KB** always.",
+            "So every operation demands identical bytes there, and naming "
+            "one would invent a winner."])],
     'F': ["the three roofline terms side by side.",
           "largest wins; “over 2nd” is the margin over the runner-up."],
     'G': ["per stage: what it costs to compute, what it costs to fetch, and "
@@ -640,12 +658,18 @@ def main():
         trows = []
         for c in CONTEXTS:
             for buf in ('input', 'scale', 'weight', 'output'):
-                need, op = runs[c]['peaks'].get((tag, buf), (0, '—'))
+                need, ops = runs[c]['peaks'].get((tag, buf), (0, set()))
                 fits = need <= caps[buf]
+                if len(ops) == 1:
+                    op = op_label(next(iter(ops)))
+                elif ops:
+                    op = f"tie — all {len(ops)} ops"
+                else:
+                    op = "—"
                 rows.append({'section': 'E', 'context': c, 'phase': tag,
-                             'buffer': buf, 'need': need, 'set_by': op,
-                             'fits': fits})
-                trows.append([f"{c:,}", buf, op_label(op),
+                             'buffer': buf, 'need': need,
+                             'set_by': ','.join(sorted(ops)), 'fits': fits})
+                trows.append([f"{c:,}", buf, op,
                               f"{need / KB:,.0f} KB",
                               f"{caps[buf] / KB:,.0f} KB",
                               f"{need / caps[buf]:.0%}",
