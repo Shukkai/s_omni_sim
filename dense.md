@@ -250,19 +250,14 @@
     - Only the input one shrinks with a smaller block; the other two scale with `K`, not with the block.
 
 - **Per stage, decode is exposed memory almost everywhere and prefill is exposed nowhere.**
-    - In prefill every stage is compute-bound and **RAM wait is 0.00 ms** across the board — the fetch always hides behind the work.
-    - In decode the FFN contract waits **17.52 ms of its 18.44 ms** of DRAM time, and the expand 17.32 of 18.38: at `M = 1` there is almost no compute to hide it behind, so **~95% of the fetch is exposed.**
-    - **`attention scores·V` is the only compute-bound stage in decode** (16.87 ms compute against 4.26 ms DRAM).
-    - So the two stages carrying nearly all of decode's exposed wait are exactly the two the FFN weight lever targets — which is why that lever works and KV levers do not.
-    - *Caveat: this is bandwidth stall, not cache-miss latency. The model has no latency or queueing term at all.*
+    - In prefill every stage is compute-bound: **RAM wait is 0.00 ms across the board.**
+    - In decode the two FFN stages wait **~95% of their DRAM time** — at `M = 1` there is no compute to hide it behind. `attention scores·V` is the only compute-bound stage.
+    - **Those are exactly the stages the FFN weight lever targets**, which is why it works and KV levers do not.
 
 - **Key-cache bit allocation is nearly free; Value-cache width is not.**
-    - Taking **50% of Key channels to 5 bits** (effective 4.5, the best measured perplexity) costs **1.005× TPOT at 8K and 1.010× at 32K**. Even *every* Key channel at 5 bits costs only 1.010× / 1.021×.
-    - Taking **both** caches to 5 bits costs **1.070× / 1.152×** — 7–15× more, for the same per-tensor widening.
-    - The asymmetry is §G's: `qk` is ~5% of decode cycles while `attn_v` is 80–92%, though the two carry **identical bytes**. Widening the Key is cheap in cycles and the Value is not.
-    - **So the load-bearing half of AS-Bit is “no extra bits to the Value cache”, not the Key adaptivity** — the Key side is so cheap the allocation barely matters.
-    - **And the packed-vs-padded schedule does not matter either**: the two differ by 11% of `qk` cycles and **0% of TPOT**, because decode is DRAM-bound and the extra bit-plane pass hides behind the memory it waits on. No case for packing hardware.
-    - *This sheet models a flat 4-bit cache. The built part has a ~4.5-bit Key, which moves decode DRAM ~1.9% at 32K and nothing else materially.*
+    - 50% of Key channels at 5 bits costs **1.005× TPOT at 8K, 1.010× at 32K**. Both caches at 5 bits costs **1.070× / 1.152×** — 7–15× more.
+    - `qk` is ~5% of decode cycles and `attn_v` is 80–92%, though they carry identical bytes. **So AS-Bit's load-bearing half is leaving the Value cache alone, not the Key adaptivity.**
+    - **Packed vs padded scheduling changes TPOT by 0%** — decode is DRAM-bound, so the extra bit-plane pass hides. No case for packing hardware.
 
 - **The array shape is tuned to `head_dim`, and is right for the block it was designed for.**
     - A 32×4 array gives exactly **128 columns** against attention's `head_dim` of 128; 16×8 wastes half, 8×16 three quarters.
