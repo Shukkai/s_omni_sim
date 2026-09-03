@@ -30,8 +30,9 @@ for p in ('simulator', 'analysis', 'analysis/cycle_breakdown',
           'analysis/memory'):
     sys.path.insert(0, os.path.join(_root, *p.split('/')))
 
+import dataclasses                                                    # noqa: E402
 from simulator import (                                              # noqa: E402
-    HardwareConfig, WorkloadConfig, Simulator, ComputeMode,
+    HardwareConfig, WorkloadConfig, Simulator, ComputeMode, OperationType,
 )
 from buffer_tech import (                                            # noqa: E402
     buffer_config, with_buffer_config, DEFAULT_BUFFER_CONFIG,
@@ -132,6 +133,8 @@ READS_AS = {
          "how much of the fetch its own compute fails to hide.",
     'H': "the units that are not GEMM stages \u2014 quantisation, table "
          "generation, operand load. **BQU rows are a placeholder.**",
+    'I': "what the Key cache's bit allocation costs. Value is held at the low "
+         "width throughout, as the paper specifies.",
 }
 
 ORIENT = ("**B and D are bytes, C is time, E is capacity, F reconciles them.** "
@@ -213,6 +216,26 @@ FINDINGS = [
       "lever works and KV levers do not.",
       "*Caveat: this is bandwidth stall, not cache-miss latency. The model "
       "has no latency or queueing term at all.*"]),
+
+    ("**Key-cache bit allocation is nearly free; Value-cache width is not.**",
+     ["Taking **50% of Key channels to 5 bits** (effective 4.5, the best "
+      "measured perplexity) costs **1.005× TPOT at 8K and 1.010× at 32K**. "
+      "Even *every* Key channel at 5 bits costs only 1.010× / 1.021×.",
+      "Taking **both** caches to 5 bits costs **1.070× / 1.152×** — 7–15× "
+      "more, for the same per-tensor widening.",
+      "The asymmetry is §G's: `qk` is ~5% of decode cycles while `attn_v` is "
+      "80–92%, though the two carry **identical bytes**. Widening the Key is "
+      "cheap in cycles and the Value is not.",
+      "**So the load-bearing half of AS-Bit is \u201cno extra bits to the "
+      "Value cache\u201d, not the Key adaptivity** — the Key side is so cheap "
+      "the allocation barely matters.",
+      "**And the packed-vs-padded schedule does not matter either**: the two "
+      "differ by 11% of `qk` cycles and **0% of TPOT**, because decode is "
+      "DRAM-bound and the extra bit-plane pass hides behind the memory it "
+      "waits on. No case for packing hardware.",
+      "*This sheet models a flat 4-bit cache. The built part has a ~4.5-bit "
+      "Key, which moves decode DRAM ~1.9% at 32K and nothing else "
+      "materially.*"]),
 
     ("**The array shape is tuned to `head_dim`, and is right for the block it "
      "was designed for.**",
@@ -722,6 +745,70 @@ def main():
         "own DMA cost is **not** — the RTL measures 492 → 927 ns from adding "
         "it, and this model has no term for that. It is the largest "
         "unmodelled hardware cost in the sheet.")
+
+    # ---- I: KV bit allocation -------------------------------------------
+    emit_section(rep, "I. Key cache bit allocation, dense",
+                 "AS-Bit gives a fraction of Key channels a high width and "
+                 "the rest a low one; the Value cache stays at the low width. "
+                 "Value held at 4 bits in every row.")
+
+    def _kv_run(ctx, key_bits, planes="packed"):
+        h = dataclasses.replace(base_hw(), kv_key_bits=key_bits,
+                                kv_value_bits=4.0, kv_plane_model=planes)
+        sim = Simulator(h)
+        mm = get_model_config(MODEL)
+        w = WorkloadConfig(batch_size=1, input_tokens=ctx,
+                           output_tokens=OUTPUT_TOKENS, flash_block_size=0)
+        r = sim.simulate(mm, w)
+        _, tp = sim.compute_roofline_latency(r, w)
+        qk = r.decode.get_operation_total(OperationType.QK_MATMUL,
+                                          ComputeMode.AA)
+        t = r.decode.get_total_metrics()
+        steps = max(1, OUTPUT_TOKENS - 1)
+        return {'qk_cyc': qk.cycles / steps, 'tpot': tp,
+                'dram': (t.dram_read_eff + t.dram_write_eff) / steps}
+
+    ALLOC = [(0.00, 4.00, "all low (what this sheet models)"),
+             (0.25, 4.25, "paper's AS-Bit ratio"),
+             (0.50, 4.50, "best measured perplexity"),
+             (1.00, 5.00, "all high (Key only)")]
+    for ctx in (FOCUS, 32768):
+        base_kv = _kv_run(ctx, 4.0)
+        trows = []
+        for frac, eff, label in ALLOC:
+            pk = _kv_run(ctx, eff, "packed")
+            pd = _kv_run(ctx, eff, "padded")
+            rows.append({'section': 'I', 'context': ctx, 'high_frac': frac,
+                         'key_bits': eff, 'tpot_s': pk['tpot'],
+                         'qk_cycles_packed': pk['qk_cyc'],
+                         'qk_cycles_padded': pd['qk_cyc'],
+                         'dram': pk['dram']})
+            trows.append([f"{frac:.0%} at 5 bits", f"{eff:.2f}",
+                          f"{pk['qk_cyc'] / 1e3:,.0f} K",
+                          f"{pd['qk_cyc'] / 1e3:,.0f} K",
+                          f"{pk['dram'] / GB:,.3f} GB",
+                          f"{1e3 * pk['tpot']:,.2f} ms",
+                          f"{pk['tpot'] / base_kv['tpot']:.3f}×", label])
+        emit_table(rep, ["Key allocation", "eff. bits", "qk cyc (packed)",
+                         "qk cyc (padded)", "decode DRAM", "TPOT", "vs 4-bit",
+                         ""], trows, aligns="lrrrrrrl",
+                   caption=f"decode per token, context {ctx:,}")
+    rep.note(
+        "**The packed/padded question turns out not to matter.** The two "
+        "schedules differ by 11% of `qk` cycles and **0% of TPOT** — decode "
+        "is DRAM-bound, so the extra bit-plane pass hides entirely behind the "
+        "memory it is waiting on. There is no case for building packing "
+        "hardware.\n\n"
+        "**Key-side mixed precision is nearly free; widening the Value cache "
+        "is not.** 50% of Key channels at 5 bits costs **1.005× TPOT at 8K "
+        "and 1.010× at 32K**. Taking both caches to 5 bits costs **1.070× and "
+        "1.152×** — 7-15× more. The asymmetry is §G's: `qk` is ~5% of decode "
+        "cycles while `attn_v` is 80-92%, though the two carry identical "
+        "bytes. **So the paper's \"no extra bits to the Value cache\" is the "
+        "load-bearing half of AS-Bit**, not the Key adaptivity.\n\n"
+        "**This sheet models the first row, and the built part is the third.** "
+        "Everything else here is a flat-4 result; a 4.5-bit Key would move "
+        "decode DRAM by ~1.9% at 32K and nothing else materially.")
 
     rep.save()
     write_dense(args.dense, SETUP)

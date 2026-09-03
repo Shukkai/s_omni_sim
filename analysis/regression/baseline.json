@@ -1,6 +1,6 @@
 {
  "FIGLUT|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "7845fe3d4d87e435920d7b08f9d090fab5b095331b834eb9817f11f3c5db7534",
+  "full_sha256": "246feb494e242271b73fbf3c56a956f65e1b1ecfb33572052f894600038bb137",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -17,7 +17,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -826,7 +829,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "f3a515dc7ec6fd7cb1488335e2efc801939ffdb8c8a816681cd298a64257a65b",
+  "full_sha256": "5af951f5094eb789362d16ce6abe42dd98a274581942dd7606d74b5f03fda58c",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -843,7 +846,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -1724,7 +1730,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "2dd908d239ac867cfd0a7de903a7ca07f30ba46cdd9aeb33805c5491f027c332",
+  "full_sha256": "21501f81d96deda0e0a76c1e494af0bac0f33441a4ebd0540c6660c5654c0e4b",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -1741,7 +1747,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -2622,7 +2631,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "a7e68a3be015a3ed3d113997c6ad15725c5f2359a60befd9f020894bad888050",
+  "full_sha256": "d45da6a3be716eefae30d94cd8437672bf16303dded775036fc9b50d605690f5",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -2639,7 +2648,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -3520,7 +3532,7 @@
   }
  },
  "FIGLUT|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "78a8dee02ca808a0d42c64012fede5fe6de3b21b0e56282034fb04124936c759",
+  "full_sha256": "85f2b049b9c2dd912b34aa11d88499aa882d21ae8d50c5f5d99d9dc634506b8d",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -3537,7 +3549,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -4418,7 +4433,7 @@
   }
  },
  "FIGLUT|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "fe1113af76f2b673065d7bfc22a7047326723cdbe96f5c90f5b320e9d564b4e2",
+  "full_sha256": "145330cf79543390680da6b594bcddb5e98f77f9a9057dc08dc791a68db84597",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "LUT_WS",
@@ -4435,7 +4450,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -5244,7 +5262,7 @@
   }
  },
  "FPE|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "2f120d36ba10b64bbe20681c0dc905f98af3f055abd82a2a7ce58ead166e533a",
+  "full_sha256": "5af169b4024aacc130360f5f125dbd4d406e3d16a2a941cdd84d19464f139ccc",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -5261,7 +5279,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -6070,7 +6091,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "5331e17cf5fbcb9ca1b18b5216337a53371f2534864646001693e293627bc7b3",
+  "full_sha256": "832a251e8465da33854d42907c488f9ffd9abce67440cc6bb3514e7162240e29",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6087,7 +6108,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -6968,7 +6992,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "071be9e0f7929cef28d49c759d11c07af1b1a603cada24d54d71838231984cbb",
+  "full_sha256": "8bf26f60e4b9101a87acbd34ff512f51e5a299d49a07fad6b258cf3b71b9fbad",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -6985,7 +7009,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -7866,7 +7893,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "915bef26316c691cdc65324375817b92163b65e5b68ebc17197b2013c0256e13",
+  "full_sha256": "b6cafc3d7dc527b026561d23dcf6532bc842af31105b83025d2c42c179175721",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -7883,7 +7910,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -8764,7 +8794,7 @@
   }
  },
  "FPE|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "518d8eb597b6ca6018ff7217fe235e4d73e6df69b826480c903981b5870b4a73",
+  "full_sha256": "15c3b7293a997cd0cd542ba90d26498828d877664d58d6fc9dbb9ece85a074d9",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -8781,7 +8811,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -9662,7 +9695,7 @@
   }
  },
  "FPE|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "982f1c555d0619b3845e9a3ddd8cb87c10bec156ea74bb5538a930a08da4ccca",
+  "full_sha256": "0922ec02699777db2a22ff52bd910d2da18f071efd78c9b78e0e8fc3a829a376",
   "hw": {
    "AA_mode": "FPE_OS",
    "AW_mode": "FPE_OS",
@@ -9679,7 +9712,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 16,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -10488,7 +10524,7 @@
   }
  },
  "Omni-OSV|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "254fd1c68fcd05af040c51fecaf86e69ae0772e2b4c1af8a5e0961bfe5efe387",
+  "full_sha256": "6cd23dbf45b6783583d384b92904d2423ed06605b4709a03d67568a9240eccba",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -10505,7 +10541,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -11314,7 +11353,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "6e805c3119cfab779bb7944f330962ad433c5337fe9566ed88834f29faea28b5",
+  "full_sha256": "549aecf585c982dd401015452e1bfff5d333340d8c1da1a018459cf8f4ce9641",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -11331,7 +11370,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -12212,7 +12254,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "9b90b1beb505a7247656523e7288f04302a1945678b85d5874a8480e2bc3c931",
+  "full_sha256": "09debcb42eef2d01b2f49d94c23dc64944b19d8a76f9f78bdbf7bfd04d667ca2",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -12229,7 +12271,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -13110,7 +13155,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "f67163a80e8337969f5ba08c398bd9d0540368d753e00ea75439578e941ef58f",
+  "full_sha256": "98fa0607f1ea902f2c4a8ca933a07a3209353a88fa8b1abfee9f16a3d286e115",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -13127,7 +13172,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -14008,7 +14056,7 @@
   }
  },
  "Omni-OSV|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "ca7b2fc22f299a30b8df0cde29ca81b367141ad48aed26a780c173b03f8b6742",
+  "full_sha256": "a4584879f1a516a4ec248f4c33a7d3422bc39457b79da2c098a209a505ddd8e9",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14025,7 +14073,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -14906,7 +14957,7 @@
   }
  },
  "Omni-OSV|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "c0c536e6eee3a26280e75758b03cb64ce02d3741931428eddab517d1cbe8556f",
+  "full_sha256": "7a0222476fa282a984d8d073558869f67bce044f47090754759cd94093790cb4",
   "hw": {
    "AA_mode": "LUT_OS_V",
    "AW_mode": "LUT_OS_V",
@@ -14923,7 +14974,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -15732,7 +15786,7 @@
   }
  },
  "Omni3|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "9453b1df23f50e33abc804923ab8761cbf70d97b476abac0e2386b13d9adf3e5",
+  "full_sha256": "c4f9b01abbbbe0e90fa24d30492e1382f8927a2a7f3734897fac531be21aaacd",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -15749,7 +15803,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -16558,7 +16615,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "60817ef917121f67a0f1d6e90e1c4b1f92621096124aee798e2bdcc2e83fcc0f",
+  "full_sha256": "d940d4b1798b015e092f05d69b90f3b62bb3367d295a8536f6c6a89272663567",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -16575,7 +16632,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -17456,7 +17516,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "bf93f7d3ed33bf22669cae77255a6fb4a758f1e2979f956239d6de1b1e858689",
+  "full_sha256": "2e4c2c6eda3e8120727eec7e46998a616845613899646424bf169e603cc6cef4",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -17473,7 +17533,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -18354,7 +18417,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "d8d1c80cd35d345377e2b0598c1001da237021372663d2c391110d325f1c0777",
+  "full_sha256": "e6dc8733c177f9730f4e84b9fc0cd10fc7a159404400957417d4ab49cb2ca1f5",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -18371,7 +18434,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -19252,7 +19318,7 @@
   }
  },
  "Omni3|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "c6028b7e325846ab8c08281eca7d5e077e214b1f7fa12796db65920d6dbd24f7",
+  "full_sha256": "d501152cd8b05e1d6fa69f03d9280110d4d45fe8023eb048ede211419e1da62b",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -19269,7 +19335,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -20150,7 +20219,7 @@
   }
  },
  "Omni3|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "7b71da94da04322c982bd488db9acc651e9025409ce53b2a5ce22b08bef499cc",
+  "full_sha256": "e8d771d977ff0a83837e67d74c3fa39fb2a425484b0d815338646d4b8e88824a",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20167,7 +20236,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 3,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -20976,7 +21048,7 @@
   }
  },
  "Omni4|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "3cdb1108f2e14e1efac5a5b4ad36c7166b5b2bf0650914c595caafa108a244cf",
+  "full_sha256": "1a8f1c9d62ba46a52ff59b92c574c6922fb38769d83d090d7513b4b8a23561eb",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -20993,7 +21065,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -21802,7 +21877,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "d4756e49ea98c3dfa3ba56abde69cabfd0150a6f13b458431c67b38f70743f83",
+  "full_sha256": "c9c7b5edcdb6a45b453476c7e3d1913c73e616cf7365a1718e3010fc12524b96",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -21819,7 +21894,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -22700,7 +22778,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "54110f60ad53e2a694f5e3cfa7cc71c686d30ffd9f5bf2af3b80b509433c02a1",
+  "full_sha256": "101ad637aab6bf071dc287c11ef26733ca44aebef50baaf5f09c4a98c5c3648b",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -22717,7 +22795,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -23598,7 +23679,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "6d0dd7303dd4cd72c95cf47121427dbb99b11748463a43e41849e3359c5b9b0d",
+  "full_sha256": "082b0cf3cb1369c6a14b6715a50a9db043562a4849790ab0f5590cba5a64c399",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -23615,7 +23696,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -24496,7 +24580,7 @@
   }
  },
  "Omni4|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "f187d0252608f9278d91e3b611708ab28c1495e5d61ed5f9bb72640262703020",
+  "full_sha256": "83706ed82378719bf48e693c816aac115ee5d78b2b2935af3c55bb98ab0cfa5b",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -24513,7 +24597,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -25394,7 +25481,7 @@
   }
  },
  "Omni4|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "856e7b61fedd55fa475cd8f7da66366a38c5fb846c4d571443a439ab4beba8cf",
+  "full_sha256": "5c9ef7929a93c800f74c557f04e8c74b600a2a0d8ba426127732b9b83af7b8b1",
   "hw": {
    "AA_mode": "OMNI",
    "AW_mode": "OMNI",
@@ -25411,7 +25498,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 4,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -26220,7 +26310,7 @@
   }
  },
  "Tender|LLaMA-2-7B|b1|i8192|o16|f256": {
-  "full_sha256": "543225ec9838f73e6c89f5ab3052f90e17c8190802a472de28c5d7530ad101a2",
+  "full_sha256": "8cd5550850466aa92c103a849367f78ec1ceed9051cbdb9f25c07b151bd6b878",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -26237,7 +26327,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -27046,7 +27139,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i2048|o32|f0": {
-  "full_sha256": "7adb0ff9f56f6b9804191d8ad1d685db2ea7000354a516cf719596a2ef6377d0",
+  "full_sha256": "6ec6b884be323a773e967f47df2eebe432bdbc6ce5605329b001e9dff396e268",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27063,7 +27156,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -27944,7 +28040,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b1|i32768|o32|f0": {
-  "full_sha256": "5e1aa7471268df470dbc1f82b42e6368c17a952078ba4824301dbb0b8ef2e474",
+  "full_sha256": "b02208a2e5a7bc3565462f0914b12cea9f09021c62e5033ee75368d92ce9b6af",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -27961,7 +28057,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -28842,7 +28941,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b32|i32768|o8|f0": {
-  "full_sha256": "bfd64b9566826ca020940a97f295ed3ae4ee9c8617819e005f0dbf2827719896",
+  "full_sha256": "934e849a5c8ad1829c33376303583796926ccd5561ac120a3b65625efe5653be",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -28859,7 +28958,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -29740,7 +29842,7 @@
   }
  },
  "Tender|LLaMA-3-8B|b8|i8192|o16|f0": {
-  "full_sha256": "1ea908ba6a3142b09e8e3064a4398edad9708b91a5f3a6fa1f94d08ea60cc46a",
+  "full_sha256": "00ad0789d642681de013673f75a5fc70755c5b7e6fdaec8c34b8ebd700b181dc",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -29757,7 +29859,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",
@@ -30638,7 +30743,7 @@
   }
  },
  "Tender|OPT-6.7B|b1|i8192|o16|f256": {
-  "full_sha256": "711bce1cac32ffa446b2b85f4e1993a2fa2f460e2b289a246d04df0c9349a1c0",
+  "full_sha256": "593b05300a903fdf4e69fdaf91667b1cd66ca083c27b411a600a7e5d8363f168",
   "hw": {
    "AA_mode": "TENDER",
    "AW_mode": "TENDER",
@@ -30655,7 +30760,10 @@
    "input_buffer_bytes": 0,
    "input_buffer_word_bytes": 0,
    "kv_cache_bits": 8,
+   "kv_key_bits": 0.0,
+   "kv_plane_model": "packed",
    "kv_sram_kb": 0,
+   "kv_value_bits": 0.0,
    "model_scale_traffic": false,
    "mu": 4,
    "os_rounds_model": "tiled",

@@ -390,6 +390,42 @@ class HardwareConfig:
     weight_bits: int = 4
     kv_cache_bits: int = 16
 
+    # --- Per-tensor KV bit allocation ---
+    # Effective bit width of the Key and Value caches, separately.  0 = fall
+    # back to `kv_cache_bits`, which is what every published number assumes
+    # and makes these fields inert.
+    #
+    # **The built part does not use one width for both.**  OMNI_LUT.pdf SSIII-C
+    # gives the Key cache adaptive per-channel allocation (AS-Bit): a fraction
+    # `k` of channels at a high width, the rest at a low one, for an effective
+    # width of `k*b_h + (1-k)*b_l`.  The Value cache gets per-token uniform
+    # quantization at the low width, with -- in the paper's words -- "no extra
+    # bits".  So the shipped configuration is a *fractional* Key width against
+    # an integer Value width, which a single `kv_cache_bits` cannot express.
+    #
+    # Fractional values are meaningful here: a mixed-precision cache really
+    # does store `k*b_h + (1-k)*b_l` bits per element on average.
+    kv_key_bits: float = 0.0
+    kv_value_bits: float = 0.0
+
+    # How a fractional Key width turns into bit-plane passes.
+    #
+    #   "packed"  the high-bit channels get their extra plane in a narrow pass
+    #             costing proportionally less, so cycles scale with the
+    #             effective width.  The optimistic bound.
+    #   "padded"  every channel is processed at the *high* width and the
+    #             low-bit ones idle on the final plane, so cycles scale with
+    #             `ceil` of the effective width.  The pessimistic bound, and
+    #             the likelier one on a systolic array -- a narrow pass still
+    #             pays the full `array_m + array_n` fill/drain, which SSC shows
+    #             is exactly what this machine is worst at.
+    #
+    # **Bytes never change between the two.**  Storage is the average either
+    # way; only the pass schedule differs.  They bracket the truth the way
+    # `overlap_model` does, and "packed" is the default only because it is the
+    # one that reduces to the old integer behaviour without a `ceil`.
+    kv_plane_model: str = "packed"
+
     # --- Dataflow modes ---
     AW_mode: str = "LUT_WS"    # VPU, FPE_OS, LUT_OS, LUT_OS_V, LUT_WS, OMNI, TENDER
     AA_mode: str = "VPU"
@@ -1130,14 +1166,16 @@ class Simulator:
 
         # Resolve dataflow mode (handles OMNI → LUT_WS / LUT_OS_V)
         base_mode, resolved_mode = self._resolve_dataflow_mode(compute_mode, is_decode)
-        qbit = hw.weight_bits if compute_mode == ComputeMode.AW else hw.kv_cache_bits
+        qbit = self._qbit_for(compute_mode, op_type, for_cycles=False)
 
         metrics = OperationMetrics(shape=shape)
         metrics.flops = 2 * M * K * N * batch_size
 
-        # 1. Cycles
-        metrics.cycles = self._calculate_cycles(M, K, N, qbit, compute_mode,
-                                                resolved_mode, batch_size)
+        # 1. Cycles.  Bit-plane passes, which for a mixed-precision cache are
+        #    not the same as the stored width -- see `_kv_bits`.
+        metrics.cycles = self._calculate_cycles(
+            M, K, N, self._qbit_for(compute_mode, op_type, for_cycles=True),
+            compute_mode, resolved_mode, batch_size)
 
         # 2. Memory access
         mem = self._calculate_memory_access(
@@ -1448,7 +1486,7 @@ class Simulator:
             else:
                 rounds = math.ceil(m_tiles * n_tiles / replication)
 
-            return batch_size * per_round * rounds * qbit
+            return int(batch_size * per_round * rounds * qbit)
 
         elif mode == "LUT_WS":
             k_eff = math.ceil(K / self.MU)
@@ -1464,7 +1502,7 @@ class Simulator:
             overhead = array_n + array_m + INPUT_CYCLES + OUTPUT_CYCLES
             m_blocks = self._row_blocks(M)
             rounds = math.ceil(n_tiles * k_tiles / replication)
-            return batch_size * rounds * (M + m_blocks * overhead) * qbit
+            return int(batch_size * rounds * (M + m_blocks * overhead) * qbit)
 
         elif mode == "FPE_OS":
             m_tiles = math.ceil(M / fpe_size)
@@ -1598,7 +1636,7 @@ class Simulator:
         express that, which is why it is a separate hook from
         `_kv_dram_run_entries`.
         """
-        return run_entries * head_dim * kv_bits // 8
+        return int(run_entries * head_dim * kv_bits // 8)
 
     def _sram_ports(self, m) -> Tuple[int, int, int]:
         """Split one operation's SRAM bytes into (activation, weight, accum).
@@ -1776,6 +1814,56 @@ class Simulator:
     # weights, not activations, are what stops being fetched.  That aims at
     # SS3's finding that decode idles ~85% waiting on *weights*.
 
+    def _kv_bits(self, op_type: 'OperationType', for_cycles: bool) -> float:
+        """Effective KV bit width for one AA operation.
+
+        `QK` reads the Key cache and `Attn.V` reads the Value cache, so they
+        can differ -- see `HardwareConfig.kv_key_bits`.  Any other AA op falls
+        back to `kv_cache_bits`.
+
+        `for_cycles` selects between the two meanings a fractional width has:
+        **bytes** are the average (a mixed cache really does store that many
+        bits per element), while **cycles** are bit-plane passes and depend on
+        `kv_plane_model`.  Returning one number for both would silently pick a
+        side of a question the model is supposed to bracket.
+        """
+        hw = self.hw
+        if op_type == OperationType.QK_MATMUL and hw.kv_key_bits > 0:
+            bits = hw.kv_key_bits
+        elif op_type == OperationType.ATTN_V_MATMUL and hw.kv_value_bits > 0:
+            bits = hw.kv_value_bits
+        else:
+            return hw.kv_cache_bits
+        if for_cycles and hw.kv_plane_model == "padded":
+            return math.ceil(bits)
+        return bits
+
+    def _kv_tensor_bits(self, op_type: 'OperationType') -> float:
+        """Stored width of the KV tensor this operation touches.
+
+        Distinct from `_qbit_for`, which answers "what width is this
+        operation's B *operand*".  Here the question is "which cache do these
+        bytes belong to", and it has to cover the projections too: `K_PROJ`
+        *writes* the Key cache and `V_PROJ` writes the Value cache, even
+        though both are AW operations whose operand is a weight.
+
+        Always the stored width, never the pass count -- bytes do not care how
+        the planes are scheduled.
+        """
+        hw = self.hw
+        if op_type in (OperationType.QK_MATMUL, OperationType.K_PROJ):
+            return hw.kv_key_bits or hw.kv_cache_bits
+        if op_type in (OperationType.ATTN_V_MATMUL, OperationType.V_PROJ):
+            return hw.kv_value_bits or hw.kv_cache_bits
+        return hw.kv_cache_bits
+
+    def _qbit_for(self, compute_mode: ComputeMode, op_type: 'OperationType',
+                  for_cycles: bool) -> float:
+        """The operand bit width one operation is charged at."""
+        if compute_mode == ComputeMode.AW:
+            return self.hw.weight_bits
+        return self._kv_bits(op_type, for_cycles)
+
     def _ffn_active_neurons(self, model, op_type: 'OperationType',
                             is_decode: bool) -> int:
         """How many FFN hidden units this operation actually touches.
@@ -1833,8 +1921,11 @@ class Simulator:
         accum_bits = hw.accumulate_bits
         weight_bits = hw.weight_bits
         kv_bits = hw.kv_cache_bits
+        # The cache this operation reads or writes may be narrower or wider
+        # than the other one -- see `HardwareConfig.kv_key_bits`.
+        kv_tensor_bits = self._kv_tensor_bits(op_type)
 
-        qbit = weight_bits if compute_mode == ComputeMode.AW else kv_bits
+        qbit = self._qbit_for(compute_mode, op_type, for_cycles=False)
 
         # Operand sizes (bits)
         A_bits = batch_size * M * K * act_bits
@@ -1847,7 +1938,7 @@ class Simulator:
         # DRAM writes: K/V projections write KV cache to DRAM;
         #              QK matmul writes attention scores to DRAM (standard attention only)
         if op_type in (OperationType.K_PROJ, OperationType.V_PROJ):
-            dram_write_bits = batch_size * M * N * kv_bits
+            dram_write_bits = int(batch_size * M * N * kv_tensor_bits)
         elif op_type == OperationType.QK_MATMUL:
             # Attention scores (M × N) spill to DRAM between QK and Attn·V --
             # unless a row's worth fits on chip, in which case they never leave.
@@ -1949,16 +2040,17 @@ class Simulator:
             # One run is however many consecutive entries the reader takes in
             # one go, times the per-entry width.
             run_entries = min(kv_prev, self._kv_dram_run_entries(kv_prev))
-            kv_bits_total = eff_kv_batch * kv_prev * head_dim * kv_bits
+            kv_bits_total = int(eff_kv_batch * kv_prev * head_dim
+                                * kv_tensor_bits)
             # Whatever is held on chip between steps is not re-read.
             resident = self._kv_resident_bytes(kv_bits_total // 8)
             kv_resident_bytes = resident
             kv_logical = kv_bits_total // 8 - resident
             read_parts.append((kv_logical * 8,
                                self._kv_dram_run_bytes(run_entries, head_dim,
-                                                       kv_bits),
+                                                       kv_tensor_bits),
                                self._kv_covering_bytes(kv_logical, head_dim,
-                                                       kv_bits)))
+                                                       kv_tensor_bits)))
 
         elif (self.hw.prefill_kv_dram_read
                 and not is_decode
@@ -1972,15 +2064,16 @@ class Simulator:
             # resident while asserting the (much larger) score matrix was not.
             head_dim = K if op_type == OperationType.QK_MATMUL else N
             run_entries = min(kv_len, self._kv_dram_run_entries(kv_len))
-            kv_bits_total = eff_kv_batch * kv_len * head_dim * kv_bits
+            kv_bits_total = int(eff_kv_batch * kv_len * head_dim
+                                * kv_tensor_bits)
             resident = self._kv_resident_bytes(kv_bits_total // 8)
             kv_resident_bytes = resident
             kv_logical = kv_bits_total // 8 - resident
             read_parts.append((kv_logical * 8,
                                self._kv_dram_run_bytes(run_entries, head_dim,
-                                                       kv_bits),
+                                                       kv_tensor_bits),
                                self._kv_covering_bytes(kv_logical, head_dim,
-                                                       kv_bits)))
+                                                       kv_tensor_bits)))
 
         elif compute_mode == ComputeMode.AW:
             # AW operations: weights loaded from DRAM.  Dense and contiguous by

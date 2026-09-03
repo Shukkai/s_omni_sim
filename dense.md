@@ -190,6 +190,30 @@
 
 ---
 
+## I. Key cache bit allocation, dense
+
+**Reads as** — what the Key cache's bit allocation costs. Value is held at the low width throughout, as the paper specifies.
+
+**decode per token, context 8,192**
+
+| Key allocation | eff. bits | qk cyc (packed) | qk cyc (padded) | decode DRAM | TPOT | vs 4-bit |  |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0% at 5 bits | 4.00 | 516 K | 516 K | 2.915 GB | 69.54 ms | 1.000× | all low (what this sheet models) |
+| 25% at 5 bits | 4.25 | 548 K | 645 K | 2.923 GB | 69.71 ms | 1.002× | paper's AS-Bit ratio |
+| 50% at 5 bits | 4.50 | 581 K | 645 K | 2.932 GB | 69.87 ms | 1.005× | best measured perplexity |
+| 100% at 5 bits | 5.00 | 645 K | 645 K | 2.949 GB | 70.20 ms | 1.010× | all high (Key only) |
+
+**decode per token, context 32,768**
+
+| Key allocation | eff. bits | qk cyc (packed) | qk cyc (padded) | decode DRAM | TPOT | vs 4-bit |  |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0% at 5 bits | 4.00 | 1,548 K | 1,548 K | 3.972 GB | 127.74 ms | 1.000× | all low (what this sheet models) |
+| 25% at 5 bits | 4.25 | 1,645 K | 1,935 K | 4.006 GB | 128.39 ms | 1.005× | paper's AS-Bit ratio |
+| 50% at 5 bits | 4.50 | 1,742 K | 1,935 K | 4.039 GB | 129.05 ms | 1.010× | best measured perplexity |
+| 100% at 5 bits | 5.00 | 1,935 K | 1,935 K | 4.106 GB | 130.36 ms | 1.021× | all high (Key only) |
+
+---
+
 ## Findings
 
 - **Prefill and decode are bound by different things**, at every context.
@@ -231,6 +255,14 @@
     - **`attention scores·V` is the only compute-bound stage in decode** (16.87 ms compute against 4.26 ms DRAM).
     - So the two stages carrying nearly all of decode's exposed wait are exactly the two the FFN weight lever targets — which is why that lever works and KV levers do not.
     - *Caveat: this is bandwidth stall, not cache-miss latency. The model has no latency or queueing term at all.*
+
+- **Key-cache bit allocation is nearly free; Value-cache width is not.**
+    - Taking **50% of Key channels to 5 bits** (effective 4.5, the best measured perplexity) costs **1.005× TPOT at 8K and 1.010× at 32K**. Even *every* Key channel at 5 bits costs only 1.010× / 1.021×.
+    - Taking **both** caches to 5 bits costs **1.070× / 1.152×** — 7–15× more, for the same per-tensor widening.
+    - The asymmetry is §G's: `qk` is ~5% of decode cycles while `attn_v` is 80–92%, though the two carry **identical bytes**. Widening the Key is cheap in cycles and the Value is not.
+    - **So the load-bearing half of AS-Bit is “no extra bits to the Value cache”, not the Key adaptivity** — the Key side is so cheap the allocation barely matters.
+    - **And the packed-vs-padded schedule does not matter either**: the two differ by 11% of `qk` cycles and **0% of TPOT**, because decode is DRAM-bound and the extra bit-plane pass hides behind the memory it waits on. No case for packing hardware.
+    - *This sheet models a flat 4-bit cache. The built part has a ~4.5-bit Key, which moves decode DRAM ~1.9% at 32K and nothing else materially.*
 
 - **The array shape is tuned to `head_dim`, and is right for the block it was designed for.**
     - A 32×4 array gives exactly **128 columns** against attention's `head_dim` of 128; 16×8 wastes half, 8×16 three quarters.
