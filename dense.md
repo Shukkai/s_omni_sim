@@ -7,19 +7,6 @@
 
 ---
 
-## Findings
-
-- **Prefill is compute-bound and decode is DRAM-bound, at every context.** Decode spends 6.8× longer on DRAM than compute at 2K, narrowing to 1.1× at 32K; prefill leads compute by 2.8–3.3×. Two machines, two different optimisations.
-- **The 256 KB input buffer decides how many tokens are processed at once, and the FFN's second matrix is what limits it.** The buffer holds `rows x input width x 2 B`. Every projection and the FFN *expand* take a 4,096-wide input, so one row is 8 KB and **32 rows** fit — exactly the array's height, clearly what it was sized for. But the FFN *contract* takes a **14,336**-wide input, so one row is 28 KB and only **9** fit. The block is one global setting, so the tightest operation wins: **9, not 32.**
-- **Those 9 rows are where prefill's time goes.** A systolic array pays a fixed start-up cost to fill and drain, and at 9 rows it is spread over 9 rows instead of 32 — so **fill/drain becomes 70–74% of prefill cycles**, against under 2% when the whole sequence streams at once. It costs ~5.3× prefill compute. **A bigger input buffer is worth more here than a faster anything.**
-- **No on-chip port exceeds 37% of its width.** The same tiling that inflates cycles ~5× leaves the operand bytes unchanged, so every port's utilisation falls with it. The 8 weight banks are there for capacity, not bandwidth.
-- **Decode moves per token almost exactly what prefill moves in total** (2.65 GB vs 2.65 GB at 2K) — 2.58 GB of weights are re-read every step and do not fit in 3 MB. **It is weights, not KV, until 32K.**
-- **32K is where the part runs out, and three walls arrive together**: attention's scores-times-V step needs 225% of the input buffer and 125% of the scale buffer, and one 32K Key cache is 2,048 KB against a 2,048 KB weight buffer. Only the input one shrinks with a smaller block.
-- **The array shape is tuned to `head_dim`, and it is right for the block the buffer was sized for.** A 32x4 array gives exactly 128 columns against attention's `head_dim` of 128. Reshaping to 16x8 would be 1.16x faster *at this 9-row block*, but 32x4 wins at every block from 32 rows upward — and 32 rows is what a 256 KB input buffer holds. **The array and the buffer agree; the FFN contract is what breaks the pairing.** (`analysis/memory/tileshape_report.md`)
-- **The geometry confirms the array model.** The input word is 256 B = `array_m × MU × act_bits/8` and the output word is 512 B = `array_n × NUM_RAC × accum_bits/8` — one cycle of activation operand, one column tile of accumulators.
-
----
-
 ## Reading the tables
 
 **B and D are bytes, C is time, E is capacity, F reconciles them.** Read F first to see what is limiting, then jump to whichever of B/C/D explains it.
@@ -152,3 +139,16 @@
 | 8,192 | decode | 20.9 ms | 56.9 ms | 3.8 ms | **DRAM** | 2.7× |
 | 32,768 | prefill | 1,168,260.1 ms | 77.6 ms | 349,503.0 ms | **compute** | 3.3× |
 | 32,768 | decode | 73.3 ms | 77.6 ms | 7.8 ms | **DRAM** | 1.1× |
+
+---
+
+## Findings
+
+- **Prefill is compute-bound and decode is DRAM-bound, at every context.** Decode spends 6.8× longer on DRAM than compute at 2K, narrowing to 1.1× at 32K; prefill leads compute by 2.8–3.3×. Two machines, two different optimisations.
+- **The 256 KB input buffer decides how many tokens are processed at once, and the FFN's second matrix is what limits it.** The buffer holds `rows x input width x 2 B`. Every projection and the FFN *expand* take a 4,096-wide input, so one row is 8 KB and **32 rows** fit — exactly the array's height, clearly what it was sized for. But the FFN *contract* takes a **14,336**-wide input, so one row is 28 KB and only **9** fit. The block is one global setting, so the tightest operation wins: **9, not 32.**
+- **Those 9 rows are where prefill's time goes.** A systolic array pays a fixed start-up cost to fill and drain, and at 9 rows it is spread over 9 rows instead of 32 — so **fill/drain becomes 70–74% of prefill cycles**, against under 2% when the whole sequence streams at once. It costs ~5.3× prefill compute. **A bigger input buffer is worth more here than a faster anything.**
+- **No on-chip port exceeds 37% of its width.** The same tiling that inflates cycles ~5× leaves the operand bytes unchanged, so every port's utilisation falls with it. The 8 weight banks are there for capacity, not bandwidth.
+- **Decode moves per token almost exactly what prefill moves in total** (2.65 GB vs 2.65 GB at 2K) — 2.58 GB of weights are re-read every step and do not fit in 3 MB. **It is weights, not KV, until 32K.**
+- **32K is where the part runs out, and three walls arrive together**: attention's scores-times-V step needs 225% of the input buffer and 125% of the scale buffer, and one 32K Key cache is 2,048 KB against a 2,048 KB weight buffer. Only the input one shrinks with a smaller block.
+- **The array shape is tuned to `head_dim`, and it is right for the block the buffer was sized for.** A 32x4 array gives exactly 128 columns against attention's `head_dim` of 128. Reshaping to 16x8 would be 1.16x faster *at this 9-row block*, but 32x4 wins at every block from 32 rows upward — and 32 rows is what a 256 KB input buffer holds. **The array and the buffer agree; the FFN contract is what breaks the pairing.** (`analysis/memory/tileshape_report.md`)
+- **The geometry confirms the array model.** The input word is 256 B = `array_m × MU × act_bits/8` and the output word is 512 B = `array_n × NUM_RAC × accum_bits/8` — one cycle of activation operand, one column tile of accumulators.

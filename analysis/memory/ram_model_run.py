@@ -214,7 +214,6 @@ def write_dense(path, setup):
            ""]
     for line in setup:
         out.append(f"- {line}")
-    out += ["", "---", "", "## Findings", ""] + [f"- {b}" for b in FINDINGS]
     out += ["", "---", "", "## Reading the tables", "", ORIENT, ""]
     for item in DENSE:
         if item[0] == 'section':
@@ -237,6 +236,9 @@ def write_dense(path, setup):
         for row in trows:
             out.append("| " + " | ".join(str(c).strip() for c in row) + " |")
         out.append("")
+    # Findings last: the tables are the document, and the summary reads better
+    # once you have seen the numbers it is drawn from.
+    out += ["---", "", "## Findings", ""] + [f"- {b}" for b in FINDINGS]
     io.open(path, 'w', encoding='utf-8').write("\n".join(out).rstrip() + "\n")
     return path
 
