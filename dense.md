@@ -142,6 +142,54 @@
 
 ---
 
+## G. Per-stage profile, dense
+
+**Reads as** — per stage: what it costs to compute, what it costs to fetch, and how much of the fetch its own compute fails to hide.
+
+**prefill — context 8,192, top stages by time**
+
+| stage | kind | cycles | compute ms | DRAM | DRAM ms | RAM wait ms | bound |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| FFN expand (4,096 → 14,336) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.38 | 0.00 | compute |
+| FFN contract (14,336 → 4,096) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.44 | 0.00 | compute |
+| attention Q·Kᵀ | AA | 11,461.2 M | 22,922.40 | 0.00 GB | 0.03 | 0.00 | compute |
+| attention scores·V | AA | 11,461.2 M | 22,922.40 | 0.08 GB | 1.64 | 0.00 | compute |
+| Q projection | AW | 5,730.6 M | 11,461.20 | 0.27 GB | 5.27 | 0.00 | compute |
+| output projection | AW | 5,730.6 M | 11,461.20 | 0.27 GB | 5.27 | 0.00 | compute |
+| softmax | non_gemm | 2,684.4 M | 5,368.71 | 0.00 GB | 0.00 | 0.00 | compute |
+| K projection | AW | 1,432.6 M | 2,865.30 | 0.20 GB | 3.96 | 0.00 | compute |
+
+**decode — context 8,192, top stages by time**
+
+| stage | kind | cycles | compute ms | DRAM | DRAM ms | RAM wait ms | bound |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| FFN contract (14,336 → 4,096) | AW | 0.5 M | 0.92 | 0.94 GB | 18.44 | 17.52 | memory |
+| FFN expand (4,096 → 14,336) | AW | 0.5 M | 1.06 | 0.94 GB | 18.38 | 17.32 | memory |
+| attention scores·V | AA | 8.4 M | 16.87 | 0.22 GB | 4.26 | 0.00 | compute |
+| Q projection | AW | 0.1 M | 0.26 | 0.27 GB | 5.27 | 5.00 | memory |
+| output projection | AW | 0.1 M | 0.26 | 0.27 GB | 5.27 | 5.00 | memory |
+| attention Q·Kᵀ | AA | 0.5 M | 1.03 | 0.14 GB | 2.65 | 1.62 | memory |
+| K projection | AW | 0.1 M | 0.26 | 0.07 GB | 1.34 | 1.07 | memory |
+| V projection | AW | 0.1 M | 0.26 | 0.07 GB | 1.34 | 1.07 | memory |
+
+---
+
+## H. Quantisation and load, dense
+
+**Reads as** — the units that are not GEMM stages — quantisation, table generation, operand load. **BQU rows are a placeholder.**
+
+**context 8,192**
+
+| unit | prefill cycles | decode cycles/token | status |
+| --- | ---: | ---: | --- |
+| BQU — BEA (encode) | 16.78 M | 2.0 K | placeholder |
+| BQU — TSE (Value scales) | 2.10 M | 0.3 K | placeholder |
+| LGU (table generation) | 0.00 M | 52.6 K | modelled |
+| operand issue (buffer load) | 1,611.99 M | 0.0 K | modelled |
+| accumulator drain | 3,223.98 M | 35.1 K | modelled |
+
+---
+
 ## Findings
 
 - **Prefill and decode are bound by different things**, at every context.
@@ -176,6 +224,13 @@
     - And **125%** of the scale buffer.
     - And one 32K Key cache is **2,048 KB against a 2,048 KB** weight buffer — K alone fills it, K+V needs twice the chip.
     - Only the input one shrinks with a smaller block; the other two scale with `K`, not with the block.
+
+- **Per stage, decode is exposed memory almost everywhere and prefill is exposed nowhere.**
+    - In prefill every stage is compute-bound and **RAM wait is 0.00 ms** across the board — the fetch always hides behind the work.
+    - In decode the FFN contract waits **17.52 ms of its 18.44 ms** of DRAM time, and the expand 17.32 of 18.38: at `M = 1` there is almost no compute to hide it behind, so **~95% of the fetch is exposed.**
+    - **`attention scores·V` is the only compute-bound stage in decode** (16.87 ms compute against 4.26 ms DRAM).
+    - So the two stages carrying nearly all of decode's exposed wait are exactly the two the FFN weight lever targets — which is why that lever works and KV levers do not.
+    - *Caveat: this is bandwidth stall, not cache-miss latency. The model has no latency or queueing term at all.*
 
 - **The array shape is tuned to `head_dim`, and is right for the block it was designed for.**
     - A 32×4 array gives exactly **128 columns** against attention's `head_dim` of 128; 16×8 wastes half, 8×16 three quarters.

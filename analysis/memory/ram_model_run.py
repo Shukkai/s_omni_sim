@@ -43,11 +43,13 @@ from model_configs import get_model_config                           # noqa: E40
 from report import Report                                            # noqa: E402
 from cycle_units import (                                            # noqa: E402
     UnitAwareSimulator, compute_unit_cycle_breakdown,
+    compute_stage_cycle_breakdown, bqu_metrics,
 )
 
 MODEL = 'LLaMA-3-8B'
 TECH = 'DDR5-6400'
 CONTEXTS = [2048, 8192, 32768]
+FOCUS = 8192        # sections G and H tabulate one context; the CSV has all
 OUTPUT_TOKENS = 4
 KV_BITS = 4
 SCORE_SRAM_KB = 128
@@ -126,6 +128,10 @@ READS_AS = {
          "demands it. `OVER` = does not fit.",
     'F': "the three roofline terms side by side. Largest wins; "
          "\u201cover 2nd\u201d is the margin.",
+    'G': "per stage: what it costs to compute, what it costs to fetch, and "
+         "how much of the fetch its own compute fails to hide.",
+    'H': "the units that are not GEMM stages \u2014 quantisation, table "
+         "generation, operand load. **BQU rows are a placeholder.**",
 }
 
 ORIENT = ("**B and D are bytes, C is time, E is capacity, F reconciles them.** "
@@ -192,6 +198,21 @@ FINDINGS = [
       "buffer — K alone fills it, K+V needs twice the chip.",
       "Only the input one shrinks with a smaller block; the other two scale "
       "with `K`, not with the block."]),
+
+    ("**Per stage, decode is exposed memory almost everywhere and prefill is "
+     "exposed nowhere.**",
+     ["In prefill every stage is compute-bound and **RAM wait is 0.00 ms** "
+      "across the board — the fetch always hides behind the work.",
+      "In decode the FFN contract waits **17.52 ms of its 18.44 ms** of DRAM "
+      "time, and the expand 17.32 of 18.38: at `M = 1` there is almost no "
+      "compute to hide it behind, so **~95% of the fetch is exposed.**",
+      "**`attention scores·V` is the only compute-bound stage in decode** "
+      "(16.87 ms compute against 4.26 ms DRAM).",
+      "So the two stages carrying nearly all of decode's exposed wait are "
+      "exactly the two the FFN weight lever targets — which is why that "
+      "lever works and KV levers do not.",
+      "*Caveat: this is bandwidth stall, not cache-miss latency. The model "
+      "has no latency or queueing term at all.*"]),
 
     ("**The array shape is tuned to `head_dim`, and is right for the block it "
      "was designed for.**",
@@ -266,6 +287,32 @@ def write_dense(path, setup):
     return path
 
 
+def _bqu_for(hw, model, context):
+    """BQU cycles per phase, from `bqu_metrics`.
+
+    **This is a placeholder, not a measurement.**  `study.md`'s TODO says so
+    plainly: the original simulator does not model the BQU at all, and
+    `bqu_metrics` assumes one BEA pass per bit-plane, one TSE min/max pass on
+    the Value path, and `bqu_width` elements per cycle.  It is reported here
+    because "what does quantisation cost?" is a fair question to ask of a
+    reference sheet, and because leaving it out silently is worse than
+    including it labelled.  Replace with RTL numbers before quoting.
+
+    Excluded from every serial total in this sheet, per OMNI_LUT.pdf §IV-A,
+    which runs the BQU on-the-fly alongside the PE array.
+    """
+    out = {}
+    for phase, tokens in (('prefill', context), ('decode', 1)):
+        tse = bea = 0
+        for tensor in ('key', 'value'):
+            b = bqu_metrics(hw, tensor, tokens, model.d_kv)
+            tse += b.tse_cycles
+            bea += b.bea_cycles
+        out[phase] = {'tse': tse * model.num_layers,
+                      'bea': bea * model.num_layers}
+    return out
+
+
 def base_hw(m_tile=M_TILE):
     hw = HardwareConfig(
         array_m=32, array_n=4, FPE_array_size=64,
@@ -288,7 +335,9 @@ def run(context, batch=1):
     steps = max(1, w.output_tokens - 1)
     out = {'context': context, 'batch': batch,
            'ttft_s': ttft, 'tpot_s': tpot, 'peaks': sim.peaks,
-           'units': compute_unit_cycle_breakdown(sim, r, w)}
+           'units': compute_unit_cycle_breakdown(sim, r, w),
+           'stages': compute_stage_cycle_breakdown(sim, r, w),
+           'bqu': _bqu_for(hw, m, context)}
     for tag, ph, div in (('prefill', r.prefill, 1), ('decode', r.decode, steps)):
         t = ph.get_total_metrics()
         out[tag] = {
@@ -582,6 +631,97 @@ def main():
         "worth more to prefill than a faster anything.**\n\n"
         "These are per-phase sums. The *operation*-level `sum(max(...))` the "
         "simulator reports is larger, and §17 brackets the difference.")
+
+    # ---- G: per-stage profile -------------------------------------------
+    emit_section(rep, "G. Per-stage profile, dense",
+                 "Every pipeline stage: its cycles, the DRAM it needs, and "
+                 "how much of that fetch its own compute fails to hide. "
+                 "\"RAM wait\" is max(0, DRAM time − compute time).")
+    for tag, key in (('prefill', 'prefill'), ('decode', 'decode_per_token')):
+        trows = []
+        for c in CONTEXTS:
+            st = runs[c]['stages'][key]
+            ordered = sorted(st.values(), key=lambda r: -r['eff_time'])
+            for r in ordered[:8]:
+                wait = max(0.0, r['mem_time'] - r['compute_time'])
+                rows.append({'section': 'G', 'context': c, 'phase': tag,
+                             'stage': r['stage'], 'cycles': r['cycles'],
+                             'compute_s': r['compute_time'],
+                             'mem_s': r['mem_time'], 'ram_wait_s': wait,
+                             'bound': r['bound']})
+                if c != FOCUS:
+                    continue
+                trows.append([
+                    op_label(r['stage']), r['category'],
+                    f"{r['cycles'] / 1e6:,.1f} M",
+                    f"{1e3 * r['compute_time']:,.2f}",
+                    f"{r['dram_bytes'] / GB:,.2f} GB",
+                    f"{1e3 * r['mem_time']:,.2f}",
+                    f"{1e3 * wait:,.2f}",
+                    r['bound'],
+                ])
+        emit_table(rep, ["stage", "kind", "cycles", "compute ms", "DRAM",
+                         "DRAM ms", "RAM wait ms", "bound"], trows,
+                   aligns="llrrrrrl",
+                   caption=f"{tag} — context {FOCUS:,}, top stages by time")
+    rep.note(
+        "**\"RAM wait\" is bandwidth stall, not cache-miss latency.** This "
+        "model has no latency or queueing term anywhere — `memory_tech.py` "
+        "says so — so a stage's memory cost is `bytes / bandwidth` and the "
+        "wait is whatever of that its own compute cannot cover. A real part "
+        "adds per-access latency on top, and nothing here estimates it.\n\n"
+        "**The split is the whole story of this sheet in one table.** In "
+        "prefill almost every stage is compute-bound and waits on nothing; "
+        "in decode the projections and the FFN are memory-bound and wait "
+        "nearly their entire DRAM time, because at `M = 1` there is almost no "
+        "compute to hide it behind.")
+
+    # ---- H: the non-stage units -----------------------------------------
+    emit_section(rep, "H. Quantisation and load, dense",
+                 "The units that are not GEMM stages. Both BQU rows are "
+                 "placeholders; the load path is partly unmodelled.")
+    trows = []
+    for c in CONTEXTS:
+        b = runs[c]['bqu']
+        u_pf = runs[c]['units']['prefill']
+        u_dec = runs[c]['units']['decode_per_token']
+        for label, pf, dec, note in (
+            ("BQU — BEA (encode)", b['prefill']['bea'], b['decode']['bea'],
+             "placeholder"),
+            ("BQU — TSE (Value scales)", b['prefill']['tse'],
+             b['decode']['tse'], "placeholder"),
+            ("LGU (table generation)",
+             u_pf.get('lgu', {}).get('cycles', 0.0),
+             u_dec.get('lgu', {}).get('cycles', 0.0), "modelled"),
+            ("operand issue (buffer load)",
+             u_pf.get('input_load', {}).get('cycles', 0.0),
+             u_dec.get('input_load', {}).get('cycles', 0.0), "modelled"),
+            ("accumulator drain",
+             u_pf.get('accumulator', {}).get('cycles', 0.0),
+             u_dec.get('accumulator', {}).get('cycles', 0.0), "modelled"),
+        ):
+            rows.append({'section': 'H', 'context': c, 'unit': label,
+                         'prefill_cycles': pf, 'decode_cycles': dec})
+            if c != FOCUS:
+                continue
+            trows.append([label, f"{pf / 1e6:,.2f} M", f"{dec / 1e3:,.1f} K",
+                          note])
+    emit_table(rep, ["unit", "prefill cycles", "decode cycles/token",
+                     "status"], trows, aligns="lrrl",
+               caption=f"context {FOCUS:,}")
+    rep.note(
+        "**The BQU rows are order-of-magnitude, not measurements.** The "
+        "original simulator does not model it at all; `bqu_metrics` assumes "
+        "one BEA pass per bit-plane, one TSE min/max pass on the Value path, "
+        "and `bqu_width` elements per cycle. They are excluded from every "
+        "serial total here, per OMNI_LUT.pdf §IV-A, which runs the BQU "
+        "on-the-fly alongside the array — **which is itself unverified "
+        "against the RTL schedule.**\n\n"
+        "**\"Buffer loading\" is only half present.** `operand issue` is the "
+        "array-side cost of accepting a word, and it is modelled. The LSU's "
+        "own DMA cost is **not** — the RTL measures 492 → 927 ns from adding "
+        "it, and this model has no term for that. It is the largest "
+        "unmodelled hardware cost in the sheet.")
 
     rep.save()
     write_dense(args.dense, SETUP)
