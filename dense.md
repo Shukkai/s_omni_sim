@@ -34,12 +34,12 @@
 
 | context | phase | read | write | total | time @51.2 GB/s |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 2,048 | prefill | 2.58 GB | 0.07 GB | 2.65 GB | 51.8 ms |
-| 2,048 | decode | 2.65 GB | 0.00 GB | 2.65 GB | 51.8 ms |
-| 8,192 | prefill | 2.65 GB | 0.27 GB | 2.91 GB | 56.9 ms |
-| 8,192 | decode | 2.91 GB | 0.00 GB | 2.91 GB | 56.9 ms |
-| 32,768 | prefill | 2.90 GB | 1.07 GB | 3.97 GB | 77.6 ms |
-| 32,768 | decode | 3.97 GB | 0.00 GB | 3.97 GB | 77.6 ms |
+| 2,048 | prefill | 2.57 GB | 0.07 GB | 2.63 GB | 51.4 ms |
+| 2,048 | decode | 2.63 GB | 0.00 GB | 2.63 GB | 51.4 ms |
+| 8,192 | prefill | 2.58 GB | 0.27 GB | 2.85 GB | 55.7 ms |
+| 8,192 | decode | 2.85 GB | 0.00 GB | 2.85 GB | 55.7 ms |
+| 32,768 | prefill | 2.65 GB | 1.07 GB | 3.72 GB | 72.6 ms |
+| 32,768 | decode | 3.72 GB | 0.00 GB | 3.72 GB | 72.6 ms |
 
 ---
 
@@ -73,17 +73,17 @@
 
 | context | input 256 B | scale 256 B | weight 2,048 B | output 512 B |
 | --- | ---: | ---: | ---: | ---: |
-| 2,048 | 49.6 (19%) | 0.5 (0%) | 42.7 (2%) | 183.1 (36%) |
-| 8,192 | 52.0 (20%) | 1.1 (0%) | 42.7 (2%) | 171.9 (34%) |
-| 32,768 | 55.8 (22%) | 2.2 (1%) | 42.7 (2%) | 153.2 (30%) |
+| 2,048 | 49.6 (19%) | 0.3 (0%) | 42.7 (2%) | 183.1 (36%) |
+| 8,192 | 52.0 (20%) | 0.4 (0%) | 42.7 (2%) | 171.9 (34%) |
+| 32,768 | 55.8 (22%) | 0.6 (0%) | 42.7 (2%) | 153.2 (30%) |
 
 **decode — B/cycle (% of port width)**
 
 | context | input 256 B | scale 256 B | weight 2,048 B | output 512 B |
 | --- | ---: | ---: | ---: | ---: |
-| 2,048 | 95.5 (37%) | 8.7 (3%) | 735.4 (36%) | 0.0 (0%) |
-| 8,192 | 47.0 (18%) | 9.2 (4%) | 346.2 (17%) | 0.0 (0%) |
-| 32,768 | 27.1 (11%) | 9.5 (4%) | 186.7 (9%) | 0.0 (0%) |
+| 2,048 | 95.5 (37%) | 4.4 (2%) | 735.4 (36%) | 0.0 (0%) |
+| 8,192 | 47.0 (18%) | 3.1 (1%) | 346.2 (17%) | 0.0 (0%) |
+| 32,768 | 27.1 (11%) | 2.6 (1%) | 186.7 (9%) | 0.0 (0%) |
 
 ---
 
@@ -133,12 +133,12 @@
 
 | context | phase | compute | DRAM | SRAM | bound by | over 2nd |
 | --- | --- | ---: | ---: | ---: | --- | ---: |
-| 2,048 | prefill | 30,112.5 ms | 51.8 ms | 10,771.0 ms | **compute** | 2.8× |
-| 2,048 | decode | 7.7 ms | 51.8 ms | 2.9 ms | **DRAM** | 6.8× |
-| 8,192 | prefill | 154,726.2 ms | 56.9 ms | 51,942.3 ms | **compute** | 3.0× |
-| 8,192 | decode | 20.9 ms | 56.9 ms | 3.8 ms | **DRAM** | 2.7× |
-| 32,768 | prefill | 1,168,260.1 ms | 77.6 ms | 349,503.0 ms | **compute** | 3.3× |
-| 32,768 | decode | 73.3 ms | 77.6 ms | 7.8 ms | **DRAM** | 1.1× |
+| 2,048 | prefill | 30,112.5 ms | 51.4 ms | 10,771.0 ms | **compute** | 2.8× |
+| 2,048 | decode | 7.7 ms | 51.4 ms | 2.9 ms | **DRAM** | 6.7× |
+| 8,192 | prefill | 154,726.2 ms | 55.7 ms | 51,942.3 ms | **compute** | 3.0× |
+| 8,192 | decode | 20.9 ms | 55.7 ms | 3.8 ms | **DRAM** | 2.7× |
+| 32,768 | prefill | 1,168,260.1 ms | 72.6 ms | 349,503.0 ms | **compute** | 3.3× |
+| 32,768 | decode | 73.3 ms | 72.6 ms | 7.8 ms | **compute** | 1.0× |
 
 ---
 
@@ -152,8 +152,8 @@
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | FFN expand (4,096 → 14,336) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.38 | 0.00 | compute |
 | FFN contract (14,336 → 4,096) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.44 | 0.00 | compute |
-| attention Q·Kᵀ | AA | 11,461.2 M | 22,922.40 | 0.00 GB | 0.03 | 0.00 | compute |
-| attention scores·V | AA | 11,461.2 M | 22,922.40 | 0.08 GB | 1.64 | 0.00 | compute |
+| attention Q·Kᵀ | AA | 11,461.2 M | 22,922.40 | 0.00 GB | 0.01 | 0.00 | compute |
+| attention scores·V | AA | 11,461.2 M | 22,922.40 | 0.02 GB | 0.41 | 0.00 | compute |
 | Q projection | AW | 5,730.6 M | 11,461.20 | 0.27 GB | 5.27 | 0.00 | compute |
 | output projection | AW | 5,730.6 M | 11,461.20 | 0.27 GB | 5.27 | 0.00 | compute |
 | softmax | non_gemm | 2,684.4 M | 5,368.71 | 0.00 GB | 0.00 | 0.00 | compute |
@@ -165,10 +165,10 @@
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | FFN contract (14,336 → 4,096) | AW | 0.5 M | 0.92 | 0.94 GB | 18.44 | 17.52 | memory |
 | FFN expand (4,096 → 14,336) | AW | 0.5 M | 1.06 | 0.94 GB | 18.38 | 17.32 | memory |
-| attention scores·V | AA | 8.4 M | 16.87 | 0.22 GB | 4.26 | 0.00 | compute |
+| attention scores·V | AA | 8.4 M | 16.87 | 0.16 GB | 3.03 | 0.00 | compute |
 | Q projection | AW | 0.1 M | 0.26 | 0.27 GB | 5.27 | 5.00 | memory |
 | output projection | AW | 0.1 M | 0.26 | 0.27 GB | 5.27 | 5.00 | memory |
-| attention Q·Kᵀ | AA | 0.5 M | 1.03 | 0.14 GB | 2.65 | 1.62 | memory |
+| attention Q·Kᵀ | AA | 0.5 M | 1.03 | 0.13 GB | 2.63 | 1.60 | memory |
 | K projection | AW | 0.1 M | 0.26 | 0.07 GB | 1.34 | 1.07 | memory |
 | V projection | AW | 0.1 M | 0.26 | 0.07 GB | 1.34 | 1.07 | memory |
 
@@ -198,19 +198,19 @@
 
 | Key allocation | eff. bits | qk cyc (packed) | qk cyc (padded) | decode DRAM | TPOT | vs 4-bit |  |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 0% at 5 bits | 4.00 | 516 K | 516 K | 2.915 GB | 69.54 ms | 1.000× | all low (what this sheet models) |
-| 25% at 5 bits | 4.25 | 548 K | 645 K | 2.923 GB | 69.71 ms | 1.002× | paper's AS-Bit ratio |
-| 50% at 5 bits | 4.50 | 581 K | 645 K | 2.932 GB | 69.87 ms | 1.005× | best measured perplexity |
-| 100% at 5 bits | 5.00 | 645 K | 645 K | 2.949 GB | 70.20 ms | 1.010× | all high (Key only) |
+| 0% at 5 bits | 4.00 | 516 K | 516 K | 2.851 GB | 69.52 ms | 1.000× | all low (what this sheet models) |
+| 25% at 5 bits | 4.25 | 548 K | 645 K | 2.860 GB | 69.69 ms | 1.002× | paper's AS-Bit ratio |
+| 50% at 5 bits | 4.50 | 581 K | 645 K | 2.868 GB | 69.85 ms | 1.005× | best measured perplexity |
+| 100% at 5 bits | 5.00 | 645 K | 645 K | 2.885 GB | 70.18 ms | 1.009× | all high (Key only) |
 
 **decode per token, context 32,768**
 
 | Key allocation | eff. bits | qk cyc (packed) | qk cyc (padded) | decode DRAM | TPOT | vs 4-bit |  |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 0% at 5 bits | 4.00 | 1,548 K | 1,548 K | 3.972 GB | 127.74 ms | 1.000× | all low (what this sheet models) |
-| 25% at 5 bits | 4.25 | 1,645 K | 1,935 K | 4.006 GB | 128.39 ms | 1.005× | paper's AS-Bit ratio |
-| 50% at 5 bits | 4.50 | 1,742 K | 1,935 K | 4.039 GB | 129.05 ms | 1.010× | best measured perplexity |
-| 100% at 5 bits | 5.00 | 1,935 K | 1,935 K | 4.106 GB | 130.36 ms | 1.021× | all high (Key only) |
+| 0% at 5 bits | 4.00 | 1,548 K | 1,548 K | 3.719 GB | 127.72 ms | 1.000× | all low (what this sheet models) |
+| 25% at 5 bits | 4.25 | 1,645 K | 1,935 K | 3.753 GB | 128.37 ms | 1.005× | paper's AS-Bit ratio |
+| 50% at 5 bits | 4.50 | 1,742 K | 1,935 K | 3.786 GB | 129.03 ms | 1.010× | best measured perplexity |
+| 100% at 5 bits | 5.00 | 1,935 K | 1,935 K | 3.854 GB | 130.34 ms | 1.021× | all high (Key only) |
 
 ---
 

@@ -2012,7 +2012,11 @@ class Simulator:
         # re-derived per mode.
         scale_read_bits = 0
         if hw.model_scale_traffic:
-            scale_bits = self._scale_operand_bits(K, batch_size, qbit)
+            # Same GQA argument as the DRAM charge below.
+            _sb_batch = (kv_batch_size if (compute_mode == ComputeMode.AA
+                                           and kv_batch_size > 0)
+                         else batch_size)
+            scale_bits = self._scale_operand_bits(K, _sb_batch, qbit)
             b_reuse = (b_read_bits / B_bits) if B_bits > 0 else 1.0
             scale_read_bits = int(scale_bits * b_reuse)
 
@@ -2088,7 +2092,14 @@ class Simulator:
         # The scales come from DRAM too, once per operation and contiguous --
         # the RTL loads them with their own command and base address.
         if hw.model_scale_traffic:
-            _sb = self._scale_operand_bits(K, batch_size, qbit)
+            # Scales belong to the *cache*, so under GQA they scale with the
+            # KV head count, not the query head count.  Charging `batch_size`
+            # here over-counts by `num_heads / num_kv_heads` -- 4x on
+            # LLaMA-3-8B -- because the AA ops are issued once per query head
+            # while eight of them share one K/V head's scale vector.
+            _sb_batch = (eff_kv_batch if compute_mode == ComputeMode.AA
+                         else batch_size)
+            _sb = self._scale_operand_bits(K, _sb_batch, qbit)
             read_parts.append((_sb, _sb // 8, 0))
 
         # Attn·V reads attention scores (A operand) back from DRAM, contiguous.
@@ -2211,6 +2222,10 @@ class Simulator:
             'input': A_bytes * batch_resident,
             'weight': B_tile * batch_resident,
             'output': C_tile * batch_resident,
+            # The resident scale vector belongs to the cache too, but the
+            # footprint is per co-resident instance rather than per head, so
+            # `batch_resident` is already the right count -- it is 1 unless
+            # `sram_batch_model` says otherwise.
             'scale': (self._scale_operand_bits(K, batch_resident, qbit) // 8
                       if hw.model_scale_traffic else 0),
         }
