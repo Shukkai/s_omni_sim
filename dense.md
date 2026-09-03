@@ -66,7 +66,7 @@
     - Columns are each unit's share of that phase's serial cycles.
 - **what is *not* counted** — memory:
     - No DRAM time, no stalls, no queueing. **This is a cycle table, not a latency model.**
-    - So decode looks cheap here and is not: it is DRAM-bound, and what it waits *for* is in **F** and **G**.
+    - So decode looks cheap here and is not: most of its wall-clock is spent waiting on memory, and what it waits *for* is in **F** and **G**.
     - The **BQU** is also absent — the paper runs it on-the-fly alongside the array, and the model's figure for it is a placeholder.
 - **the two tables are in different units:**
     - **prefill = the whole phase** — every token of the prompt.
@@ -141,10 +141,10 @@
 - `OVER` = does not fit.
 - **the eight operations a layer runs**, which is what “every op” means below:
     - Q, K, V and output projections — 4,096-wide input.
-    - FFN expand (4,096 → 14,336) and FFN contract (14,336 → 4,096).
+    - FFN **up-projection** (4,096 → 14,336) and FFN **down-projection** (14,336 → 4,096) — `fc1` and `fc2` in the simulator, `up_proj`/`down_proj` in HuggingFace.
     - attention Q·Kᵀ and attention scores·V.
 - **“same for every op” means there is no winner to name**, and that is the real answer for two of the four buffers:
-    - **input** and **scale** *do* have a winner. Both scale with the operation's `K`, so the widest input wins: the **FFN contract** (`K` = `d_ffn` = 14,336) below 16K context, and **attention scores·V** (`K` = `kv_len`) at 32K.
+    - **input** and **scale** *do* have a winner. Both scale with the operation's `K`, so the widest input wins: the **FFN down-projection** (`K` = `d_ffn` = 14,336) below 16K context, and **attention scores·V** (`K` = `kv_len`) at 32K.
     - **weight** and **output** do not, because their tiles are clamped by the *array* rather than by the operation. `B_tile` is `128 × min(N, 128) × qbit/8` = **8 KB** for every op with `N ≥ 128`; `C_tile` is `m_tile × 128 × 4 B` = **4 KB** always.
     - All eight operations therefore demand **identical** bytes in those two columns, and picking one to name would invent a winner that does not exist.
 
@@ -152,12 +152,12 @@
 
 | context | buffer | set by | needs | has | used |  |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| 2,048 | input | FFN contract (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
-| 2,048 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 2,048 | input | FFN down-proj (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
+| 2,048 | scale | FFN down-proj (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
 | 2,048 | weight | same for every op | 8 KB | 2,048 KB | 0% | fits |
 | 2,048 | output | same for every op | 4 KB | 512 KB | 1% | fits |
-| 8,192 | input | FFN contract (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
-| 8,192 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 8,192 | input | FFN down-proj (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
+| 8,192 | scale | FFN down-proj (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
 | 8,192 | weight | same for every op | 8 KB | 2,048 KB | 0% | fits |
 | 8,192 | output | same for every op | 4 KB | 512 KB | 1% | fits |
 | 32,768 | input | attention scores·V | 576 KB | 256 KB | 225% | **OVER** |
@@ -169,13 +169,13 @@
 
 | context | buffer | set by | needs | has | used |  |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| 2,048 | input | FFN contract (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
-| 2,048 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
-| 2,048 | weight | FFN contract (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
+| 2,048 | input | FFN down-proj (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
+| 2,048 | scale | FFN down-proj (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 2,048 | weight | FFN down-proj (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
 | 2,048 | output | same for every op | 0 KB | 512 KB | 0% | fits |
-| 8,192 | input | FFN contract (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
-| 8,192 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
-| 8,192 | weight | FFN contract (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
+| 8,192 | input | FFN down-proj (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
+| 8,192 | scale | FFN down-proj (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
+| 8,192 | weight | FFN down-proj (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
 | 8,192 | output | same for every op | 0 KB | 512 KB | 0% | fits |
 | 32,768 | input | attention scores·V | 64 KB | 256 KB | 25% | fits |
 | 32,768 | scale | attention scores·V | 320 KB | 256 KB | 125% | **OVER** |
@@ -188,8 +188,12 @@
 
 **Reads as**
 
-- the three roofline terms side by side.
-- largest wins; “over 2nd” is the margin over the runner-up.
+- the three roofline terms for each phase, side by side.
+- **bound by** = the largest of the three. Under the serial model it sets the phase's time and the other two hide behind it.
+- **over 2nd** = largest ÷ **second-largest** — how decisively the winner wins:
+    - **1.0× is a near-tie.** 32K decode is compute 73.3 ms against DRAM 72.6 ms — either could bind, and a small change flips it.
+    - **A large number is decisive.** 2K decode is DRAM 51.4 ms against compute 7.7 ms, so 6.7×: nothing short of removing most of the bytes will change what binds.
+    - The runner-up is not always the same term — it is SRAM in every prefill row and compute or DRAM in decode.
 
 | context | phase | compute | DRAM | SRAM | bound by | over 2nd |
 | --- | --- | ---: | ---: | ---: | --- | ---: |
@@ -213,8 +217,8 @@
 
 | stage | kind | cycles | compute ms | DRAM | DRAM ms | RAM wait ms | bound |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| FFN expand (4,096 → 14,336) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.38 | 0.00 | compute |
-| FFN contract (14,336 → 4,096) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.44 | 0.00 | compute |
+| FFN up-proj (4,096 → 14,336) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.38 | 0.00 | compute |
+| FFN down-proj (14,336 → 4,096) | AW | 20,057.1 M | 40,114.19 | 0.94 GB | 18.44 | 0.00 | compute |
 | attention Q·Kᵀ | AA | 11,461.2 M | 22,922.40 | 0.00 GB | 0.01 | 0.00 | compute |
 | attention scores·V | AA | 11,461.2 M | 22,922.40 | 0.02 GB | 0.41 | 0.00 | compute |
 | Q projection | AW | 5,730.6 M | 11,461.20 | 0.27 GB | 5.27 | 0.00 | compute |
@@ -226,8 +230,8 @@
 
 | stage | kind | cycles | compute ms | DRAM | DRAM ms | RAM wait ms | bound |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| FFN contract (14,336 → 4,096) | AW | 0.5 M | 0.92 | 0.94 GB | 18.44 | 17.52 | memory |
-| FFN expand (4,096 → 14,336) | AW | 0.5 M | 1.06 | 0.94 GB | 18.38 | 17.32 | memory |
+| FFN down-proj (14,336 → 4,096) | AW | 0.5 M | 0.92 | 0.94 GB | 18.44 | 17.52 | memory |
+| FFN up-proj (4,096 → 14,336) | AW | 0.5 M | 1.06 | 0.94 GB | 18.38 | 17.32 | memory |
 | attention scores·V | AA | 8.4 M | 16.87 | 0.16 GB | 3.03 | 0.00 | compute |
 | Q projection | AW | 0.1 M | 0.26 | 0.27 GB | 5.27 | 5.00 | memory |
 | output projection | AW | 0.1 M | 0.26 | 0.27 GB | 5.27 | 5.00 | memory |
@@ -267,14 +271,14 @@
 ## Findings
 
 - **Prefill and decode are bound by different things**, at every context.
-    - Decode is **DRAM-bound**: 6.8× more DRAM time than compute at 2K, narrowing to 1.1× at 32K.
-    - Prefill is **compute-bound** by 2.8–3.3×.
+    - Decode is **DRAM-bound at short context** — 6.7× more DRAM time than compute at 2K — but the gap closes as attention grows, and by 32K compute has caught up and just overtakes it (**1.0×**, a near-tie).
+    - Prefill is **compute-bound** by 2.8–3.2× at every context.
     - Two machines in one part, wanting two different optimisations.
 
 - **The 256 KB input buffer decides how many tokens run at once, and the FFN's second matrix is what limits it.**
     - The buffer holds `rows × input width × 2 B`, so the block depends on *that operation's* input width.
-    - Projections and the FFN **expand** take a 4,096-wide input: 8 KB a row, so **32 rows** fit — exactly the array's height, clearly what it was sized for.
-    - The FFN **contract** takes a 14,336-wide input: 28 KB a row, so only **9** fit.
+    - Projections and the FFN **up-projection** take a 4,096-wide input: 8 KB a row, so **32 rows** fit — exactly the array's height, clearly what it was sized for.
+    - The FFN **down-projection** takes a 14,336-wide input: 28 KB a row, so only **9** fit.
     - The block is one global setting, so the tightest operation wins: **9, not 32.**
 
 - **Those 9 rows are where prefill's time goes.**
@@ -307,13 +311,13 @@
 - **Key-cache bit allocation is nearly free; Value-cache width is not.**
     - 50% of Key channels at 5 bits costs **1.005× TPOT at 8K, 1.010× at 32K**. Both caches at 5 bits costs **1.070× / 1.152×** — 7–15× more.
     - `qk` is ~5% of decode cycles and `attn_v` is 80–92%, though they carry identical bytes. **So AS-Bit's load-bearing half is leaving the Value cache alone, not the Key adaptivity.**
-    - **Packed vs padded scheduling changes TPOT by 0%** — decode is DRAM-bound, so the extra bit-plane pass hides. No case for packing hardware.
+    - **Packed vs padded scheduling changes TPOT by 0%** — the extra bit-plane pass lands on `qk`, which is itself memory-bound, so it hides behind that operation's own DRAM time. No case for packing hardware.
 
 - **The array shape is tuned to `head_dim`, and is right for the block it was designed for.**
     - A 32×4 array gives exactly **128 columns** against attention's `head_dim` of 128; 16×8 wastes half, 8×16 three quarters.
     - At the forced 9-row block, 16×8 would be **1.16×** faster — fill/drain dominates there.
     - But **32×4 wins at every block from 32 rows upward**, including untiled, and 32 rows is what a 256 KB input buffer holds.
-    - **The array and the buffer agree; the FFN contract breaks the pairing.** (`analysis/memory/tileshape_report.md`)
+    - **The array and the buffer agree; the FFN down-projection breaks pairing.** (`analysis/memory/tileshape_report.md`)
 
 - **The geometry confirms the array model.**
     - Input word 256 B = `array_m × MU × act_bits/8` — one cycle of activation operand.

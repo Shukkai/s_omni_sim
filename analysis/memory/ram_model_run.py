@@ -116,8 +116,8 @@ OP_LABEL = {
     'k_proj': 'K projection',
     'v_proj': 'V projection',
     'o_proj': 'output projection',
-    'fc1': 'FFN expand (4,096 \u2192 14,336)',
-    'fc2': 'FFN contract (14,336 \u2192 4,096)',
+    'fc1': 'FFN up-proj (4,096 \u2192 14,336)',
+    'fc2': 'FFN down-proj (14,336 \u2192 4,096)',
     'qk_matmul': 'attention Q\u00b7K\u1d40',
     'attn_v_matmul': 'attention scores\u00b7V',
     'gate': 'MoE router',
@@ -150,8 +150,9 @@ READS_AS = {
           ("**what is *not* counted** — memory:",
            ["No DRAM time, no stalls, no queueing. **This is a cycle table, "
             "not a latency model.**",
-            "So decode looks cheap here and is not: it is DRAM-bound, and "
-            "what it waits *for* is in **F** and **G**.",
+            "So decode looks cheap here and is not: most of its wall-clock is "
+            "spent waiting on memory, and what it waits *for* is in "
+            "**F** and **G**.",
             "The **BQU** is also absent — the paper runs it on-the-fly "
             "alongside the array, and the model's figure for it is a "
             "placeholder."]),
@@ -205,13 +206,14 @@ READS_AS = {
           ("**the eight operations a layer runs**, which is what \u201cevery "
            "op\u201d means below:",
            ["Q, K, V and output projections \u2014 4,096-wide input.",
-            "FFN expand (4,096 \u2192 14,336) and FFN contract "
-            "(14,336 \u2192 4,096).",
+            "FFN **up-projection** (4,096 \u2192 14,336) and FFN "
+            "**down-projection** (14,336 \u2192 4,096) \u2014 `fc1` and `fc2` "
+            "in the simulator, `up_proj`/`down_proj` in HuggingFace.",
             "attention Q\u00b7K\u1d40 and attention scores\u00b7V."]),
           ("**\u201csame for every op\u201d means there is no winner to "
            "name**, and that is the real answer for two of the four buffers:",
            ["**input** and **scale** *do* have a winner. Both scale with the "
-            "operation's `K`, so the widest input wins: the **FFN contract** "
+            "operation's `K`, so the widest input wins: the **FFN down-projection** "
             "(`K` = `d_ffn` = 14,336) below 16K context, and **attention "
             "scores·V** (`K` = `kv_len`) at 32K.",
             "**weight** and **output** do not, because their tiles are "
@@ -221,8 +223,18 @@ READS_AS = {
             "All eight operations therefore demand **identical** bytes in "
             "those two columns, and picking one to name would invent a "
             "winner that does not exist."])],
-    'F': ["the three roofline terms side by side.",
-          "largest wins; “over 2nd” is the margin over the runner-up."],
+    'F': ["the three roofline terms for each phase, side by side.",
+          "**bound by** = the largest of the three. Under the serial model it "
+          "sets the phase's time and the other two hide behind it.",
+          ("**over 2nd** = largest ÷ **second-largest** — how decisively the "
+           "winner wins:",
+           ["**1.0× is a near-tie.** 32K decode is compute 73.3 ms against "
+            "DRAM 72.6 ms — either could bind, and a small change flips it.",
+            "**A large number is decisive.** 2K decode is DRAM 51.4 ms "
+            "against compute 7.7 ms, so 6.7×: nothing short of removing most "
+            "of the bytes will change what binds.",
+            "The runner-up is not always the same term — it is SRAM in every "
+            "prefill row and compute or DRAM in decode."])],
     'G': ["per stage: what it costs to compute, what it costs to fetch, and "
           "how much of the fetch its own compute fails to hide.",
           "“RAM wait” is bandwidth stall, **not** cache-miss latency — this "
@@ -251,19 +263,20 @@ DENSE = []          # [('section', title, subtitle) | ('table', caption, hdr, ro
 #: skimmed by headline alone.
 FINDINGS = [
     ("**Prefill and decode are bound by different things**, at every context.",
-     ["Decode is **DRAM-bound**: 6.8× more DRAM time than compute at 2K, "
-      "narrowing to 1.1× at 32K.",
-      "Prefill is **compute-bound** by 2.8–3.3×.",
+     ["Decode is **DRAM-bound at short context** — 6.7× more DRAM time than "
+      "compute at 2K — but the gap closes as attention grows, and by 32K "
+      "compute has caught up and just overtakes it (**1.0×**, a near-tie).",
+      "Prefill is **compute-bound** by 2.8–3.2× at every context.",
       "Two machines in one part, wanting two different optimisations."]),
 
     ("**The 256 KB input buffer decides how many tokens run at once, and the "
      "FFN's second matrix is what limits it.**",
      ["The buffer holds `rows × input width × 2 B`, so the block depends on "
       "*that operation's* input width.",
-      "Projections and the FFN **expand** take a 4,096-wide input: 8 KB a "
+      "Projections and the FFN **up-projection** take a 4,096-wide input: 8 KB a "
       "row, so **32 rows** fit — exactly the array's height, clearly what "
       "it was sized for.",
-      "The FFN **contract** takes a 14,336-wide input: 28 KB a row, so only "
+      "The FFN **down-projection** takes a 14,336-wide input: 28 KB a row, so only "
       "**9** fit.",
       "The block is one global setting, so the tightest operation wins: "
       "**9, not 32.**"]),
@@ -314,8 +327,9 @@ FINDINGS = [
       "`qk` is ~5% of decode cycles and `attn_v` is 80–92%, though they carry "
       "identical bytes. **So AS-Bit's load-bearing half is leaving the Value "
       "cache alone, not the Key adaptivity.**",
-      "**Packed vs padded scheduling changes TPOT by 0%** — decode is "
-      "DRAM-bound, so the extra bit-plane pass hides. No case for packing "
+      "**Packed vs padded scheduling changes TPOT by 0%** — the extra "
+      "bit-plane pass lands on `qk`, which is itself memory-bound, so it "
+      "hides behind that operation's own DRAM time. No case for packing "
       "hardware."]),
 
     ("**The array shape is tuned to `head_dim`, and is right for the block it "
@@ -326,7 +340,7 @@ FINDINGS = [
       "fill/drain dominates there.",
       "But **32×4 wins at every block from 32 rows upward**, including "
       "untiled, and 32 rows is what a 256 KB input buffer holds.",
-      "**The array and the buffer agree; the FFN contract breaks the "
+      "**The array and the buffer agree; the FFN down-projection breaks "
       "pairing.** (`analysis/memory/tileshape_report.md`)"]),
 
     ("**The geometry confirms the array model.**",
@@ -481,9 +495,10 @@ def main():
 
     rep.summary([
         "**The two phases are bound by different resources at every context.** "
-        "Decode is DRAM-bound — 6.7× more DRAM time than compute at 2K, "
-        "narrowing to 1.06× at 32K. Prefill is compute-bound by 3.3× to 581×. "
-        "They are two machines and want two different optimisations.",
+        "Decode is DRAM-bound at short context — 6.7× more DRAM time than "
+        "compute at 2K — and by 32K compute has caught up and just overtakes "
+        "it. Prefill is compute-bound at every context. They are two machines "
+        "and want two different optimisations.",
         "**The 256 KB input buffer is the binding design decision, and it is "
         "set by fc2.** Its A operand is `m_tile × d_ffn × 2 B`, and `d_ffn` is "
         "3.5× `d_model`, so the block is **9 rows** rather than `array_m`'s 32 "
@@ -728,8 +743,9 @@ def main():
     emit_table(rep, ["context", "phase", "compute", "DRAM", "SRAM", "bound by",
                "over 2nd"], trows, aligns="llrrrlr")
     rep.note(
-        "**Decode is DRAM-bound and prefill is compute-bound, at every "
-        "context** — the single most load-bearing fact in this repo. It is why "
+        "**Prefill is compute-bound at every context, and decode is "
+        "DRAM-bound until attention catches up at 32K** — the single most "
+        "load-bearing fact in this repo. It is why "
         "§21's byte lever moves decode 1.911× and why §20's row block costs "
         "prefill time rather than saving it.\n\n"
         "**Prefill's compute figure is a consequence of the buffer, not of the "
