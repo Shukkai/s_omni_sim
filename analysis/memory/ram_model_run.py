@@ -121,20 +121,39 @@ OP_LABEL = {
 READS_AS = {
     'A': ["the parts list — what exists and how fast each one is."],
     'B': ["off-chip bytes actually moved, split by operand kind.",
-          "**AW** = weights and the KV cache written by the projections. "
-          "**AA** = the KV cache read back by attention, plus its scales.",
+          "**AW** = weights, plus the KV the projections write. "
+          "**AA** = the KV attention reads back, plus its scales.",
           "**prefill = the whole phase; decode = one token.**",
-          "decode's AW write is **32 KB/token** — the new KV entry — which is "
-          "0.000 at this precision, not zero."],
-    'C': ["where cycles go, by unit. Columns are % of that phase's cycles.",
-          "**prefill is the whole phase and decode is one token** — that, not "
-          "efficiency, is the ~7,000× gap in the cycle column. Divide prefill "
-          "by the context and the two are within 2× of each other: 7.5 M vs "
-          "4.0 M per token at 2K, 9.8 vs 10.8 at 8K, 19.2 vs 38.0 at 32K.",
-          "**cycles are not latency.** Nothing is hidden from this table, but "
-          "decode is DRAM-bound, so most of its wall-clock is spent waiting "
-          "rather than cycling — that cost appears in **F** and **G**, not "
-          "here."],
+          ("**the two `0.000` columns mean different things:**",
+           ["**AW write in decode is 32 KB/token** — the new KV entry. Small, "
+            "not none: 1/78,164 of the AW read, so it rounds away here.",
+            "**AA write is exactly zero.** The attention scores stay on chip, "
+            "so attention never writes to DRAM at all."])],
+    'C': [("**what is counted** — cycles on the compute units:",
+           ["**PE array — compute**: rows streaming through the systolic "
+            "array doing useful work.",
+            "**PE array — fill/drain**: the pipeline start-up and wind-down "
+            "paid once per round, `array_m + array_n` cycles.",
+            "**LGU**: building the lookup tables the PEs index into.",
+            "**operand issue**: accepting a word from the buffers.",
+            "**accumulator**: draining partial sums out of the array.",
+            "**VPU**: softmax, RMSNorm, SiLU, RoPE — everything not a GEMM.",
+            "Columns are each unit's share of that phase's serial cycles."]),
+          ("**what is *not* counted** — memory:",
+           ["No DRAM time, no stalls, no queueing. **This is a cycle table, "
+            "not a latency model.**",
+            "So decode looks cheap here and is not: it is DRAM-bound, and "
+            "what it waits *for* is in **F** and **G**.",
+            "The **BQU** is also absent — the paper runs it on-the-fly "
+            "alongside the array, and the model's figure for it is a "
+            "placeholder."]),
+          ("**the two tables are in different units:**",
+           ["**prefill = the whole phase** — every token of the prompt.",
+            "**decode = one token.**",
+            "That, not efficiency, is the ~7,000× gap in the cycle column. "
+            "Per token the two are within 2×: **7.5 M vs 4.0 M** at 2K, "
+            "**9.8 vs 10.8** at 8K, **19.2 vs 38.0** at 32K — decode is the "
+            "*more* expensive of the two at long context."])],
     'D': ["on-chip bytes per port, as B/cycle and % of that port's width.",
           "100% = that port is the bottleneck."],
     'E': ["the largest working set each buffer must hold, and which operation "
@@ -284,7 +303,13 @@ def write_dense(path, setup):
             key = READS_AS.get(item[1][:1])
             if key:
                 out += ["**Reads as**", ""]
-                out += [f"- {k}" for k in key]
+                for k in key:
+                    if isinstance(k, tuple):
+                        head, subs = k
+                        out.append(f"- {head}")
+                        out += [f"    - {t}" for t in subs]
+                    else:
+                        out.append(f"- {k}")
                 out.append("")
             elif item[2]:
                 out += [f"*{item[2]}*", ""]
