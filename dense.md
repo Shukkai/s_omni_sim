@@ -95,24 +95,36 @@
 
 **Reads as**
 
-- on-chip bytes per port, as B/cycle and % of that port's width.
-- 100% = that port is the bottleneck.
+- **the columns are §A's four SRAMs**, each at its own width:
+    - **input, 256 B/cycle** — activation reads, the A operand.
+    - **scale, 256 B/cycle** — BCQ scaling factors and zero points.
+    - **weight, 2,048 B/cycle** — weights, and the KV cache in attention. 8 banks × 256 B, which is why it is the wide one.
+    - **output, 512 B/cycle** — final results, plus partial sums recirculating through the accumulator.
+- **each cell is `B/cycle (% of that port's width)`:**
+    - the rate is that phase's bytes divided by that phase's cycles.
+    - **100% would mean the port is the bottleneck** — the array cannot be fed faster than its buffer delivers.
+- **what the numbers say:**
+    - **Nothing is close to saturated.** The busiest cell anywhere is 36%, so no port limits this machine at the built configuration.
+    - **Prefill's input port idles at 19%** — not because activations are cheap, but because the 9-row block inflates cycles ~5× while the operand bytes do not move. **The buffer that forces the block is the same buffer whose port then goes idle.**
+    - **Prefill's busiest port is the output**, at 31–36%: weight-stationary recirculates a 32-bit partial-sum matrix `k_tiles × qbit` times per GEMM.
+    - **Decode's traffic is almost all on the weight port** — the per-token weight re-read. It falls 36% → 9% with context as attention grows relative to the FFN.
+    - **Decode's output port is ~1%**, and structurally so: `LUT_OS_V` is output-stationary, so partial sums never leave the array.
 
 **prefill — B/cycle (% of port width)**
 
 | context | input 256 B | scale 256 B | weight 2,048 B | output 512 B |
 | --- | ---: | ---: | ---: | ---: |
-| 2,048 | 49.6 (19%) | 0.3 (0%) | 42.7 (2%) | 183.1 (36%) |
-| 8,192 | 52.0 (20%) | 0.4 (0%) | 42.7 (2%) | 171.9 (34%) |
-| 32,768 | 55.8 (22%) | 0.6 (0%) | 42.7 (2%) | 153.2 (30%) |
+| 2,048 | 47.9 (19%) | 0.3 (0%) | 42.7 (2%) | 184.8 (36%) |
+| 8,192 | 48.0 (19%) | 0.4 (0%) | 42.7 (2%) | 175.9 (34%) |
+| 32,768 | 48.0 (19%) | 0.6 (0%) | 42.7 (2%) | 160.9 (31%) |
 
 **decode — B/cycle (% of port width)**
 
 | context | input 256 B | scale 256 B | weight 2,048 B | output 512 B |
 | --- | ---: | ---: | ---: | ---: |
-| 2,048 | 95.5 (37%) | 4.4 (2%) | 735.4 (36%) | 0.0 (0%) |
-| 8,192 | 47.0 (18%) | 3.1 (1%) | 346.2 (17%) | 0.0 (0%) |
-| 32,768 | 27.1 (11%) | 2.6 (1%) | 186.7 (9%) | 0.0 (0%) |
+| 2,048 | 92.2 (36%) | 4.4 (2%) | 735.4 (36%) | 3.3 (1%) |
+| 8,192 | 43.4 (17%) | 3.1 (1%) | 346.2 (17%) | 3.6 (1%) |
+| 32,768 | 23.4 (9%) | 2.6 (1%) | 186.7 (9%) | 3.8 (1%) |
 
 ---
 
@@ -168,12 +180,12 @@
 
 | context | phase | compute | DRAM | SRAM | bound by | over 2nd |
 | --- | --- | ---: | ---: | ---: | --- | ---: |
-| 2,048 | prefill | 30,112.5 ms | 51.4 ms | 10,771.0 ms | **compute** | 2.8× |
-| 2,048 | decode | 7.7 ms | 51.4 ms | 2.9 ms | **DRAM** | 6.7× |
-| 8,192 | prefill | 154,726.2 ms | 55.7 ms | 51,942.3 ms | **compute** | 3.0× |
-| 8,192 | decode | 20.9 ms | 55.7 ms | 3.8 ms | **DRAM** | 2.7× |
-| 32,768 | prefill | 1,168,260.1 ms | 72.6 ms | 349,503.0 ms | **compute** | 3.3× |
-| 32,768 | decode | 73.3 ms | 72.6 ms | 7.8 ms | **compute** | 1.0× |
+| 2,048 | prefill | 30,112.5 ms | 51.4 ms | 10,871.6 ms | **compute** | 2.8× |
+| 2,048 | decode | 7.7 ms | 51.4 ms | 2.8 ms | **DRAM** | 6.7× |
+| 8,192 | prefill | 154,726.2 ms | 55.7 ms | 53,150.2 ms | **compute** | 2.9× |
+| 8,192 | decode | 20.9 ms | 55.7 ms | 3.5 ms | **DRAM** | 2.7× |
+| 32,768 | prefill | 1,168,260.1 ms | 72.6 ms | 367,219.7 ms | **compute** | 3.2× |
+| 32,768 | decode | 73.3 ms | 72.6 ms | 6.7 ms | **compute** | 1.0× |
 
 ---
 
@@ -258,7 +270,7 @@
     - That costs **~5.3x** prefill compute.
     - **A bigger input buffer is worth more here than a faster anything.**
 
-- **No on-chip port exceeds 37% of its width, in either phase.**
+- **No on-chip port exceeds 36% of its width, in either phase.**
     - The same tiling inflates cycles ~5× but leaves operand bytes unchanged, so every port's utilisation falls with it.
     - The buffer that forces the block is the same buffer whose port then goes idle.
     - The 8 weight banks are there for **capacity, not bandwidth**: the FFN contract needs 896 KB resident and one bank holds 256 KB.

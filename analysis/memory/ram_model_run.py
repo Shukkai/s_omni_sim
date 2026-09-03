@@ -154,8 +154,33 @@ READS_AS = {
             "Per token the two are within 2×: **7.5 M vs 4.0 M** at 2K, "
             "**9.8 vs 10.8** at 8K, **19.2 vs 38.0** at 32K — decode is the "
             "*more* expensive of the two at long context."])],
-    'D': ["on-chip bytes per port, as B/cycle and % of that port's width.",
-          "100% = that port is the bottleneck."],
+    'D': [("**the columns are §A's four SRAMs**, each at its own width:",
+           ["**input, 256 B/cycle** — activation reads, the A operand.",
+            "**scale, 256 B/cycle** — BCQ scaling factors and zero points.",
+            "**weight, 2,048 B/cycle** — weights, and the KV cache in "
+            "attention. 8 banks × 256 B, which is why it is the wide one.",
+            "**output, 512 B/cycle** — final results, plus partial sums "
+            "recirculating through the accumulator."]),
+          ("**each cell is `B/cycle (% of that port's width)`:**",
+           ["the rate is that phase's bytes divided by that phase's cycles.",
+            "**100% would mean the port is the bottleneck** — the array "
+            "cannot be fed faster than its buffer delivers."]),
+          ("**what the numbers say:**",
+           ["**Nothing is close to saturated.** The busiest cell anywhere is "
+            "36%, so no port limits this machine at the built configuration.",
+            "**Prefill's input port idles at 19%** — not because activations "
+            "are cheap, but because the 9-row block inflates cycles ~5× while "
+            "the operand bytes do not move. **The buffer that forces the "
+            "block is the same buffer whose port then goes idle.**",
+            "**Prefill's busiest port is the output**, at 31–36%: "
+            "weight-stationary recirculates a 32-bit partial-sum matrix "
+            "`k_tiles × qbit` times per GEMM.",
+            "**Decode's traffic is almost all on the weight port** — the "
+            "per-token weight re-read. It falls 36% → 9% with context as "
+            "attention grows relative to the FFN.",
+            "**Decode's output port is ~1%**, and structurally so: "
+            "`LUT_OS_V` is output-stationary, so partial sums never leave "
+            "the array."])],
     'E': ["the largest working set each buffer must hold, and which operation "
           "demands it.",
           "`OVER` = does not fit."],
@@ -214,7 +239,7 @@ FINDINGS = [
       "That costs **~5.3x** prefill compute.",
       "**A bigger input buffer is worth more here than a faster anything.**"]),
 
-    ("**No on-chip port exceeds 37% of its width, in either phase.**",
+    ("**No on-chip port exceeds 36% of its width, in either phase.**",
      ["The same tiling inflates cycles ~5× but leaves operand bytes "
       "unchanged, so every port's utilisation falls with it.",
       "The buffer that forces the block is the same buffer whose port then "
@@ -375,10 +400,14 @@ def run(context, batch=1):
             'dram_write': t.dram_write_eff / div,
             'dram_s': ((t.dram_read_eff + t.dram_write_eff)
                        / (hw.dram_bandwidth_gbps * 1e9) / div),
-            'input': (t.sram_read_a + t.sram_write_out) / div,
+            # Grouped exactly as `Simulator._sram_buffer_ports` does: the
+            # final result write goes to the *output* buffer, not back into
+            # the input one.  The two disagreed until this was checked.
+            'input': t.sram_read_a / div,
             'scale': t.sram_read_scale / div,
             'weight': t.sram_read_b / div,
-            'output': (t.sram_acc_read + t.sram_acc_write) / div,
+            'output': (t.sram_write_out + t.sram_acc_read
+                       + t.sram_acc_write) / div,
             'overflow': t.sram_overflow_buffers,
         }
     return out
@@ -423,7 +452,7 @@ def main():
         "3.5× `d_model`, so the block is **9 rows** rather than `array_m`'s 32 "
         "— and a 9-row block inflates prefill compute **~5.3×** over untiled "
         "(§20). One SRAM sets prefill performance.",
-        "**No on-chip port exceeds 37% of its width, in either phase.** At the "
+        "**No on-chip port exceeds 36% of its width, in either phase.** At the "
         "block the buffer forces, the array is fill/drain-dominated rather "
         "than operand-starved. The 8 weight banks are there for **capacity, "
         "not bandwidth**.",
