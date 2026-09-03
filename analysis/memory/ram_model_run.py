@@ -202,16 +202,25 @@ READS_AS = {
     'E': ["the largest working set each buffer must hold, and which "
           "operation demands it.",
           "`OVER` = does not fit.",
-          ("**\"tie — all N ops\" is not a cop-out**, it is the answer:",
-           ["**input** and **scale** scale with the operation's `K`, so they "
-            "have a real winner — the FFN contract (`K` = `d_ffn` 14,336) "
-            "below 16K context, attention's scores·V (`K` = `kv_len`) above.",
-            "**weight** and **output** are clamped by the *array*, not the "
-            "operation: `B_tile` is `128 × min(N, 128) × qbit/8` = **8 KB** "
-            "for every op with `N ≥ 128`, and `C_tile` is "
-            "`m_tile × 128 × 4 B` = **4 KB** always.",
-            "So every operation demands identical bytes there, and naming "
-            "one would invent a winner."])],
+          ("**the eight operations a layer runs**, which is what \u201cevery "
+           "op\u201d means below:",
+           ["Q, K, V and output projections \u2014 4,096-wide input.",
+            "FFN expand (4,096 \u2192 14,336) and FFN contract "
+            "(14,336 \u2192 4,096).",
+            "attention Q\u00b7K\u1d40 and attention scores\u00b7V."]),
+          ("**\u201csame for every op\u201d means there is no winner to "
+           "name**, and that is the real answer for two of the four buffers:",
+           ["**input** and **scale** *do* have a winner. Both scale with the "
+            "operation's `K`, so the widest input wins: the **FFN contract** "
+            "(`K` = `d_ffn` = 14,336) below 16K context, and **attention "
+            "scores·V** (`K` = `kv_len`) at 32K.",
+            "**weight** and **output** do not, because their tiles are "
+            "clamped by the *array* rather than by the operation. `B_tile` is "
+            "`128 × min(N, 128) × qbit/8` = **8 KB** for every op with "
+            "`N ≥ 128`; `C_tile` is `m_tile × 128 × 4 B` = **4 KB** always.",
+            "All eight operations therefore demand **identical** bytes in "
+            "those two columns, and picking one to name would invent a "
+            "winner that does not exist."])],
     'F': ["the three roofline terms side by side.",
           "largest wins; “over 2nd” is the margin over the runner-up."],
     'G': ["per stage: what it costs to compute, what it costs to fetch, and "
@@ -663,7 +672,7 @@ def main():
                 if len(ops) == 1:
                     op = op_label(next(iter(ops)))
                 elif ops:
-                    op = f"tie — all {len(ops)} ops"
+                    op = "same for every op"
                 else:
                     op = "—"
                 rows.append({'section': 'E', 'context': c, 'phase': tag,

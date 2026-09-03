@@ -139,10 +139,14 @@
 
 - the largest working set each buffer must hold, and which operation demands it.
 - `OVER` = does not fit.
-- **"tie — all N ops" is not a cop-out**, it is the answer:
-    - **input** and **scale** scale with the operation's `K`, so they have a real winner — the FFN contract (`K` = `d_ffn` 14,336) below 16K context, attention's scores·V (`K` = `kv_len`) above.
-    - **weight** and **output** are clamped by the *array*, not the operation: `B_tile` is `128 × min(N, 128) × qbit/8` = **8 KB** for every op with `N ≥ 128`, and `C_tile` is `m_tile × 128 × 4 B` = **4 KB** always.
-    - So every operation demands identical bytes there, and naming one would invent a winner.
+- **the eight operations a layer runs**, which is what “every op” means below:
+    - Q, K, V and output projections — 4,096-wide input.
+    - FFN expand (4,096 → 14,336) and FFN contract (14,336 → 4,096).
+    - attention Q·Kᵀ and attention scores·V.
+- **“same for every op” means there is no winner to name**, and that is the real answer for two of the four buffers:
+    - **input** and **scale** *do* have a winner. Both scale with the operation's `K`, so the widest input wins: the **FFN contract** (`K` = `d_ffn` = 14,336) below 16K context, and **attention scores·V** (`K` = `kv_len`) at 32K.
+    - **weight** and **output** do not, because their tiles are clamped by the *array* rather than by the operation. `B_tile` is `128 × min(N, 128) × qbit/8` = **8 KB** for every op with `N ≥ 128`; `C_tile` is `m_tile × 128 × 4 B` = **4 KB** always.
+    - All eight operations therefore demand **identical** bytes in those two columns, and picking one to name would invent a winner that does not exist.
 
 **prefill — m_tile = 9**
 
@@ -150,16 +154,16 @@
 | --- | --- | --- | ---: | ---: | ---: | --- |
 | 2,048 | input | FFN contract (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
 | 2,048 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
-| 2,048 | weight | tie — all 8 ops | 8 KB | 2,048 KB | 0% | fits |
-| 2,048 | output | tie — all 8 ops | 4 KB | 512 KB | 1% | fits |
+| 2,048 | weight | same for every op | 8 KB | 2,048 KB | 0% | fits |
+| 2,048 | output | same for every op | 4 KB | 512 KB | 1% | fits |
 | 8,192 | input | FFN contract (14,336 → 4,096) | 252 KB | 256 KB | 98% | fits |
 | 8,192 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
-| 8,192 | weight | tie — all 8 ops | 8 KB | 2,048 KB | 0% | fits |
-| 8,192 | output | tie — all 8 ops | 4 KB | 512 KB | 1% | fits |
+| 8,192 | weight | same for every op | 8 KB | 2,048 KB | 0% | fits |
+| 8,192 | output | same for every op | 4 KB | 512 KB | 1% | fits |
 | 32,768 | input | attention scores·V | 576 KB | 256 KB | 225% | **OVER** |
 | 32,768 | scale | attention scores·V | 320 KB | 256 KB | 125% | **OVER** |
-| 32,768 | weight | tie — all 8 ops | 8 KB | 2,048 KB | 0% | fits |
-| 32,768 | output | tie — all 8 ops | 4 KB | 512 KB | 1% | fits |
+| 32,768 | weight | same for every op | 8 KB | 2,048 KB | 0% | fits |
+| 32,768 | output | same for every op | 4 KB | 512 KB | 1% | fits |
 
 **decode — m_tile = 9**
 
@@ -168,15 +172,15 @@
 | 2,048 | input | FFN contract (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
 | 2,048 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
 | 2,048 | weight | FFN contract (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
-| 2,048 | output | tie — all 8 ops | 0 KB | 512 KB | 0% | fits |
+| 2,048 | output | same for every op | 0 KB | 512 KB | 0% | fits |
 | 8,192 | input | FFN contract (14,336 → 4,096) | 28 KB | 256 KB | 11% | fits |
 | 8,192 | scale | FFN contract (14,336 → 4,096) | 140 KB | 256 KB | 55% | fits |
 | 8,192 | weight | FFN contract (14,336 → 4,096) | 896 KB | 2,048 KB | 44% | fits |
-| 8,192 | output | tie — all 8 ops | 0 KB | 512 KB | 0% | fits |
+| 8,192 | output | same for every op | 0 KB | 512 KB | 0% | fits |
 | 32,768 | input | attention scores·V | 64 KB | 256 KB | 25% | fits |
 | 32,768 | scale | attention scores·V | 320 KB | 256 KB | 125% | **OVER** |
 | 32,768 | weight | attention scores·V | 2,048 KB | 2,048 KB | 100% | **OVER** |
-| 32,768 | output | tie — all 8 ops | 0 KB | 512 KB | 0% | fits |
+| 32,768 | output | same for every op | 0 KB | 512 KB | 0% | fits |
 
 ---
 
