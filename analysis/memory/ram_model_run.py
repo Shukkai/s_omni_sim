@@ -44,7 +44,7 @@ from model_configs import get_model_config                           # noqa: E40
 from report import Report                                            # noqa: E402
 from cycle_units import (                                            # noqa: E402
     UnitAwareSimulator, compute_unit_cycle_breakdown,
-    compute_stage_cycle_breakdown, bqu_metrics,
+    compute_stage_cycle_breakdown,
 )
 
 MODEL = 'LLaMA-3-8B'
@@ -145,10 +145,7 @@ READS_AS = {
           "how much of the fetch its own compute fails to hide.",
           "“RAM wait” is bandwidth stall, **not** cache-miss latency — this "
           "model has no latency term."],
-    'H': ["the units that are not GEMM stages — quantisation, table "
-          "generation, operand load.",
-          "**the BQU rows are a placeholder, not a measurement.**"],
-    'I': ["what the Key cache's bit allocation costs.",
+    'H': ["what the Key cache's bit allocation costs.",
           "Value is held at the low width throughout, as the paper "
           "specifies."],
 }
@@ -314,32 +311,6 @@ def write_dense(path, setup):
     return path
 
 
-def _bqu_for(hw, model, context):
-    """BQU cycles per phase, from `bqu_metrics`.
-
-    **This is a placeholder, not a measurement.**  `study.md`'s TODO says so
-    plainly: the original simulator does not model the BQU at all, and
-    `bqu_metrics` assumes one BEA pass per bit-plane, one TSE min/max pass on
-    the Value path, and `bqu_width` elements per cycle.  It is reported here
-    because "what does quantisation cost?" is a fair question to ask of a
-    reference sheet, and because leaving it out silently is worse than
-    including it labelled.  Replace with RTL numbers before quoting.
-
-    Excluded from every serial total in this sheet, per OMNI_LUT.pdf §IV-A,
-    which runs the BQU on-the-fly alongside the PE array.
-    """
-    out = {}
-    for phase, tokens in (('prefill', context), ('decode', 1)):
-        tse = bea = 0
-        for tensor in ('key', 'value'):
-            b = bqu_metrics(hw, tensor, tokens, model.d_kv)
-            tse += b.tse_cycles
-            bea += b.bea_cycles
-        out[phase] = {'tse': tse * model.num_layers,
-                      'bea': bea * model.num_layers}
-    return out
-
-
 def base_hw(m_tile=M_TILE):
     hw = HardwareConfig(
         array_m=32, array_n=4, FPE_array_size=64,
@@ -363,8 +334,7 @@ def run(context, batch=1):
     out = {'context': context, 'batch': batch,
            'ttft_s': ttft, 'tpot_s': tpot, 'peaks': sim.peaks,
            'units': compute_unit_cycle_breakdown(sim, r, w),
-           'stages': compute_stage_cycle_breakdown(sim, r, w),
-           'bqu': _bqu_for(hw, m, context)}
+           'stages': compute_stage_cycle_breakdown(sim, r, w)}
     for tag, ph, div in (('prefill', r.prefill, 1), ('decode', r.decode, steps)):
         t = ph.get_total_metrics()
         out[tag] = {
@@ -703,55 +673,8 @@ def main():
         "nearly their entire DRAM time, because at `M = 1` there is almost no "
         "compute to hide it behind.")
 
-    # ---- H: the non-stage units -----------------------------------------
-    emit_section(rep, "H. Quantisation and load, dense",
-                 "The units that are not GEMM stages. Both BQU rows are "
-                 "placeholders; the load path is partly unmodelled.")
-    trows = []
-    for c in CONTEXTS:
-        b = runs[c]['bqu']
-        u_pf = runs[c]['units']['prefill']
-        u_dec = runs[c]['units']['decode_per_token']
-        for label, pf, dec, note in (
-            ("BQU — BEA (encode)", b['prefill']['bea'], b['decode']['bea'],
-             "placeholder"),
-            ("BQU — TSE (Value scales)", b['prefill']['tse'],
-             b['decode']['tse'], "placeholder"),
-            ("LGU (table generation)",
-             u_pf.get('lgu', {}).get('cycles', 0.0),
-             u_dec.get('lgu', {}).get('cycles', 0.0), "modelled"),
-            ("operand issue (buffer load)",
-             u_pf.get('input_load', {}).get('cycles', 0.0),
-             u_dec.get('input_load', {}).get('cycles', 0.0), "modelled"),
-            ("accumulator drain",
-             u_pf.get('accumulator', {}).get('cycles', 0.0),
-             u_dec.get('accumulator', {}).get('cycles', 0.0), "modelled"),
-        ):
-            rows.append({'section': 'H', 'context': c, 'unit': label,
-                         'prefill_cycles': pf, 'decode_cycles': dec})
-            if c != FOCUS:
-                continue
-            trows.append([label, f"{pf / 1e6:,.2f} M", f"{dec / 1e3:,.1f} K",
-                          note])
-    emit_table(rep, ["unit", "prefill cycles", "decode cycles/token",
-                     "status"], trows, aligns="lrrl",
-               caption=f"context {FOCUS:,}")
-    rep.note(
-        "**The BQU rows are order-of-magnitude, not measurements.** The "
-        "original simulator does not model it at all; `bqu_metrics` assumes "
-        "one BEA pass per bit-plane, one TSE min/max pass on the Value path, "
-        "and `bqu_width` elements per cycle. They are excluded from every "
-        "serial total here, per OMNI_LUT.pdf §IV-A, which runs the BQU "
-        "on-the-fly alongside the array — **which is itself unverified "
-        "against the RTL schedule.**\n\n"
-        "**\"Buffer loading\" is only half present.** `operand issue` is the "
-        "array-side cost of accepting a word, and it is modelled. The LSU's "
-        "own DMA cost is **not** — the RTL measures 492 → 927 ns from adding "
-        "it, and this model has no term for that. It is the largest "
-        "unmodelled hardware cost in the sheet.")
-
-    # ---- I: KV bit allocation -------------------------------------------
-    emit_section(rep, "I. Key cache bit allocation, dense",
+    # ---- H: KV bit allocation -------------------------------------------
+    emit_section(rep, "H. Key cache bit allocation, dense",
                  "AS-Bit gives a fraction of Key channels a high width and "
                  "the rest a low one; the Value cache stays at the low width. "
                  "Value held at 4 bits in every row.")
@@ -782,7 +705,7 @@ def main():
         for frac, eff, label in ALLOC:
             pk = _kv_run(ctx, eff, "packed")
             pd = _kv_run(ctx, eff, "padded")
-            rows.append({'section': 'I', 'context': ctx, 'high_frac': frac,
+            rows.append({'section': 'H', 'context': ctx, 'high_frac': frac,
                          'key_bits': eff, 'tpot_s': pk['tpot'],
                          'qk_cycles_packed': pk['qk_cyc'],
                          'qk_cycles_padded': pd['qk_cyc'],

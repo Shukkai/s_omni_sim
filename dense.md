@@ -196,26 +196,7 @@
 
 ---
 
-## H. Quantisation and load, dense
-
-**Reads as**
-
-- the units that are not GEMM stages — quantisation, table generation, operand load.
-- **the BQU rows are a placeholder, not a measurement.**
-
-**context 8,192**
-
-| unit | prefill cycles | decode cycles/token | status |
-| --- | ---: | ---: | --- |
-| BQU — BEA (encode) | 16.78 M | 2.0 K | placeholder |
-| BQU — TSE (Value scales) | 2.10 M | 0.3 K | placeholder |
-| LGU (table generation) | 0.00 M | 52.6 K | modelled |
-| operand issue (buffer load) | 1,611.99 M | 0.0 K | modelled |
-| accumulator drain | 3,223.98 M | 35.1 K | modelled |
-
----
-
-## I. Key cache bit allocation, dense
+## H. Key cache bit allocation, dense
 
 **Reads as**
 
